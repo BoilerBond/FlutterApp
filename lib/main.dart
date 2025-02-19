@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+// screens
+import 'presentation/login/login_screen.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -11,27 +14,21 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      // TODO: This must be changed
+      home: LoginScreen(),
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        colorScheme: ColorScheme(
+          brightness: Brightness.light,
+          primary: const Color.fromARGB(255, 40, 89, 187),
+          onPrimary: const Color.fromARGB(255, 66, 139, 240),
+          secondary: const Color.fromARGB(255, 17, 147, 170),
+          onSecondary: const Color.fromARGB(255, 28, 206, 206),
+          error: const Color.fromARGB(255, 255, 68, 68),
+          onError: const Color.fromARGB(255, 255, 68, 68),
+          surface: const Color.fromARGB(255, 255, 255, 255),
+          onSurface: const Color.fromARGB(255, 0, 0, 0),
+        ),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
