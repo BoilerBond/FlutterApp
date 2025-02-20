@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       // TODO: This must be changed
-      home: LoginScreen(verifiedPurdueEmail: ""),
+      home: LoginScreen(),
       theme: ThemeData(
         colorScheme: ColorScheme(
           brightness: Brightness.light,

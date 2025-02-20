@@ -3,8 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key, required String this.verifiedPurdueEmail});
-  final String verifiedPurdueEmail;
+  const LoginScreen({super.key});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -14,7 +13,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _showPasswordLogin = false;
 
   // input controller for password login
-  final usernameController = TextEditingController();
+  final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
   void setPasswordLoginFormVisibility(bool visibility) {
@@ -27,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
     // TODO: implement log in with apple
   }
 
-  Future<UserCredential> loginWithGoogle() async {
+  Future<void> loginWithGoogle() async {
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
     final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
 
@@ -38,23 +37,29 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     // Once signed in, return the UserCredential
-    return await FirebaseAuth.instance.signInWithCredential(credential);
+    UserCredential user = await FirebaseAuth.instance.signInWithCredential(credential);
+    bool isNewUser = user.additionalUserInfo?.isNewUser ?? true;
+    navigateToNextScreen(isNewUser);
   }
 
   void loginWithPassword() {
-    // TODO: implement log in with username/password
+    // TODO: implement log in with email/password
+    // TODO: navigate to dashboard
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void navigateToNextScreen(bool isNewUser) {
+    if (isNewUser) {
+      // TODO: navigate to app description & terms and conditions
+      // the app should skip sign up screen directly to purdue email verification since user is authenticated
+    } else {
+      // TODO: navigate to dashboard
+    }
   }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
-    
-
 
     return Scaffold(
         body: _showPasswordLogin
@@ -69,15 +74,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           // Main title of the login screen.
                           Text("Login", style: Theme.of(context).textTheme.headlineLarge),
 
-                          // Text field for entering the username.
+                          // Text field for entering the email.
                           TextFormField(
-                            controller: usernameController,
-                            decoration: InputDecoration(labelText: 'Username'),
+                            controller: emailController,
+                            decoration: InputDecoration(labelText: 'Email'),
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter a username';
-                              }
-                              return null;
+                              final bool emailValid = value != null && RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").hasMatch(value);
+                              return emailValid ? null : "Please enter an email";
                             },
                           ),
 
@@ -90,10 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: InputDecoration(labelText: 'Password'),
                             obscureText: true,
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter a password';
-                              }
-                              return null;
+                              return (value != null && value.isNotEmpty) ? null : 'Please enter a password';
                             },
                           ),
 
@@ -102,13 +102,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           // Login button.
                           ElevatedButton(
-                            child: Text('Login'),
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
                             onPressed: loginWithPassword,
+                            child: Text('Login'),
                           ),
                         ],
                       ),
@@ -156,12 +156,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: loginWithGoogle,
                       )),
 
-                  // Button to switch to username/password login form.
+                  // Button to switch to email/password login form.
                   SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         icon: Icon(Icons.key, size: 24),
-                        label: Text('Login with Username/Password'),
+                        label: Text('Login with Email/Password'),
                         style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                         onPressed: () => {setPasswordLoginFormVisibility(true)},
                       )),
