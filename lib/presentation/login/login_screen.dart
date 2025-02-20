@@ -1,40 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, required String this.verifiedPurdueEmail});
+  final String verifiedPurdueEmail;
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool _showUsernameLogin = false;
+  bool _showPasswordLogin = false;
+
+  // input controller for password login
+  final usernameController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  void setPasswordLoginFormVisibility(bool visibility) {
+    setState(() {
+      _showPasswordLogin = visibility;
+    });
+  }
 
   void loginWithApple() {
     // TODO: implement log in with apple
   }
 
-  void loginWithGoogle() {
-    // TODO: implement log in with google
+  Future<UserCredential> loginWithGoogle() async {
+    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
+
+    // Create a new credential
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth?.accessToken,
+      idToken: googleAuth?.idToken,
+    );
+
+    // Once signed in, return the UserCredential
+    return await FirebaseAuth.instance.signInWithCredential(credential);
   }
 
   void loginWithPassword() {
     // TODO: implement log in with username/password
   }
 
-  void setPasswordLoginFormVisibility(bool visibility) {
-    setState(() {
-      _showUsernameLogin = visibility;
-    });
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
   }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
+    
+
 
     return Scaffold(
-        body: _showUsernameLogin
+        body: _showPasswordLogin
             ? Stack(
                 children: [
                   Padding(
@@ -48,10 +71,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           // Text field for entering the username.
                           TextFormField(
+                            controller: usernameController,
                             decoration: InputDecoration(labelText: 'Username'),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please enter a username'; // Validation for empty username.
+                                return 'Please enter a username';
                               }
                               return null;
                             },
@@ -62,6 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           // Text field for entering the password.
                           TextFormField(
+                            controller: passwordController,
                             decoration: InputDecoration(labelText: 'Password'),
                             obscureText: true,
                             validator: (value) {
@@ -83,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            onPressed: () {},
+                            onPressed: loginWithPassword,
                           ),
                         ],
                       ),
