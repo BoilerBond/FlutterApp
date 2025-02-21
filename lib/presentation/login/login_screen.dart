@@ -1,3 +1,5 @@
+import 'package:datingapp/utils/validators/email_validator.dart';
+import 'package:datingapp/utils/validators/password_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -12,9 +14,11 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _showPasswordLogin = false;
 
-  // input controller for password login
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  final _passwordLoginFormKey = GlobalKey<FormState>();
+
+  // input validators
+  final emailValidator = EmailValidator();
+  final passwordValidator = PasswordValidator();
 
   void setPasswordLoginFormVisibility(bool visibility) {
     setState(() {
@@ -43,8 +47,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void loginWithPassword() {
-    // TODO: implement log in with email/password
-    // TODO: navigate to dashboard
+    if (_passwordLoginFormKey.currentState!.validate()) {
+      // TODO: implement log in with email/password
+      // TODO: navigate to dashboard
+    }
   }
 
   void navigateToNextScreen(bool isNewUser) {
@@ -68,6 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Padding(
                     padding: EdgeInsets.all(16.0),
                     child: Form(
+                      key: _passwordLoginFormKey,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -76,12 +83,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           // Text field for entering the email.
                           TextFormField(
-                            controller: emailController,
                             decoration: InputDecoration(labelText: 'Email'),
-                            validator: (value) {
-                              final bool emailValid = value != null && RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").hasMatch(value);
-                              return emailValid ? null : "Please enter an email";
-                            },
+                            validator: emailValidator.validate,
                           ),
 
                           // Space between input fields.
@@ -89,12 +92,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           // Text field for entering the password.
                           TextFormField(
-                            controller: passwordController,
                             decoration: InputDecoration(labelText: 'Password'),
                             obscureText: true,
-                            validator: (value) {
-                              return (value != null && value.isNotEmpty) ? null : 'Please enter a password';
-                            },
+                            validator: passwordValidator.validate,
                           ),
 
                           // Space between input fields.
