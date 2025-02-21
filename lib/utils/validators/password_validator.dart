@@ -6,7 +6,8 @@ class PasswordValidator extends AbstractValidator {
   late final String _noLowerCaseMessage = "Password must contain at least 1 lower case character";
   late final String _noUpperCaseMessage = "Password must contain at least 1 upper case character";
   late final String _noNumberMessage = "Password must contain at least 1 number character";
-  late final String _noSpecialCharacterMessage = "Password must contain at least 1 special character";
+  late final String _noValidSpecialCharacterMessage = "Password must contain at least 1 valid special character";
+  late final String _invalidCharacterExistMessage = "Password contains invalid characters";
 
   @override
   String? validate(String? value, {bool validatePurdueEmail = false}) {
@@ -29,9 +30,19 @@ class PasswordValidator extends AbstractValidator {
       return _noNumberMessage;
     }
 
-    // if the password does not have a special character
-    if (!RegExp(r"[^\w\s]+").hasMatch(value)) {
-      return _noSpecialCharacterMessage;
+    // if the password does not have a valid special character
+    if (!RegExp(r"[!@#$%^&*()_\+=|\\\.?/~-]+").hasMatch(value)) {
+      return _noValidSpecialCharacterMessage;
+    }
+
+    // if the password does not have a valid special character
+    if (!RegExp(r"[!@#$%^&*()_\+=|\\\.?/~-]+").hasMatch(value)) {
+      return _noValidSpecialCharacterMessage;
+    }
+
+    // if the password does not have a valid special character
+    if (RegExp(r"[^a-zA-z0-9!@#$%^&*()_\+=|\\\.?/~-]+").hasMatch(value)) {
+      return _invalidCharacterExistMessage;
     }
 
     return null;
