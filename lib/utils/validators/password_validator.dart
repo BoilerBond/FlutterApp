@@ -10,7 +10,7 @@ class PasswordValidator extends AbstractValidator {
   late final String _invalidCharacterExistMessage = "Password contains invalid characters";
 
   @override
-  String? validate(String? value, {bool validatePurdueEmail = false}) {
+  String? validate(String? value) {
     if (value == null || value.isEmpty || value.length < _minimumLength) {
       return _invalidLengthMessage;
     }

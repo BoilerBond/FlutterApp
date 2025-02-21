@@ -4,8 +4,12 @@ class EmailValidator extends AbstractValidator {
   final String _invalidFormatMessage = "Please enter an email";
   final String _notPurdueMailMessage = "Please enter an Purdue email";
 
+  bool validatePurdueEmail = false;
+
+  EmailValidator({this.validatePurdueEmail = false});
+
   @override
-  String? validate(String? value, {bool validatePurdueEmail = false}) {
+  String? validate(String? value) {
     if (value == null) {
       return _invalidFormatMessage;
     }

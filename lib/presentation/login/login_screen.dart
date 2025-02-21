@@ -17,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordLoginFormKey = GlobalKey<FormState>();
 
   // input validators
-  final emailValidator = EmailValidator();
+  final emailValidator = EmailValidator(validatePurdueEmail: true);
   final passwordValidator = PasswordValidator();
 
   void setPasswordLoginFormVisibility(bool visibility) {
