@@ -1,17 +1,19 @@
 import 'package:datingapp/utils/validators/abstract_validator.dart';
 
 class PasswordValidator extends AbstractValidator {
-  final int _minimumLength = 8;
-  late final String _invalidLengthMessage = "Minimum of $_minimumLength characters required";
+  int minimumLength;
+  late final String _invalidLengthMessage = "Minimum of $minimumLength characters required";
   late final String _noLowerCaseMessage = "Password must contain at least 1 lower case character";
   late final String _noUpperCaseMessage = "Password must contain at least 1 upper case character";
   late final String _noNumberMessage = "Password must contain at least 1 number character";
   late final String _noValidSpecialCharacterMessage = "Password must contain at least 1 valid special character";
   late final String _invalidCharacterExistMessage = "Password contains invalid characters";
 
+  PasswordValidator({this.minimumLength = 8});
+
   @override
   String? validate(String? value) {
-    if (value == null || value.isEmpty || value.length < _minimumLength) {
+    if (value == null || value.isEmpty || value.length < minimumLength) {
       return _invalidLengthMessage;
     }
 

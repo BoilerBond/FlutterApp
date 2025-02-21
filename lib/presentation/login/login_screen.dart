@@ -79,7 +79,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           // Main title of the login screen.
-                          Text("Login", style: Theme.of(context).textTheme.headlineLarge),
+                          Text("Login to Account", style: textTheme.headlineLarge),
+                          Text("Please provide your email and password", style: textTheme.bodySmall),
+
+                          SizedBox(height: 16.0),
 
                           // Text field for entering the email.
                           TextFormField(
@@ -131,10 +134,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Center(
                     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
                   // Main title of the login screen.
-                  Text("Login", style: textTheme.headlineLarge),
+                  Text("Welcome Back", style: textTheme.headlineLarge),
+                  Text("Please select a login method", style: textTheme.bodySmall),
 
                   // Space below the title.
-                  SizedBox(height: 10),
+                  SizedBox(height: 16.0),
 
                   // Button for Apple login.
                   SizedBox(

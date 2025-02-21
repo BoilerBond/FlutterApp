@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
+import 'package:datingapp/theme/theme.dart';
 
 // screens
 import 'presentation/login/login_screen.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,23 +21,12 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    final brightness = View.of(context).platformDispatcher.platformBrightness;
+    MaterialTheme theme = MaterialTheme(context);
     return MaterialApp(
-      // TODO: This must be changed
-      home: LoginScreen(),
-      theme: ThemeData(
-        colorScheme: ColorScheme(
-          brightness: Brightness.light,
-          primary: const Color.fromARGB(255, 40, 89, 187),
-          onPrimary: const Color.fromARGB(255, 66, 139, 240),
-          secondary: const Color.fromARGB(255, 17, 147, 170),
-          onSecondary: const Color.fromARGB(255, 28, 206, 206),
-          error: const Color.fromARGB(255, 255, 68, 68),
-          onError: const Color.fromARGB(255, 255, 68, 68),
-          surface: const Color.fromARGB(255, 255, 255, 255),
-          onSurface: const Color.fromARGB(255, 0, 0, 0),
-        ),
-      ),
-    );
+        // TODO: This must be changed
+        home: LoginScreen(),
+        theme: brightness == Brightness.light ? theme.light() : theme.dark());
   }
 }
 
