@@ -12,9 +12,15 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // password login screen visibility state
   bool _showPasswordLogin = false;
 
+  // error message string state
+  String _errorMessageString = "";
+
   final _passwordLoginFormKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   // input validators
   final emailValidator = EmailValidator(validatePurdueEmail: true);
@@ -26,9 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  void loginWithApple() {
-    // TODO: implement log in with apple
-  }
+  Future<void> loginWithApple() async {}
 
   Future<void> loginWithGoogle() async {
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
@@ -43,13 +47,23 @@ class _LoginScreenState extends State<LoginScreen> {
     // Once signed in, return the UserCredential
     UserCredential user = await FirebaseAuth.instance.signInWithCredential(credential);
     bool isNewUser = user.additionalUserInfo?.isNewUser ?? true;
+
+    // TODO: check firestore if user profile exists
     navigateToNextScreen(isNewUser);
   }
 
-  void loginWithPassword() {
+  Future<void> loginWithPassword() async {
     if (_passwordLoginFormKey.currentState!.validate()) {
-      // TODO: implement log in with email/password
-      // TODO: navigate to dashboard
+      try {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(email: _emailController.text, password: _passwordController.text);
+        navigateToNextScreen(false);
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'invalid-credential') {
+          setState(() {
+            _errorMessageString = "Invalid email or password";
+          });
+        }
+      }
     }
   }
 
@@ -87,7 +101,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           // Text field for entering the email.
                           TextFormField(
                             decoration: InputDecoration(labelText: 'Email'),
+                            controller: _emailController,
                             validator: emailValidator.validate,
+                            onChanged: (value) => {
+                              setState(() {
+                                _errorMessageString = "";
+                              })
+                            },
                           ),
 
                           // Space between input fields.
@@ -97,7 +117,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           TextFormField(
                             decoration: InputDecoration(labelText: 'Password'),
                             obscureText: true,
+                            controller: _passwordController,
                             validator: passwordValidator.validate,
+                            onChanged: (value) => {
+                              setState(() {
+                                _errorMessageString = "";
+                              })
+                            },
                           ),
 
                           // Space between input fields.
@@ -113,6 +139,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: loginWithPassword,
                             child: Text('Login'),
                           ),
+                          // Space between input fields.
+                          SizedBox(height: 16.0),
+
+                          // error message display
+                          Text(_errorMessageString, style: TextStyle(color: Theme.of(context).colorScheme.error))
                         ],
                       ),
                     ),
