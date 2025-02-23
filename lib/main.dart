@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        //colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
       home: const MyHomePage(title: 'BoilerBond Home Page'),
@@ -68,8 +68,12 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('BBond')),
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Color(0xFF5E77DF),
+        selectedItemColor: Color(0xFF454746),
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
@@ -115,7 +119,7 @@ class BondScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Bond')),
+      appBar: AppBar(title: const Text('My Bond')),
       body: Center(
         child: Text('Bond Screen'),
       ),
