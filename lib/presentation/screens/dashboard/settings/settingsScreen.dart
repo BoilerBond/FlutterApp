@@ -53,43 +53,11 @@ class MyRouterDelegate extends RouterDelegate<Object>
     notifyListeners();
   }
 
-  Future<bool> _showConfirmDialog() async {
-    return await showDialog<bool>(
-          context: navigatorKey.currentContext!,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Are you sure?'),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                  },
-                ),
-                TextButton(
-                  child: const Text('Confirm'),
-                  onPressed: () {
-                    Navigator.of(context).pop(true);
-                  },
-                ),
-              ],
-            );
-          },
-        ) ??
-        false;
-  }
-
   Future<void> _handlePopDetails(bool didPop, void result) async {
     if (didPop) {
       if (showPrivacyPage) showPrivacyPage = false;
       if (showLoginPage) showLoginPage = false;
       return;
-    }
-    final bool confirmed = await _showConfirmDialog();
-    if (confirmed) {
-      if (showPrivacyPage) showPrivacyPage = false;
-      if (showLoginPage) showLoginPage = false;
     }
   }
 
@@ -145,56 +113,68 @@ class _SettingsPageState extends State<_SettingsPage> {
         child: Column(
           children: [
             Divider(),
-            TextButton(style: TextButton.styleFrom(
+            TextButton.icon(
+              style: TextButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.onPrimary,
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
               ),
               onPressed: () {},
-              child: const Text('App Settings'),
+              icon: Icon(Icons.desktop_windows),
+              label: const Text('App Settings'),
             ),
             Spacer(),
-            TextButton(style: TextButton.styleFrom(
+            TextButton.icon(
+              style: TextButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.onPrimary,
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
               ),
               onPressed: () {
                 MyRouterDelegate.of(context).showLoginPage = true;
               },
-              child: const Text('Login Settings'),
+              icon: Icon(Icons.alternate_email),
+              label: const Text('Login Settings'),
             ),
             Spacer(),
-            TextButton(style: TextButton.styleFrom(
+            TextButton.icon(
+              style: TextButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.onPrimary,
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
               ),
               onPressed: () {
                 MyRouterDelegate.of(context).showPrivacyPage = true;
               },
-              child: const Text('Privacy Settings'),
+              icon: Icon(Icons.visibility_off),
+              label: const Text('Privacy Settings'),
             ),
             Spacer(),
-            TextButton(style: TextButton.styleFrom(
+            TextButton.icon(
+              style: TextButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.onPrimary,
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
               ),
               onPressed: () {},
-              child: const Text('Safety Settings'),
+              icon: Icon(Icons.key),
+              label: const Text('Safety Settings'),
             ),
             Spacer(),
-            TextButton(style: TextButton.styleFrom(
+            TextButton.icon(
+              style: TextButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.onPrimary,
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
               ),
               onPressed: () {},
-              child: const Text('Legal Information'),
+              icon: Icon(Icons.list),
+              label: const Text('Legal Information'),
             ),
             Spacer(),
-            TextButton(style: TextButton.styleFrom(
+            TextButton.icon(
+              style: TextButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.onPrimary,
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
               ),
               onPressed: () {},
-              child: const Text('BoilerBond Guide'),
+              icon: Icon(Icons.help_outline),
+              label: const Text('BoilerBond Guide'),
             ), 
             Spacer(flex: 5)
           ]

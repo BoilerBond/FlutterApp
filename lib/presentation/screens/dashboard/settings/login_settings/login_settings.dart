@@ -15,7 +15,7 @@ class _LoginSettingsPage extends State<LoginSettings> {
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.075), // Button width and height
               ),
               onPressed: () {},
-              label: const Text('Placeholder buttons'),
+              label: const Text('Change Password'),
             ),
             Spacer(),
             TextButton.icon(
@@ -24,7 +24,7 @@ class _LoginSettingsPage extends State<LoginSettings> {
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.075), // Button width and height
               ),
               onPressed: () {},
-              label: const Text('Placeholder buttons'),
+              label: const Text('Google'),
             ),
             Spacer(),
             TextButton.icon(
@@ -33,7 +33,7 @@ class _LoginSettingsPage extends State<LoginSettings> {
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.075), // Button width and height
               ),
               onPressed: () {},
-              label: const Text('Placeholder buttons'),
+              label: const Text('iCloud'),
             ),
             Spacer(flex: 7),
             TextButton.icon(
@@ -42,7 +42,9 @@ class _LoginSettingsPage extends State<LoginSettings> {
                 backgroundColor: Theme.of(context).colorScheme.error,
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.075), // Button width and height
               ),
-              onPressed: () {},
+              onPressed: () {
+                _showConfirmDialog(context);
+              },
               label: const Text('Delete Account'),
             ),
             Spacer()
@@ -59,3 +61,31 @@ class LoginSettings extends StatefulWidget {
   @override
   State<LoginSettings> createState() => _LoginSettingsPage();
 }
+
+ Future<bool> _showConfirmDialog(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: true,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Are you sure?'),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.pop(context, false);
+                  },
+                ),
+                TextButton(
+                  child: const Text('Confirm'),
+                  onPressed: () {
+                    // delete user information in Firebase
+                    // log out user
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
