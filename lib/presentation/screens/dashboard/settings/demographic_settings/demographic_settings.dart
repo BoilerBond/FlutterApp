@@ -10,12 +10,13 @@ class _DemographicSettingsPage extends State<DemographicSettings> {
 
   // Dropdown for gender
   String _selectedGender = 'Other';
+  String _selectedPronouns = '';
 
   void _handleSubmit() {
     if (_nameController.text.trim().isEmpty ||
         _ageController.text.trim().isEmpty ||
         _selectedGender.isEmpty ||
-        _cityController.text.trim().isEmpty) {
+        _selectedPronouns.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill all required (*) fields.'),
@@ -48,8 +49,19 @@ class _DemographicSettingsPage extends State<DemographicSettings> {
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(
-                labelText: 'Name *',
-                hintText: 'Enter your full name',
+                labelText: 'Enter your first name... *',
+                hintText: 'What is your first name?',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+              
+            // Name (Required)
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Enter your last name... *',
+                hintText: 'What is your last name?',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -87,44 +99,53 @@ class _DemographicSettingsPage extends State<DemographicSettings> {
             ),
             const SizedBox(height: 16),
 
-            // Phone (Optional)
+            // Age (Required)
             TextField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
+              controller: _ageController,
+              keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'Phone',
-                hintText: 'Enter your phone number (optional)',
+                labelText: 'Enter your major... *',
+                hintText: 'Enter your major',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
 
-            // City (Required)
+            // City (Optional)
             TextField(
               controller: _cityController,
               decoration: const InputDecoration(
-                labelText: 'City *',
+                labelText: 'City',
                 hintText: 'Enter your city',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
 
-            // State (Optional)
-            TextField(
-              controller: _stateController,
+            DropdownButtonFormField<String>(
+              value: _selectedGender.isEmpty ? null : _selectedGender,
+              hint: const Text('Select your pronouns'),
               decoration: const InputDecoration(
-                labelText: 'State',
-                hintText: 'Enter your state (optional)',
+                labelText: 'Pronouns *',
                 border: OutlineInputBorder(),
               ),
+              items: const [
+                DropdownMenuItem(value: 'He/Him', child: Text('He/Him')),
+                DropdownMenuItem(value: 'She/Her', child: Text('She/Her')),
+                DropdownMenuItem(value: 'They/Them', child: Text('They/Them')),
+                DropdownMenuItem(value: 'Other', child: Text('Other')),
+              ],
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedGender = newValue ?? '';
+                });
+              },
             ),
-            const SizedBox(height: 24),
-
+            const SizedBox(height: 16),
             // Submit Button
             ElevatedButton(
               onPressed: _handleSubmit,
-              child: const Text('Submit'),
+              child: const Text('Next'),
             ),
           ],
         ),
