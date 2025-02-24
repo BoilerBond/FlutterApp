@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import './login_settings/login_settings.dart';
 import './privacy_settings/privacy_settings.dart';
+import './demographic_settings/demographic_settings.dart';
 
 void main() => runApp(const SettingsScreen());
 
@@ -50,6 +51,16 @@ class MyRouterDelegate extends RouterDelegate<Object>
       return;
     }
     _showPrivacyPage = value;
+    notifyListeners();
+  }
+
+  bool get showDemographicPage => _showDemographicPage;
+  bool _showDemographicPage = false;
+  set showDemographicPage(bool value) {
+    if (_showDemographicPage == value) {
+      return;
+    }
+    _showDemographicPage = value;
     notifyListeners();
   }
 
@@ -113,6 +124,13 @@ class MyRouterDelegate extends RouterDelegate<Object>
           canPop: true,
           onPopInvoked: _handlePopDetails,
         ),
+      if (showDemographicPage)
+        MaterialPage<void>(
+          key: const ValueKey<String>('Demographic'),
+          child: const DemographicSettings(),
+          canPop: true,
+          onPopInvoked: _handlePopDetails,
+        ),
     ];
   }
 
@@ -124,6 +142,7 @@ class MyRouterDelegate extends RouterDelegate<Object>
       onDidRemovePage: (Page<Object?> page) {
         showLoginPage = false;
         showPrivacyPage = false;
+        showDemographicPage = false;
       },
     );
   }
@@ -196,7 +215,17 @@ class _SettingsPageState extends State<_SettingsPage> {
               onPressed: () {},
               child: const Text('BoilerBond Guide'),
             ), 
-            Spacer(flex: 5)
+            Spacer(),
+            TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.onPrimary,
+                fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
+              ),
+              onPressed: () {
+                MyRouterDelegate.of(context).showDemographicPage = true;
+              },
+              child: const Text('Demographic Information'),
+            ),
           ]
         ),
       ),
