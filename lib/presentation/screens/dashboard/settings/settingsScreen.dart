@@ -143,7 +143,7 @@ class _SettingsPageState extends State<_SettingsPage> {
               onPressed: () {
                 MyRouterDelegate.of(context).showPrivacyPage = true;
               },
-              icon: Icon(Icons.visibility_off),
+              icon: Icon(Icons.no_photography),
               label: const Text('Privacy Settings'),
             ),
             Spacer(),

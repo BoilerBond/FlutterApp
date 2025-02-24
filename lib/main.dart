@@ -1,4 +1,3 @@
-import 'package:datingapp/presentation/screens/dashboard/settings/login_settings/login_settings.dart';
 import 'package:flutter/material.dart';
 import './presentation/screens/dashboard/settings/settingsScreen.dart';
 
