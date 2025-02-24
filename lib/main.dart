@@ -4,7 +4,7 @@ import 'firebase_options.dart';
 import 'package:datingapp/theme/theme.dart';
 
 // screens
-import 'presentation/login/login_screen.dart';
+import 'presentation/screens/login/login_screen.dart';
 
 
 Future<void> main() async {

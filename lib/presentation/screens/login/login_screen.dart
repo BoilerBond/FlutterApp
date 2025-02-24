@@ -12,8 +12,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // password login screen visibility state
   bool _showPasswordLogin = false;
+  bool _showLoadingAnimation = false;
 
   // error message string state
   String _errorMessageString = "";
@@ -53,18 +53,31 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> loginWithPassword() async {
+    setState(() {
+      _showLoadingAnimation = true;
+    });
     if (_passwordLoginFormKey.currentState!.validate()) {
       try {
         await FirebaseAuth.instance.signInWithEmailAndPassword(email: _emailController.text, password: _passwordController.text);
         navigateToNextScreen(false);
       } on FirebaseAuthException catch (e) {
-        if (e.code == 'invalid-credential') {
-          setState(() {
-            _errorMessageString = "Invalid email or password";
-          });
+        switch (e.code) {
+          case ("invalid-credential"):
+            setState(() {
+              _errorMessageString = "Invalid email or password";
+            });
+            break;
+          case ("network-request-failed"):
+            setState(() {
+              _errorMessageString = "Failed to connect to the server";
+            });
+            break;
         }
       }
     }
+    setState(() {
+      _showLoadingAnimation = false;
+    });
   }
 
   void navigateToNextScreen(bool isNewUser) {
@@ -142,8 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           // Space between input fields.
                           SizedBox(height: 16.0),
 
-                          // error message display
-                          Text(_errorMessageString, style: TextStyle(color: Theme.of(context).colorScheme.error))
+                          _showLoadingAnimation ? CircularProgressIndicator() : Text(_errorMessageString, style: TextStyle(color: Theme.of(context).colorScheme.error))
                         ],
                       ),
                     ),
