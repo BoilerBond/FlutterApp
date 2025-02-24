@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
 
+class DemographicSettings extends StatefulWidget {
+  const DemographicSettings({Key? key}) : super(key: key);
+
+  @override
+  State<DemographicSettings> createState() => _DemographicSettingsPage();
+}
+
 class _DemographicSettingsPage extends State<DemographicSettings> {
-  // Controllers for text fields
-  final TextEditingController _nameController = TextEditingController();
+  // Separate controllers for first name, last name, age, major, city
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _majorController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
-  final TextEditingController _stateController = TextEditingController();
 
-  // Dropdown for gender
-  String _selectedGender = 'Other';
-  String _selectedPronouns = '';
+  // Dropdown values
+  String _selectedGender = 'Other';  // Default to 'Other'
+  String _selectedPronouns = '';     // Empty means not selected
 
+  // Handle form submission
   void _handleSubmit() {
-    if (_nameController.text.trim().isEmpty ||
+    // Basic validation: check if required fields are empty
+    if (_firstNameController.text.trim().isEmpty ||
+        _lastNameController.text.trim().isEmpty ||
         _ageController.text.trim().isEmpty ||
+        _majorController.text.trim().isEmpty ||
         _selectedGender.isEmpty ||
         _selectedPronouns.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -26,7 +37,7 @@ class _DemographicSettingsPage extends State<DemographicSettings> {
       return;
     }
 
-
+    // If all required fields are filled, show a success message
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Form submitted successfully!'),
@@ -45,9 +56,9 @@ class _DemographicSettingsPage extends State<DemographicSettings> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: Column(
           children: [
-            // Name (Required)
+            // First Name (Required)
             TextField(
-              controller: _nameController,
+              controller: _firstNameController,
               decoration: const InputDecoration(
                 labelText: 'Enter your first name... *',
                 hintText: 'What is your first name?',
@@ -55,10 +66,10 @@ class _DemographicSettingsPage extends State<DemographicSettings> {
               ),
             ),
             const SizedBox(height: 16),
-              
-            // Name (Required)
+
+            // Last Name (Required)
             TextField(
-              controller: _nameController,
+              controller: _lastNameController,
               decoration: const InputDecoration(
                 labelText: 'Enter your last name... *',
                 hintText: 'What is your last name?',
@@ -99,13 +110,12 @@ class _DemographicSettingsPage extends State<DemographicSettings> {
             ),
             const SizedBox(height: 16),
 
-            // Age (Required)
+            // Major (Required)
             TextField(
-              controller: _ageController,
-              keyboardType: TextInputType.number,
+              controller: _majorController,
               decoration: const InputDecoration(
                 labelText: 'Enter your major... *',
-                hintText: 'Enter your major',
+                hintText: 'What is your major?',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -122,24 +132,25 @@ class _DemographicSettingsPage extends State<DemographicSettings> {
             ),
             const SizedBox(height: 16),
 
+            // Pronouns (Required)
             DropdownButtonFormField<String>(
-              value: _selectedGender.isEmpty ? null : _selectedGender,
+              value: _selectedPronouns.isEmpty ? null : _selectedPronouns,
               hint: const Text('Select your pronouns'),
               decoration: const InputDecoration(
                 labelText: 'Pronouns *',
                 border: OutlineInputBorder(),
               ),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedPronouns = newValue ?? '';
+                });
+              },
               items: const [
                 DropdownMenuItem(value: 'He/Him', child: Text('He/Him')),
                 DropdownMenuItem(value: 'She/Her', child: Text('She/Her')),
                 DropdownMenuItem(value: 'They/Them', child: Text('They/Them')),
                 DropdownMenuItem(value: 'Other', child: Text('Other')),
               ],
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedGender = newValue ?? '';
-                });
-              },
             ),
             const SizedBox(height: 16),
             // Submit Button
@@ -152,11 +163,4 @@ class _DemographicSettingsPage extends State<DemographicSettings> {
       ),
     );
   }
-}
-
-class DemographicSettings extends StatefulWidget {
-  const DemographicSettings({Key? key}) : super(key: key);
-
-  @override
-  State<DemographicSettings> createState() => _DemographicSettingsPage();
 }
