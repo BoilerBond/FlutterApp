@@ -10,12 +10,6 @@ class LoginSettings extends StatefulWidget {
 class LoginSettingsPage extends State<LoginSettings> {
   @override
   Widget build(BuildContext context) {
-    // List of buttons except delete account
-    final List<Map<String, dynamic>> buttons = [
-      {'title': 'Change Password', 'onPressed': (BuildContext context) => _onChangePasswordPress(context)},
-      {'title': 'Google', 'onPressed': (BuildContext context) => _onGoogleSettingsPress(context)},
-    ];
-
     return Scaffold(
       appBar: AppBar(title: const Text('Login Settings')),
       body: Column(
@@ -23,32 +17,53 @@ class LoginSettingsPage extends State<LoginSettings> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                children: buttons
-                    .map(
-                      (button) => Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(
-                                width: 1,
-                                color: Theme.of(context).colorScheme.outlineVariant,
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            onPressed: () => button['onPressed'](context),
-                            child: Text(button['title'] as String),
-                          ),
+              child: Column(children: [
+                Padding(
+                  padding: EdgeInsets.only(left: MediaQuery.of(context).size.width / 2.8),
+                  child: Row(children: [Text("Username"), TextButton(onPressed: () => {}, child: Text("Edit"))]),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          width: 1,
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                    )
-                    .toList(),
-              ),
+                      onPressed: () => _onChangePasswordPress(context),
+                      child: Text("Change Password"),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          width: 1,
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                        foregroundColor: Theme.of(context).colorScheme.errorContainer,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () => _onChangePasswordPress(context),
+                      child: Text("Log Out"),
+                    ),
+                  ),
+                ),
+              ]),
             ),
           ),
           Padding(
@@ -77,8 +92,6 @@ class LoginSettingsPage extends State<LoginSettings> {
 
   void _onChangePasswordPress(BuildContext context) {}
 
-  void _onGoogleSettingsPress(BuildContext context) {}
-
   void _onDeleteAccountPress(BuildContext context) {
     _showConfirmDialog(context);
   }
@@ -103,6 +116,7 @@ Future<bool> _showConfirmDialog(BuildContext context) async {
                 onPressed: () {
                   // delete user information in Firebase
                   // log out user
+                  Navigator.pushNamed(context, "/");
                 },
               ),
             ],
