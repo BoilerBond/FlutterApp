@@ -1,3 +1,4 @@
+import "package:datingapp/presentation/screens/main%20navigation/my_profile.dart";
 import "package:flutter/material.dart";
 
 
@@ -84,6 +85,16 @@ class MyHomePage extends StatelessWidget {
                );
              },
              child: const Text("About Boiler Bond"),
+           ),
+           const SizedBox(height: 30),
+           ElevatedButton(
+             onPressed: () {
+               Navigator.push(
+                 context,
+                 MaterialPageRoute(builder: (context) => const MyProfileScreen()),
+               );
+             },
+             child: const Text("Debug"),
            ),
          ],
        ),

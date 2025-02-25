@@ -43,9 +43,9 @@ class MyProfileScreen extends StatelessWidget {
               ),
               SizedBox(height: 20),
               Container(
-                height: 120,
-                width: 120,
-                child: Icon(Icons.image, size: 120, color: Color(0xFFCDFCFF))
+                height: 200,
+                width: 200,
+                child: Icon(Icons.image, size: 200, color: Color(0xFFCDFCFF))
               ),
               SizedBox(height: 10),
               Row(
