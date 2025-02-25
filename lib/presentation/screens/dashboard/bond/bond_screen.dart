@@ -11,7 +11,10 @@ class _BondScreenState extends State<BondScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My Bond')),
+      appBar: AppBar(
+        title: const Text('My Bond'),
+        automaticallyImplyLeading: false,
+      ),
       body: Center(
         child: Text('Bond Screen'),
       ),
