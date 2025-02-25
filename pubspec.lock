@@ -48,8 +48,7 @@ packages:
       sha256: "2f5709ae4d3d59dd8f7cd309b4e023046b57d8a6c82130785d2b0e5868084e76"
       url: "https://pub.dev"
     source: hosted
-<<<<<<< HEAD
-    version: "1.19.0"
+    version: "1.19.1"
   crypto:
     dependency: "direct main"
     description:
@@ -58,9 +57,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.6"
-=======
-    version: "1.19.1"
->>>>>>> main
   cupertino_icons:
     dependency: "direct main"
     description:
@@ -76,8 +72,7 @@ packages:
       sha256: "6a95e56b2449df2273fd8c45a662d6947ce1ebb7aafe80e550a3f68297f3cacc"
       url: "https://pub.dev"
     source: hosted
-<<<<<<< HEAD
-    version: "1.3.1"
+    version: "1.3.2"
   ffi:
     dependency: transitive
     description:
@@ -134,9 +129,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.21.0"
-=======
-    version: "1.3.2"
->>>>>>> main
   flutter:
     dependency: "direct main"
     description: flutter
@@ -295,8 +287,7 @@ packages:
       sha256: "75cca69d1490965be98c73ceaea117e8a04dd21217b37b292c9ddbec0d955bc5"
       url: "https://pub.dev"
     source: hosted
-<<<<<<< HEAD
-    version: "1.9.0"
+    version: "1.9.1"
   path_provider:
     dependency: transitive
     description:
@@ -385,9 +376,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.1"
-=======
-    version: "1.9.1"
->>>>>>> main
   sky_engine:
     dependency: transitive
     description: flutter
@@ -440,8 +428,7 @@ packages:
       sha256: fb31f383e2ee25fbbfe06b40fe21e1e458d14080e3c67e7ba0acfde4df4e0bbd
       url: "https://pub.dev"
     source: hosted
-<<<<<<< HEAD
-    version: "0.7.3"
+    version: "0.7.4"
   typed_data:
     dependency: transitive
     description:
@@ -450,9 +437,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
-=======
-    version: "0.7.4"
->>>>>>> main
   vector_math:
     dependency: transitive
     description:
@@ -468,8 +452,7 @@ packages:
       sha256: "0968250880a6c5fe7edc067ed0a13d4bae1577fe2771dcf3010d52c4a9d3ca14"
       url: "https://pub.dev"
     source: hosted
-<<<<<<< HEAD
-    version: "14.3.0"
+    version: "14.3.1"
   web:
     dependency: transitive
     description:
@@ -489,9 +472,3 @@ packages:
 sdks:
   dart: ">=3.6.1 <4.0.0"
   flutter: ">=3.24.0"
-=======
-    version: "14.3.1"
-sdks:
-  dart: ">=3.7.0-0 <4.0.0"
-  flutter: ">=3.18.0-18.0.pre.54"
->>>>>>> main
