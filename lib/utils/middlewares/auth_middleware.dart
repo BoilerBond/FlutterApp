@@ -23,7 +23,7 @@ class AuthMiddleware extends StatelessWidget {
         }
 
         if (snapshot.hasData) {
-          // TODO: If the user does not have profile data set up, navigate to app description and TOS
+          // TODO: If the user does not have profile data set up, return to app description and TOS screen
           return child;
         } else {
           // TODO: Return home screen instead of login

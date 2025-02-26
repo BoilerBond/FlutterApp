@@ -39,11 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
       idToken: googleAuth.idToken,
     );
 
-    final user = await FirebaseAuth.instance.signInWithCredential(credential);
-    bool isNewUser = user.additionalUserInfo?.isNewUser ?? true;
-    bool hasProfile = true; // TODO: check if user profile exists
-
-    _navigateToNextScreen(isNewUser && hasProfile);
+    await FirebaseAuth.instance.signInWithCredential(credential);
   }
 
   Future<void> _loginWithPassword() async {
@@ -66,21 +62,12 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      _navigateToNextScreen(false);
     } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = getErrorMessage(e.code);
       });
     }
     setState(() => _showLoadingAnimation = false);
-  }
-
-  void _navigateToNextScreen(bool isNewUser) {
-    if (isNewUser) {
-      // TODO: Navigate to app description and terms and conditions screen
-    } else {
-      Navigator.pushReplacementNamed(context, "/");
-    }
   }
 
   @override
