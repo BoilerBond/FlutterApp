@@ -1,3 +1,5 @@
+import 'package:datingapp/presentation/widgets/confirm_dialog.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class LoginSettings extends StatefulWidget {
@@ -8,6 +10,7 @@ class LoginSettings extends StatefulWidget {
 }
 
 class LoginSettingsPage extends State<LoginSettings> {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,8 +22,24 @@ class LoginSettingsPage extends State<LoginSettings> {
               padding: const EdgeInsets.all(16),
               child: Column(children: [
                 Padding(
-                  padding: EdgeInsets.only(left: MediaQuery.of(context).size.width / 2.8),
-                  child: Row(children: [Text("Username"), TextButton(onPressed: () => {}, child: Text("Edit"))]),
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          width: 1,
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () => _onChangePurdueEmailPress(context),
+                      child: Text("Change Purdue Email"),
+                    ),
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
@@ -58,7 +77,7 @@ class LoginSettingsPage extends State<LoginSettings> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      onPressed: () => _onChangePasswordPress(context),
+                      onPressed: () => _onLogoutPress(context),
                       child: Text("Log Out"),
                     ),
                   ),
@@ -90,38 +109,21 @@ class LoginSettingsPage extends State<LoginSettings> {
     );
   }
 
+  void _onChangePurdueEmailPress(BuildContext context) {}
+
   void _onChangePasswordPress(BuildContext context) {}
 
-  void _onDeleteAccountPress(BuildContext context) {
-    _showConfirmDialog(context);
+  void _onLogoutPress(BuildContext context) {
+    confirmDialog(context, () async {
+      await FirebaseAuth.instance.signOut();
+    });
   }
-}
 
-Future<bool> _showConfirmDialog(BuildContext context) async {
-  return await showDialog<bool>(
-        context: context,
-        barrierDismissible: true,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Are you sure?'),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Cancel'),
-                onPressed: () {
-                  Navigator.pop(context, false);
-                },
-              ),
-              TextButton(
-                child: const Text('Confirm'),
-                onPressed: () {
-                  // delete user information in Firebase
-                  // log out user
-                  Navigator.pushNamed(context, "/");
-                },
-              ),
-            ],
-          );
-        },
-      ) ??
-      false;
+  void _onDeleteAccountPress(BuildContext context) {
+    confirmDialog(context, () async {
+      // TODO: delete user information in Firebase
+
+      await FirebaseAuth.instance.signOut();
+    });
+  }
 }

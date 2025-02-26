@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
     bool isNewUser = user.additionalUserInfo?.isNewUser ?? true;
     bool hasProfile = true; // TODO: check if user profile exists
 
-    _navigateToNextScreen(user.additionalUserInfo?.isNewUser ?? true && hasProfile);
+    _navigateToNextScreen(isNewUser && hasProfile);
   }
 
   Future<void> _loginWithPassword() async {
@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (isNewUser) {
       // TODO: Navigate to app description and terms and conditions screen
     } else {
-      Navigator.pushReplacementNamed(context, "/dashboard");
+      Navigator.pushReplacementNamed(context, "/");
     }
   }
 
