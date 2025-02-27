@@ -111,7 +111,9 @@ class LoginSettingsPage extends State<LoginSettings> {
 
   void _onChangePurdueEmailPress(BuildContext context) {}
 
-  void _onChangePasswordPress(BuildContext context) {}
+  void _onChangePasswordPress(BuildContext context) {
+    Navigator.pushReplacementNamed(context, "/settings/login/change_password");
+  }
 
   void _onLogoutPress(BuildContext context) {
     confirmDialog(context, () async {
