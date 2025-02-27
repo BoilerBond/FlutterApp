@@ -1,4 +1,4 @@
-import "package:datingapp/presentation/screens/main%20navigation/my_profile.dart";
+import "package:datingapp/presentation/screens/main%20navigation/main_nav.dart";
 import "package:flutter/material.dart";
 
 
@@ -91,7 +91,7 @@ class MyHomePage extends StatelessWidget {
              onPressed: () {
                Navigator.push(
                  context,
-                 MaterialPageRoute(builder: (context) => const MyProfileScreen()),
+                 MaterialPageRoute(builder: (context) => const MainNavigation()),
                );
              },
              child: const Text("Debug"),

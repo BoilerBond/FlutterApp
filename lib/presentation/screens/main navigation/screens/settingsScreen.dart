@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import './login_settings/login_settings.dart';
-import './privacy_settings/privacy_settings.dart';
+import '../../dashboard/settings/login_settings/login_settings.dart';
+import '../../dashboard/settings/privacy_settings/privacy_settings.dart';
 
 void main() => runApp(const SettingsScreen());
 
