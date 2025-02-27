@@ -23,6 +23,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final emailValidator = EmailValidator(validatePurdueEmail: true);
   final passwordValidator = PasswordValidator();
 
+  void navigateToDashboard() {
+    Navigator.pushReplacementNamed(context, "/");
+  }
+
   void _togglePasswordLogin(bool visibility) {
     setState(() => _showPasswordLogin = visibility);
   }
@@ -40,6 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     await FirebaseAuth.instance.signInWithCredential(credential);
+    navigateToDashboard();
   }
 
   Future<void> _loginWithPassword() async {
@@ -62,6 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+      navigateToDashboard();
     } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = getErrorMessage(e.code);
