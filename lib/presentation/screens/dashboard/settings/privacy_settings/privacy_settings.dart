@@ -1,37 +1,17 @@
 import 'package:flutter/material.dart';
 
-class _PrivacySettingsPage extends State<PrivacySettings> {
+class _PrivacySettingsState extends State<PrivacySettings> {
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> buttons = [
-      {'title': 'Placeholder buttons', 'onPressed': (BuildContext context) {}},
-      {'title': 'Placeholder buttons', 'onPressed': (BuildContext context) {}},
-    ];
-
     return Scaffold(
       appBar: AppBar(title: const Text('Privacy Settings')),
       body: Center(
         child: Column(
-          children: buttons
-              .map((button) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0).copyWith(bottom: 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(width: 1, color: Theme.of(context).colorScheme.outlineVariant),
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        onPressed: () => button['onPressed'](context),
-                        child: Text(button['title']),
-                      ),
-                    ),
-                  ))
-              .toList(),
-        ),
+          children: [
+            ProfileVisibilityToggle(),
+            PhotoVisibilityToggle(),
+          ],
+        )
       ),
     );
   }
@@ -41,17 +21,17 @@ class PrivacySettings extends StatefulWidget {
   const PrivacySettings();
 
   @override
-  State<PrivacySettings> createState() => _PrivacySettingsPage();
+  State<PrivacySettings> createState() => _PrivacySettingsState();
 }
 
-class VisibilityToggle extends StatefulWidget {
-  const VisibilityToggle({super.key});
+class ProfileVisibilityToggle extends StatefulWidget {
+  const ProfileVisibilityToggle({super.key});
 
   @override
-  State<VisibilityToggle> createState() => _VisibilityToggleState();
+  State<ProfileVisibilityToggle> createState() => _ProfileVisibilityToggleState();
 }
 
-class _VisibilityToggleState extends State<VisibilityToggle> {
+class _ProfileVisibilityToggleState extends State<ProfileVisibilityToggle> {
   bool _lights = true;
 
   @override
@@ -60,8 +40,7 @@ class _VisibilityToggleState extends State<VisibilityToggle> {
       title: const Text('Visibility of my profile'),
       subtitle: const Text('By default, your profile is visible to everyone. By turning this off, you are opting out of matchmaking.'),
       value: _lights,
-      activeTrackColor: Colors.green,
-      inactiveTrackColor: Colors.red,
+      activeTrackColor: Theme.of(context).colorScheme.primary,
       onChanged: (bool value) {
         setState(() {
           _lights = value;
@@ -72,14 +51,14 @@ class _VisibilityToggleState extends State<VisibilityToggle> {
   }
 }
 
-class PhotoToggle extends StatefulWidget {
-  const PhotoToggle({super.key});
+class PhotoVisibilityToggle extends StatefulWidget {
+  const PhotoVisibilityToggle({super.key});
 
   @override
-  State<PhotoToggle> createState() => _PhotoToggleState();
+  State<PhotoVisibilityToggle> createState() => _PhotoVisibilityToggleState();
 }
 
-class _PhotoToggleState extends State<PhotoToggle> {
+class _PhotoVisibilityToggleState extends State<PhotoVisibilityToggle> {
   bool _lights = true;
 
   @override
@@ -88,8 +67,7 @@ class _PhotoToggleState extends State<PhotoToggle> {
       title: const Text('Visibility of my photos'),
       subtitle: const Text('By default, your photos are visible to everyone. By turning this off, your photos are only visible to your match of the week.'),
       value: _lights,
-      activeTrackColor: Colors.green,
-      inactiveTrackColor: Colors.red,
+      activeTrackColor: Theme.of(context).colorScheme.primary,
       onChanged: (bool value) {
         setState(() {
           _lights = value;

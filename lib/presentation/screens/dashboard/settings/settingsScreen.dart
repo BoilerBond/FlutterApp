@@ -13,6 +13,11 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+
+  void _onAppSettingsPress(BuildContext context) {
+    Navigator.pushNamed(context, "/settings/app");
+  }
+
   void _onPrivacySettingsPress(BuildContext context) {
     Navigator.pushNamed(context, "/settings/privacy");
   }
@@ -30,7 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> buttons = [
-      {'title': 'App Settings', 'type': ButtonType.normal, 'onPressed': (BuildContext context) {}},
+      {'title': 'App Settings', 'type': ButtonType.normal, 'onPressed': _onAppSettingsPress},
       {'title': 'Privacy Settings', 'type': ButtonType.normal, 'onPressed': _onPrivacySettingsPress},
       {'title': 'Legal Information', 'type': ButtonType.normal, 'onPressed': (BuildContext context) {}},
       {'title': 'BoilerBond Guide', 'type': ButtonType.normal, 'onPressed': (BuildContext context) {}},
