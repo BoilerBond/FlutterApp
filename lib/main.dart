@@ -2,6 +2,7 @@ import "package:datingapp/presentation/screens/main%20navigation/main_nav.dart";
 import "package:flutter/material.dart";
 import "package:datingapp/privacy_policy.dart";
 import "package:datingapp/terms_of_service.dart";
+import "package:datingapp/about.dart";
 void main() {
   runApp(const MyApp());
 }
@@ -233,28 +234,6 @@ class RegisterPage extends StatelessWidget {
       ),
       body: const Center(
         child: Text("Register page"),
-      ),
-    );
-  }
-}
-
-class AboutPage extends StatelessWidget {
-  const AboutPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("About Boiler Bond"),
-      ),
-      body: const Center(
-        child: Padding(
-          padding: EdgeInsets.all(10.0),
-          child: Text(
-            "Add about text here",
-            textAlign: TextAlign.center,
-          ),
-        ),
       ),
     );
   }
