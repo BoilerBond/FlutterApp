@@ -1,6 +1,7 @@
 import "package:datingapp/presentation/screens/main%20navigation/main_nav.dart";
 import "package:flutter/material.dart";
 import "package:datingapp/privacy_policy.dart";
+import "package:datingapp/terms_of_service.dart";
 void main() {
   runApp(const MyApp());
 }
@@ -174,6 +175,28 @@ class MyHomePage extends StatelessWidget {
                   ),
                 ),
                 child: const Text('Privacy Policy'),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const TermsOfServicePage()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 183, 228, 245),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('Terms of Service'),
               ),
             ],
           ),
