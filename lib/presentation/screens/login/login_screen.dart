@@ -42,6 +42,9 @@ class _LoginScreenState extends State<LoginScreen> {
       });
       print("Firebase auth error: $e");
     }
+    
+  void navigateToDashboard() {
+    Navigator.pushReplacementNamed(context, "/");
   }
 
   void _togglePasswordLogin(bool visibility) {
@@ -73,22 +76,26 @@ class _LoginScreenState extends State<LoginScreen> {
       final googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) return;
 
-      final googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
+// <<<<<<< code for email verification via firebase for purdue emails
+//       final googleAuth = await googleUser.authentication;
+//       final credential = GoogleAuthProvider.credential(
+//         accessToken: googleAuth.accessToken,
+//         idToken: googleAuth.idToken,
+//       );
 
-      final user = await FirebaseAuth.instance.signInWithCredential(credential);
-      bool isNewUser = user.additionalUserInfo?.isNewUser ?? true;
-      bool hasProfile = true; // TODO: check if user profile exists
+//       final user = await FirebaseAuth.instance.signInWithCredential(credential);
+//       bool isNewUser = user.additionalUserInfo?.isNewUser ?? true;
+//       bool hasProfile = true; // TODO: check if user profile exists
 
-      _navigateToNextScreen(user.additionalUserInfo?.isNewUser ?? true && hasProfile);
-    } catch (e) {
-      setState(() {
-        _errorMessage = "Failed to sign in with Google: ${e.toString()}";
-      });
-    }
+//       _navigateToNextScreen(user.additionalUserInfo?.isNewUser ?? true && hasProfile);
+//     } catch (e) {
+//       setState(() {
+//         _errorMessage = "Failed to sign in with Google: ${e.toString()}";
+//       });
+//     }
+// =======
+    await FirebaseAuth.instance.signInWithCredential(credential);
+    navigateToDashboard();
   }
 
   Future<void> _loginWithPassword() async {
@@ -118,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      _navigateToNextScreen(false);
+      navigateToDashboard();
     } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = getErrorMessage(e.code);

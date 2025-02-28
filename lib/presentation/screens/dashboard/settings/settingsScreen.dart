@@ -17,13 +17,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       {
         'title': 'Login Settings',
         'onPressed': (BuildContext context) {
-          Navigator.pushNamed(context, "/dashboard/settings/login");
+          Navigator.pushNamed(context, "/settings/login");
         }
       },
       {
         'title': 'Privacy Settings',
         'onPressed': (BuildContext context) {
-          Navigator.pushNamed(context, "/dashboard/settings/privacy");
+          Navigator.pushNamed(context, "/settings/privacy");
         }
       },
       {'title': 'Safety Settings', 'onPressed': (BuildContext context) {}},
@@ -32,7 +32,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(
+        title: const Text('Settings'),
+        automaticallyImplyLeading: false,
+      ),
       body: Center(
         child: Column(
           children: buttons
