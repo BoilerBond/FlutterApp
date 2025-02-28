@@ -45,62 +45,103 @@ class MyHomePage extends StatelessWidget {
  final String title;
  const MyHomePage({super.key, required this.title});
 
-
  @override
  Widget build(BuildContext context) {
    return Scaffold(
-     appBar: AppBar(
-       title: const Text("Welcome to Boiler Bond"),
-       backgroundColor: Theme.of(context).colorScheme.primary,
-     ),
-     body: Center(
-       child: Column(
-         mainAxisAlignment: MainAxisAlignment.center,
-         children: <Widget>[
-           ElevatedButton(
-             onPressed: () {
-               Navigator.push(
-                 context,
-                 MaterialPageRoute(builder: (context) => const LoginPage()),
-               );
-             },
-             child: const Text("Login"),
-           ),
-           const SizedBox(height: 30),
-           ElevatedButton(
-             onPressed: () {
-               Navigator.push(
-                 context,
-                 MaterialPageRoute(builder: (context) => const RegisterPage()),
-               );
-             },
-             child: const Text("Register"),
-           ),
-           const SizedBox(height: 30),
-           ElevatedButton(
-             onPressed: () {
-               Navigator.push(
-                 context,
-                 MaterialPageRoute(builder: (context) => const AboutPage()),
-               );
-             },
-             child: const Text("About Boiler Bond"),
-           ),
-           const SizedBox(height: 30),
-           ElevatedButton(
-             onPressed: () {
-               Navigator.push(
-                 context,
-                 MaterialPageRoute(builder: (context) => const MainNavigation()),
-               );
-             },
-             child: const Text("Debug"),
-           ),
-         ],
-       ),
-     ),
-   );
- }
+    body: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Boiler Bond',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.indigo[400],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                
+                Text(
+                  'Form deeper bonds.',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[700],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 183, 228, 245),
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('Login'),
+                ),
+                const SizedBox(height: 16),
+                
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const RegisterPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 183, 228, 245),
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('Register'),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AboutPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 183, 228, 245),
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('Debug'),
+                ),
+              ],
+            ),
+          ),
+        ),
+    );
+  }
 }
 
 
@@ -148,7 +189,7 @@ class AboutPage extends StatelessWidget {
  Widget build(BuildContext context) {
    return Scaffold(
      appBar: AppBar(
-       title: const Text("About LoveConnect"),
+       title: const Text("About Boiler Bond"),
      ),
      body: const Center(
        child: Padding(

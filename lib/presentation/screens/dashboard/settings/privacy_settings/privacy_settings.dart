@@ -38,7 +38,7 @@ class _PrivacySettingsPage extends State<PrivacySettings> {
 }
 
 class PrivacySettings extends StatefulWidget {
-  const PrivacySettings();
+  const PrivacySettings({super.key});
 
   @override
   State<PrivacySettings> createState() => _PrivacySettingsPage();

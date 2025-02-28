@@ -103,6 +103,8 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class ExploreScreen extends StatelessWidget {
+  const ExploreScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,6 +117,8 @@ class ExploreScreen extends StatelessWidget {
 }
 
 class BondScreen extends StatelessWidget {
+  const BondScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -127,6 +131,8 @@ class BondScreen extends StatelessWidget {
 }
 
 class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

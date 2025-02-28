@@ -56,7 +56,7 @@ class _LoginSettingsPage extends State<LoginSettings> {
 }
 
 class LoginSettings extends StatefulWidget {
-  const LoginSettings();
+  const LoginSettings({super.key});
 
   @override
   State<LoginSettings> createState() => _LoginSettingsPage();
