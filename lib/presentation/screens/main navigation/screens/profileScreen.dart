@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 
@@ -35,7 +34,7 @@ class MyProfileScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 20),
-            Container(
+            SizedBox(
               height: 200,
               width: 200,
               child: Icon(Icons.image, size: 200, color: Color(0xFFCDFCFF)),
