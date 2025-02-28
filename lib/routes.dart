@@ -6,7 +6,7 @@ import 'package:datingapp/presentation/screens/dashboard/settings/privacy_settin
 import 'package:datingapp/presentation/screens/dashboard/profile/edit_profile.dart';
 import 'package:datingapp/presentation/screens/dashboard/settings/danger_zone/danger_zone.dart';
 import 'package:datingapp/presentation/screens/dashboard/settings/app_settings/app_settings.dart';
-
+import 'package:datingapp/presentation/screens/purdue_verification/purdue_verification_screen.dart';
 
 class Routes {
   static Map<String, WidgetBuilder> getRoutes() {
@@ -16,7 +16,8 @@ class Routes {
       '/settings/danger_zone': (context) => AuthMiddleware(child: DangerZone()),
       '/settings/privacy': (context) => AuthMiddleware(child: PrivacySettings()),
       '/profile/edit_profile': (context) => AuthMiddleware(child: EditProfile()),
-      '/onboarding': (context) => AuthMiddleware(child: OnBoarding())
+      '/onboarding': (context) => AuthMiddleware(child: OnBoarding()),
+      '/purdue_verification': (context) => const PurdueVerificationScreen(),
     };
   }
 }
