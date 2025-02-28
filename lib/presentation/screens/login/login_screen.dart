@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _showPasswordLogin = false;
   bool _showLoadingAnimation = false;
   String _errorMessage = "";
+  bool _isFirebaseAvailable = true;
 
   final _passwordLoginFormKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -23,30 +24,81 @@ class _LoginScreenState extends State<LoginScreen> {
   final emailValidator = EmailValidator(validatePurdueEmail: true);
   final passwordValidator = PasswordValidator();
 
+  @override
+  void initState() {
+    super.initState();
+    _checkFirebaseAvailability();
+  }
+
+  void _checkFirebaseAvailability() {
+    try {
+      FirebaseAuth.instance.authStateChanges();
+      setState(() {
+        _isFirebaseAvailable = true;
+      });
+    } catch (e) {
+      setState(() {
+        _isFirebaseAvailable = false;
+      });
+      print("Firebase auth error: $e");
+    }
+  }
+
   void _togglePasswordLogin(bool visibility) {
     setState(() => _showPasswordLogin = visibility);
   }
 
-  Future<void> _loginWithApple() async {}
+  Future<void> _loginWithApple() async {
+    if (!_isFirebaseAvailable) {
+      setState(() {
+        _errorMessage = "Firebase authentication is not available";
+      });
+      return;
+    }
+    // Apple login implementation would go here
+    setState(() {
+      _errorMessage = "Apple login not implemented yet";
+    });
+  }
 
   Future<void> _loginWithGoogle() async {
-    final googleUser = await GoogleSignIn().signIn();
-    if (googleUser == null) return;
+    if (!_isFirebaseAvailable) {
+      setState(() {
+        _errorMessage = "Firebase authentication is not available";
+      });
+      return;
+    }
 
-    final googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
+    try {
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return;
 
-    final user = await FirebaseAuth.instance.signInWithCredential(credential);
-    bool isNewUser = user.additionalUserInfo?.isNewUser ?? true;
-    bool hasProfile = true; // TODO: check if user profile exists
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
 
-    _navigateToNextScreen(user.additionalUserInfo?.isNewUser ?? true && hasProfile);
+      final user = await FirebaseAuth.instance.signInWithCredential(credential);
+      bool isNewUser = user.additionalUserInfo?.isNewUser ?? true;
+      bool hasProfile = true; // TODO: check if user profile exists
+
+      _navigateToNextScreen(user.additionalUserInfo?.isNewUser ?? true && hasProfile);
+    } catch (e) {
+      setState(() {
+        _errorMessage = "Failed to sign in with Google: ${e.toString()}";
+      });
+    }
   }
 
   Future<void> _loginWithPassword() async {
+    if (!_isFirebaseAvailable) {
+      setState(() {
+        _errorMessage = "Firebase authentication is not available";
+      });
+      return;
+    }
+
     String getErrorMessage(String errorCode) {
       switch (errorCode) {
         case "invalid-credential":
@@ -71,15 +123,35 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() {
         _errorMessage = getErrorMessage(e.code);
       });
+    } catch (e) {
+      setState(() {
+        _errorMessage = "An unexpected error occurred: ${e.toString()}";
+      });
     }
     setState(() => _showLoadingAnimation = false);
+  }
+
+  void _demoLogin() {
+    // For demo purposes, navigate to the Purdue verification screen
+    Navigator.pushReplacementNamed(context, "/purdue_verification");
   }
 
   void _navigateToNextScreen(bool isNewUser) {
     if (isNewUser) {
       // TODO: Navigate to app description and terms and conditions screen
+      Navigator.pushReplacementNamed(context, "/purdue_verification");
     } else {
-      Navigator.pushReplacementNamed(context, "/dashboard");
+      // Check if user has verified Purdue email
+      User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null && currentUser.email != null && 
+          currentUser.email!.endsWith('@purdue.edu') && 
+          currentUser.emailVerified) {
+        // User has verified Purdue email, go to dashboard
+        Navigator.pushReplacementNamed(context, "/dashboard");
+      } else {
+        // User needs to verify Purdue email
+        Navigator.pushReplacementNamed(context, "/purdue_verification");
+      }
     }
   }
 
@@ -125,11 +197,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16.0),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                  onPressed: _loginWithPassword,
+                  onPressed: _isFirebaseAvailable ? _loginWithPassword : _demoLogin,
                   child: const Text('Login'),
                 ),
                 const SizedBox(height: 16.0),
-                if (_showLoadingAnimation) const CircularProgressIndicator() else Text(_errorMessage, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                if (_showLoadingAnimation) 
+                  const CircularProgressIndicator() 
+                else 
+                  Text(_errorMessage, style: TextStyle(color: Theme.of(context).colorScheme.error)),
               ],
             ),
           ),
@@ -185,6 +260,29 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: () => _togglePasswordLogin(true),
               ),
             ),
+            if (!_isFirebaseAvailable)
+              Column(
+                children: [
+                  const SizedBox(height: 16.0),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.preview, size: 24),
+                      label: const Text('Demo Login (Without Firebase)'),
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        backgroundColor: Theme.of(context).colorScheme.secondary,
+                      ),
+                      onPressed: _demoLogin,
+                    ),
+                  ),
+                ],
+              ),
+            if (_errorMessage.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: Text(_errorMessage, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              ),
           ],
         ),
       ),

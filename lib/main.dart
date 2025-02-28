@@ -3,7 +3,6 @@ import 'package:datingapp/presentation/screens/dashboard/settings/privacy_settin
 import 'package:datingapp/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:datingapp/theme/theme.dart';
 
 // screens
@@ -12,9 +11,16 @@ import 'package:datingapp/presentation/screens/dashboard/dashboard.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  
+  try {
+    // Initialize Firebase without options
+    await Firebase.initializeApp();
+    print('Firebase initialized successfully');
+  } catch (e) {
+    print('Firebase initialization failed: $e');
+    // Continue without Firebase
+  }
+  
   runApp(const MyApp());
 }
 
@@ -26,6 +32,7 @@ class MyApp extends StatelessWidget {
     final brightness = View.of(context).platformDispatcher.platformBrightness;
     MaterialTheme theme = MaterialTheme(context);
     return MaterialApp(
+        initialRoute: '/login',
         routes: Routes.getRoutes(),
         theme: brightness == Brightness.light ? theme.light() : theme.dark());
   }
