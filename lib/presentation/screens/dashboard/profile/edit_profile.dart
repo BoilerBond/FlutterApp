@@ -12,6 +12,12 @@ class EditProfile extends StatefulWidget {
 
 class _EditProfileState extends State<EditProfile> {
   Uint8List? _image;
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
+  // final TextEditingController ageController = TextEditingController();
+  // might want to do age through drop down instead later
+  final TextEditingController bioController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,7 +38,7 @@ class _EditProfileState extends State<EditProfile> {
                         ) : 
                         CircleAvatar(
                           radius: MediaQuery.of(context).size.width * 0.2,
-                          backgroundImage: NetworkImage("https://media.discordapp.net/attachments/1024471419544944680/1344451681085296782/d33mwsf-0dd81126-6d91-4b0d-905c-886a1a41566c.png?ex=67c0f5b3&is=67bfa433&hm=19ab02c04066a2cdbae52a1a74d4d2ce5624b4d76fa8f906bca593ce0e8db499&=&format=webp&quality=lossless"),
+                          backgroundImage: NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"),
                         ),
                       Positioned(
                         bottom: 0,
@@ -51,7 +57,12 @@ class _EditProfileState extends State<EditProfile> {
                       Expanded(child: Text("First Name: ")),
                       SizedBox(
                         width: MediaQuery.of(context).size.width * 0.4,
-                        child: TextField(decoration: InputDecoration(border: OutlineInputBorder()))
+                        child: TextField(
+                          controller: firstNameController,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                          hintText: "current first name")
+                        )
                       )
                     ])
                   ),
@@ -60,8 +71,13 @@ class _EditProfileState extends State<EditProfile> {
                       child: Row(children: [
                       Expanded(child: Text("Last Name: ")),
                         SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.4,
-                            child: TextField(decoration: InputDecoration(border: OutlineInputBorder()))
+                          width: MediaQuery.of(context).size.width * 0.4,
+                          child: TextField(
+                            controller: lastNameController,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: "current last name")
+                          )
                         )
                       ])
                   ),
@@ -70,18 +86,28 @@ class _EditProfileState extends State<EditProfile> {
                       child: Row(children: [
                         Expanded(child: Text("Age: ")),
                         SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.4,
-                            child: TextField(decoration: InputDecoration(border: OutlineInputBorder()))
+                          width: MediaQuery.of(context).size.width * 0.4,
+                          child: TextField(
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(),
+                            hintText: "current age")
+                          )
                         )
                       ])
                   ),
                   Padding(
                       padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.1),
                       child: Row(children: [
-                        Expanded(child: Text("Placeholder: ")),
+                        Expanded(child: Text("Bio: ")),
                         SizedBox(
                             width: MediaQuery.of(context).size.width * 0.4,
-                            child: TextField(decoration: InputDecoration(border: OutlineInputBorder()))
+                            child: TextField(
+                              controller: bioController,
+                                decoration: InputDecoration(
+                                    border: OutlineInputBorder(),
+                                    hintText: "current bio"
+                                )
+                            )
                         )
                       ])
                   )

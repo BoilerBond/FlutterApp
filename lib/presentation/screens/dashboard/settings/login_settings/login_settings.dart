@@ -123,6 +123,17 @@ class LoginSettingsPage extends State<LoginSettings> {
     confirmDialog(context, () async {
       // TODO: delete user information in Firebase
 
+      // get current user
+      final user = FirebaseAuth.instance.currentUser;
+      try {
+        // requires user data to be stored in paths with their uid
+        await user?.delete();
+      }
+      on FirebaseAuthException {
+        // user signed-in too long ago
+        // log them out so they sign-in again
+        await FirebaseAuth.instance.signOut();
+      }
       await FirebaseAuth.instance.signOut();
     });
   }
