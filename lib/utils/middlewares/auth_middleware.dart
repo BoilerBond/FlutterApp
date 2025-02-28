@@ -1,4 +1,5 @@
 import 'package:datingapp/presentation/screens/login/login_screen.dart';
+import 'package:datingapp/presentation/screens/purdue_verification/purdue_verification_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -23,8 +24,14 @@ class AuthMiddleware extends StatelessWidget {
         }
 
         if (snapshot.hasData) {
-          // TODO: If the user does not have profile data set up, return to app description and TOS screen
-          return child;
+          // TODO: If the user does not have profile data set up (purdue email not verified), return to app description and TOS screen
+          bool hasProfile = true;
+          if (!hasProfile) {
+            // TODO: change this to app description and TOS screen
+            return PurdueVerificationScreen();
+          } else {
+            return child;
+          }
         } else {
           // TODO: Return home screen instead of login
           return LoginScreen();
