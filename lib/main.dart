@@ -134,7 +134,28 @@ class MyHomePage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text('Debug'),
+                  child: const Text('About'),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MainNavigation()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 183, 228, 245),
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('Main Navigation'),
                 ),
               ],
             ),
