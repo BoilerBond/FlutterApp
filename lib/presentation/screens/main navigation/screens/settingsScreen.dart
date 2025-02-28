@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../dashboard/settings//demographic_settings/demographic_settings.dart';
+import '../../dashboard/settings/demographic_settings/demographic_settings.dart';
 import '../../dashboard/settings/login_settings/login_settings.dart';
 import '../../dashboard/settings/privacy_settings/privacy_settings.dart';
 
