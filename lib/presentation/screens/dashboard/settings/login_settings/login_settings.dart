@@ -10,9 +10,20 @@ class LoginSettings extends StatefulWidget {
 }
 
 class LoginSettingsPage extends State<LoginSettings> {
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  bool hasEmailPasswordProvider = false;
 
   @override
   Widget build(BuildContext context) {
+    final _providerData = _firebaseAuth.currentUser!.providerData;
+
+    for (UserInfo provider in _providerData) {
+      if (provider.providerId.toLowerCase() == "password") {
+        hasEmailPasswordProvider = true;
+        break;
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Login Settings')),
       body: Column(
@@ -41,26 +52,28 @@ class LoginSettingsPage extends State<LoginSettings> {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          width: 1,
-                          color: Theme.of(context).colorScheme.outlineVariant,
+                hasEmailPasswordProvider
+                    ? Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                width: 1,
+                                color: Theme.of(context).colorScheme.outlineVariant,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: () => _onChangePasswordPress(context),
+                            child: Text("Change Password"),
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () => _onChangePasswordPress(context),
-                      child: Text("Change Password"),
-                    ),
-                  ),
-                ),
+                      )
+                    : Container(),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: SizedBox(
@@ -111,7 +124,9 @@ class LoginSettingsPage extends State<LoginSettings> {
 
   void _onChangePurdueEmailPress(BuildContext context) {}
 
-  void _onChangePasswordPress(BuildContext context) {}
+  void _onChangePasswordPress(BuildContext context) {
+    Navigator.pushReplacementNamed(context, "/settings/login/change_password");
+  }
 
   void _onLogoutPress(BuildContext context) {
     confirmDialog(context, () async {
