@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import './login_settings/login_settings.dart';
-import './privacy_settings/privacy_settings.dart';
-import './demographic_settings/demographic_settings.dart';
+import '../../dashboard/settings//demographic_settings/demographic_settings.dart';
+import '../../dashboard/settings/login_settings/login_settings.dart';
+import '../../dashboard/settings/privacy_settings/privacy_settings.dart';
 
 void main() => runApp(const SettingsScreen());
 
@@ -97,11 +97,6 @@ class MyRouterDelegate extends RouterDelegate<Object>
       if (showLoginPage) showLoginPage = false;
       return;
     }
-    final bool confirmed = await _showConfirmDialog();
-    if (confirmed) {
-      if (showPrivacyPage) showPrivacyPage = false;
-      if (showLoginPage) showLoginPage = false;
-    }
   }
 
   List<Page<Object?>> _getPages() {
@@ -164,56 +159,68 @@ class _SettingsPageState extends State<_SettingsPage> {
         child: Column(
           children: [
             Divider(),
-            TextButton(style: TextButton.styleFrom(
+            TextButton.icon(
+              style: TextButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.onPrimary,
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
               ),
               onPressed: () {},
-              child: const Text('App Settings'),
+              icon: Icon(Icons.desktop_windows),
+              label: const Text('App Settings'),
             ),
             Spacer(),
-            TextButton(style: TextButton.styleFrom(
+            TextButton.icon(
+              style: TextButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.onPrimary,
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
               ),
               onPressed: () {
                 MyRouterDelegate.of(context).showLoginPage = true;
               },
-              child: const Text('Login Settings'),
+              icon: Icon(Icons.alternate_email),
+              label: const Text('Login Settings'),
             ),
             Spacer(),
-            TextButton(style: TextButton.styleFrom(
+            TextButton.icon(
+              style: TextButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.onPrimary,
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
               ),
               onPressed: () {
                 MyRouterDelegate.of(context).showPrivacyPage = true;
               },
-              child: const Text('Privacy Settings'),
+              icon: Icon(Icons.no_photography),
+              label: const Text('Privacy Settings'),
             ),
             Spacer(),
-            TextButton(style: TextButton.styleFrom(
+            TextButton.icon(
+              style: TextButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.onPrimary,
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
               ),
               onPressed: () {},
-              child: const Text('Safety Settings'),
+              icon: Icon(Icons.key),
+              label: const Text('Safety Settings'),
             ),
             Spacer(),
-            TextButton(style: TextButton.styleFrom(
+            TextButton.icon(
+              style: TextButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.onPrimary,
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
               ),
               onPressed: () {},
-              child: const Text('Legal Information'),
+              icon: Icon(Icons.list),
+              label: const Text('Legal Information'),
             ),
             Spacer(),
-            TextButton(style: TextButton.styleFrom(
+            TextButton.icon(
+              style: TextButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.onPrimary,
                 fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
               ),
               onPressed: () {},
-              child: const Text('BoilerBond Guide'),
+              icon: Icon(Icons.help_outline),
+              label: const Text('BoilerBond Guide'),
             ), 
             Spacer(),
             TextButton(
