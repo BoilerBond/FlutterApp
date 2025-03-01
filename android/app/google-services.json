@@ -1,0 +1,91 @@
+{
+  "project_info": {
+    "project_number": "434594544336",
+    "firebase_url": "https://purduedatingapp-default-rtdb.firebaseio.com",
+    "project_id": "purduedatingapp",
+    "storage_bucket": "purduedatingapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:434594544336:android:b682121d353adecc0bfcd5",
+        "android_client_info": {
+          "package_name": "com.boilerbond"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "434594544336-bk3cc0b0891jkcuimsvsvpag58upp1kb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.boilerbond",
+            "certificate_hash": "1c6fde1a06359eba2fa72e2961cbc85d5596f276"
+          }
+        },
+        {
+          "client_id": "434594544336-47ch8tc8frvlqlqibhl11s36rudh9cho.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAP71oMhXhvIPqpO5wD4-5UAWtbkaXA0s0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "434594544336-47ch8tc8frvlqlqibhl11s36rudh9cho.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "434594544336-fj4ejrdcass7aipb66h2v3tndsg8h5ku.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.datingapp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:434594544336:android:bdbc8ad3b5dee5820bfcd5",
+        "android_client_info": {
+          "package_name": "com.example.datingapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "434594544336-47ch8tc8frvlqlqibhl11s36rudh9cho.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAP71oMhXhvIPqpO5wD4-5UAWtbkaXA0s0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "434594544336-47ch8tc8frvlqlqibhl11s36rudh9cho.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "434594544336-fj4ejrdcass7aipb66h2v3tndsg8h5ku.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.datingapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

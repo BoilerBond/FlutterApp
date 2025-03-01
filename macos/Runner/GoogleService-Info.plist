@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>434594544336-fj4ejrdcass7aipb66h2v3tndsg8h5ku.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.434594544336-fj4ejrdcass7aipb66h2v3tndsg8h5ku</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>434594544336-bk3cc0b0891jkcuimsvsvpag58upp1kb.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBig_ExPncoLRVz9owC7KQf-JEU1X98npw</string>
+	<key>GCM_SENDER_ID</key>
+	<string>434594544336</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.datingapp</string>
+	<key>PROJECT_ID</key>
+	<string>purduedatingapp</string>
+	<key>STORAGE_BUCKET</key>
+	<string>purduedatingapp.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:434594544336:ios:39eb89bb80c750b60bfcd5</string>
+	<key>DATABASE_URL</key>
+	<string>https://purduedatingapp-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>
