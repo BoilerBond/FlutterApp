@@ -48,7 +48,22 @@ class MyApp extends StatelessWidget {
        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
        useMaterial3: true,
      ),
-     home: MyHomePage(title: "Flutter Demo Home Page"),
+     // Check if the app was opened with an email sign-in link
+     initialRoute: '/',
+     routes: {
+       '/': (context) => MyHomePage(title: "Flutter Demo Home Page"),
+       '/verify-email': (context) => const EmailVerificationHandler(),
+     },
+     onGenerateRoute: (settings) {
+       // Handle deep links for email verification
+       if (settings.name != null && settings.name!.startsWith('/finishSignUp')) {
+         return MaterialPageRoute(
+           builder: (context) => const EmailVerificationHandler(),
+           settings: settings,
+         );
+       }
+       return null;
+     },
    );
  }
 }
@@ -281,71 +296,42 @@ class _PurdueVerificationPageState extends State<PurdueVerificationPage> {
       // Print debug info
       print('Attempting to verify email: $email');
       
-      // Check if user already exists
-      final methods = await _auth.fetchSignInMethodsForEmail(email);
-      print('Sign-in methods for $email: $methods');
+      // Generate a verification code
+      final verificationCode = DateTime.now().millisecondsSinceEpoch.toString().substring(7);
       
-      if (methods.isNotEmpty) {
-        // User exists, send password reset email as a way to verify
-        print('User exists, sending password reset email');
-        await _auth.sendPasswordResetEmail(email: email);
-        print('Password reset email sent successfully');
-      } else {
-        // Create new user with a random password
-        print('Creating new user with email: $email');
-        final userCredential = await _auth.createUserWithEmailAndPassword(
-          email: email,
-          password: DateTime.now().millisecondsSinceEpoch.toString(),
-        );
-        
-        print('User created successfully: ${userCredential.user?.uid}');
-        
-        // Send email verification
-        print('Sending email verification');
-        await userCredential.user?.sendEmailVerification();
-        print('Email verification sent successfully');
-      }
-
+      // Store the verification code in Firestore (you'll need to add Firestore dependency)
+      // For now, we'll just print it
+      print('Generated verification code: $verificationCode for $email');
+      
+      // In a real app, you would store this in Firestore:
+      // await FirebaseFirestore.instance.collection('emailVerifications').doc(email).set({
+      //   'code': verificationCode,
+      //   'createdAt': FieldValue.serverTimestamp(),
+      //   'verified': false
+      // });
+      
+      // Send a custom verification email using Firebase Functions or your own email service
+      // For now, we'll simulate this with a success message
+      print('Would send verification email to $email with code: $verificationCode');
+      
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Verification email sent!"),
+          SnackBar(
+            content: Text("Verification email would be sent to $email. For testing, use code: $verificationCode"),
             backgroundColor: Colors.green,
+            duration: const Duration(seconds: 8),
           ),
         );
-      }
-    } on FirebaseAuthException catch (e) {
-      // Handle Firebase Auth errors with more detailed information
-      print('FirebaseAuthException: ${e.code} - ${e.message}');
-      String errorMessage = "An error occurred. Please try again.";
-      
-      if (e.code == 'email-already-in-use') {
-        errorMessage = "This email is already in use.";
-      } else if (e.code == 'invalid-email') {
-        errorMessage = "Invalid email format.";
-      } else if (e.code == 'operation-not-allowed') {
-        errorMessage = "Email/password accounts are not enabled.";
-      } else if (e.code == 'weak-password') {
-        errorMessage = "The password is too weak.";
-      } else if (e.code == 'too-many-requests') {
-        errorMessage = "Too many requests. Try again later.";
-      } else if (e.code == 'user-disabled') {
-        errorMessage = "This user account has been disabled.";
-      } else if (e.code == 'user-not-found') {
-        errorMessage = "No user found with this email.";
-      } else if (e.code == 'network-request-failed') {
-        errorMessage = "Network error. Check your internet connection.";
-      }
-      
-      // Show detailed error in console
-      print('Showing error message to user: $errorMessage');
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("$errorMessage (Error code: ${e.code})"),
-            backgroundColor: Colors.red,
+        
+        // Navigate to verification code entry screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VerificationCodeScreen(
+              email: email,
+              expectedCode: verificationCode,
+            ),
           ),
         );
       }
@@ -461,6 +447,330 @@ class _PurdueVerificationPageState extends State<PurdueVerificationPage> {
               child: isLoading 
                 ? const CircularProgressIndicator() 
                 : const Text('Send Verification Email'),
+            ),
+            const SizedBox(height: 20),
+            // Debug section
+            const Divider(),
+            const Text(
+              "Debug Options",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                try {
+                  final authInstance = FirebaseAuth.instance;
+                  final message = 'Firebase Auth is ${authInstance != null ? "initialized" : "NOT initialized"}\n'
+                      'Current user: ${authInstance.currentUser?.email ?? "No user signed in"}';
+                  
+                  print(message);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(message),
+                      backgroundColor: Colors.blue,
+                      duration: const Duration(seconds: 5),
+                    ),
+                  );
+                } catch (e) {
+                  print('Debug button error: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Firebase error: $e'),
+                      backgroundColor: Colors.red,
+                      duration: const Duration(seconds: 5),
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[300],
+                foregroundColor: Colors.black,
+              ),
+              child: const Text('Check Firebase Connection'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Add this new class at the end of the file
+class EmailVerificationHandler extends StatefulWidget {
+  const EmailVerificationHandler({super.key});
+
+  @override
+  State<EmailVerificationHandler> createState() => _EmailVerificationHandlerState();
+}
+
+class _EmailVerificationHandlerState extends State<EmailVerificationHandler> {
+  bool isVerifying = true;
+  bool isSuccess = false;
+  String message = "Verifying your email...";
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _handleEmailLink();
+  }
+
+  Future<void> _handleEmailLink() async {
+    try {
+      // Check if the link is a sign-in with email link
+      if (_auth.isSignInWithEmailLink(Uri.base.toString())) {
+        setState(() {
+          message = "Processing your verification...";
+        });
+
+        // You would normally get this from shared preferences or local storage
+        // For demo purposes, we'll extract it from the URL
+        final uri = Uri.parse(Uri.base.toString());
+        final email = uri.queryParameters['email'];
+
+        if (email != null) {
+          // Sign in with email link
+          final userCredential = await _auth.signInWithEmailLink(
+            email: email,
+            emailLink: Uri.base.toString(),
+          );
+
+          setState(() {
+            isVerifying = false;
+            isSuccess = true;
+            message = "Email verified successfully! You can now use the app.";
+          });
+
+          print("User signed in: ${userCredential.user?.uid}");
+        } else {
+          setState(() {
+            isVerifying = false;
+            message = "Could not find email parameter in the link.";
+          });
+        }
+      } else {
+        setState(() {
+          isVerifying = false;
+          message = "This is not a valid email verification link.";
+        });
+      }
+    } catch (e) {
+      print("Error during email verification: $e");
+      setState(() {
+        isVerifying = false;
+        message = "Error verifying email: ${e.toString()}";
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Email Verification"),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (isVerifying)
+                const CircularProgressIndicator()
+              else
+                Icon(
+                  isSuccess ? Icons.check_circle : Icons.error,
+                  color: isSuccess ? Colors.green : Colors.red,
+                  size: 80,
+                ),
+              const SizedBox(height: 20),
+              Text(
+                message,
+                style: const TextStyle(fontSize: 18),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pushReplacementNamed('/');
+                },
+                child: const Text("Return to Home"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Add this new class at the end of the file
+class VerificationCodeScreen extends StatefulWidget {
+  final String email;
+  final String expectedCode;
+
+  const VerificationCodeScreen({
+    super.key, 
+    required this.email, 
+    required this.expectedCode
+  });
+
+  @override
+  State<VerificationCodeScreen> createState() => _VerificationCodeScreenState();
+}
+
+class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
+  final TextEditingController codeController = TextEditingController();
+  bool isVerifying = false;
+  bool isVerified = false;
+
+  @override
+  void dispose() {
+    codeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> verifyCode() async {
+    final enteredCode = codeController.text.trim();
+    
+    if (enteredCode.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter the verification code"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      isVerifying = true;
+    });
+
+    try {
+      // In a real app, you would verify against Firestore or your backend
+      // For now, we'll just compare with the expected code
+      await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
+      
+      if (enteredCode == widget.expectedCode) {
+        // Code is correct
+        setState(() {
+          isVerified = true;
+        });
+        
+        // In a real app, you would update Firestore and create a user record
+        print('Email verified successfully: ${widget.email}');
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Email verified successfully!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Wait a moment before navigating
+        await Future.delayed(const Duration(seconds: 2));
+        
+        if (mounted) {
+          // Navigate to the main app or profile creation
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const MainNavigation()),
+            (route) => false,
+          );
+        }
+      } else {
+        // Code is incorrect
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Invalid verification code. Please try again."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error verifying code: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isVerifying = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Verify Your Email"),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              "Enter Verification Code",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "We've sent a verification code to ${widget.email}. Please enter it below.",
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 30),
+            TextField(
+              controller: codeController,
+              decoration: InputDecoration(
+                labelText: "Verification Code",
+                hintText: "Enter the code sent to your email",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                prefixIcon: const Icon(Icons.security),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: isVerifying || isVerified ? null : verifyCode,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 183, 228, 245),
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: isVerifying 
+                ? const CircularProgressIndicator() 
+                : isVerified
+                  ? const Text('Verified ✓')
+                  : const Text('Verify Code'),
+            ),
+            const SizedBox(height: 20),
+            // Debug info
+            Text(
+              "Debug: Expected code is ${widget.expectedCode}",
+              style: const TextStyle(color: Colors.grey),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

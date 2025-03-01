@@ -31,6 +31,31 @@
 
   <title>datingapp</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Firebase SDK -->
+  <!-- Update to use the Firebase CDN for version 8.x (compatible with flutter_firebase) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
+  
+  <!-- Initialize Firebase -->
+  <script src="firebase-config.js"></script>
+  
+  <!-- Handle email verification links -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if the URL contains an email verification link
+      if (window.location.href.indexOf('mode=signIn') !== -1 || 
+          window.location.href.indexOf('mode=verifyEmail') !== -1) {
+        console.log('Email verification link detected');
+        
+        // Store the full URL to be processed by Flutter
+        localStorage.setItem('emailVerificationLink', window.location.href);
+      }
+    });
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
