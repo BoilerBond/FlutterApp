@@ -286,58 +286,62 @@ class _PurdueVerificationPageState extends State<PurdueVerificationPage> {
   // Firebase Auth instance
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Method to send verification email
-  Future<void> sendVerificationEmail(String email) async {
+  // Method to send passwordless sign-in link
+  Future<void> sendSignInLinkToEmail(String email) async {
     setState(() {
       isLoading = true;
     });
 
     try {
-      // Print debug info
-      print('Attempting to verify email: $email');
+      // Configure the action code settings
+      final actionCodeSettings = ActionCodeSettings(
+        url: 'https://boilerbond.page.link/verify?email=$email',
+        handleCodeInApp: true,
+        androidPackageName: 'com.example.boilerbond',
+        androidInstallApp: true,
+        androidMinimumVersion: '12',
+        iOSBundleId: 'com.example.boilerbond',
+      );
       
-      // Generate a verification code
-      final verificationCode = DateTime.now().millisecondsSinceEpoch.toString().substring(7);
+      // Send the sign-in link to the user's email
+      await _auth.sendSignInLinkToEmail(
+        email: email,
+        actionCodeSettings: actionCodeSettings,
+      );
       
-      // Store the verification code in Firestore (you'll need to add Firestore dependency)
-      // For now, we'll just print it
-      print('Generated verification code: $verificationCode for $email');
+      // Store the email locally to use it when the user clicks on the link
+      // In a real app, you'd store this in SharedPreferences
+      print('Email for sign-in: $email');
       
-      // In a real app, you would store this in Firestore:
-      // await FirebaseFirestore.instance.collection('emailVerifications').doc(email).set({
-      //   'code': verificationCode,
-      //   'createdAt': FieldValue.serverTimestamp(),
-      //   'verified': false
-      // });
-      
-      // Send a custom verification email using Firebase Functions or your own email service
-      // For now, we'll simulate this with a success message
-      print('Would send verification email to $email with code: $verificationCode');
-      
-      // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Verification email would be sent to $email. For testing, use code: $verificationCode"),
+            content: Text("Verification email sent to $email. Check your inbox."),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 8),
           ),
         );
         
-        // Navigate to verification code entry screen
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => VerificationCodeScreen(
-              email: email,
-              expectedCode: verificationCode,
+        // Show a success message with instructions
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Email Sent"),
+            content: Text(
+              "We've sent a verification link to $email.\n\n"
+              "Please check your email and click the link to verify your Purdue email address."
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text("OK"),
+              ),
+            ],
           ),
         );
       }
     } catch (e) {
-      // Handle other errors with more details
-      print('General exception: ${e.toString()}');
+      print('Error sending email verification link: ${e.toString()}');
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -383,7 +387,7 @@ class _PurdueVerificationPageState extends State<PurdueVerificationPage> {
             ),
             const SizedBox(height: 20),
             const Text(
-              "Please enter your Purdue email address to verify your account.",
+              "Please enter your Purdue email address. We'll send you a verification link to confirm your account.",
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 30),
@@ -430,8 +434,8 @@ class _PurdueVerificationPageState extends State<PurdueVerificationPage> {
                         ),
                       );
                     } else {
-                      // Valid Purdue email, send verification email
-                      sendVerificationEmail(email);
+                      // Valid Purdue email, send verification link
+                      sendSignInLinkToEmail(email);
                     }
                   },
               style: ElevatedButton.styleFrom(
@@ -446,7 +450,7 @@ class _PurdueVerificationPageState extends State<PurdueVerificationPage> {
               ),
               child: isLoading 
                 ? const CircularProgressIndicator() 
-                : const Text('Send Verification Email'),
+                : const Text('Send Verification Link'),
             ),
             const SizedBox(height: 20),
             // Debug section
@@ -488,7 +492,6 @@ class _PurdueVerificationPageState extends State<PurdueVerificationPage> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.grey[300],
-                foregroundColor: Colors.black,
               ),
               child: const Text('Check Firebase Connection'),
             ),
@@ -499,7 +502,7 @@ class _PurdueVerificationPageState extends State<PurdueVerificationPage> {
   }
 }
 
-// Add this new class at the end of the file
+// Email verification handler for when users click the link in their email
 class EmailVerificationHandler extends StatefulWidget {
   const EmailVerificationHandler({super.key});
 
@@ -521,37 +524,65 @@ class _EmailVerificationHandlerState extends State<EmailVerificationHandler> {
 
   Future<void> _handleEmailLink() async {
     try {
+      final currentUrl = Uri.base.toString();
       // Check if the link is a sign-in with email link
-      if (_auth.isSignInWithEmailLink(Uri.base.toString())) {
+      if (_auth.isSignInWithEmailLink(currentUrl)) {
         setState(() {
           message = "Processing your verification...";
         });
 
-        // You would normally get this from shared preferences or local storage
-        // For demo purposes, we'll extract it from the URL
-        final uri = Uri.parse(Uri.base.toString());
-        final email = uri.queryParameters['email'];
+        // Extract email from URL parameters
+        final uri = Uri.parse(currentUrl);
+        String? email = uri.queryParameters['email'];
 
-        if (email != null) {
-          // Sign in with email link
-          final userCredential = await _auth.signInWithEmailLink(
-            email: email,
-            emailLink: Uri.base.toString(),
-          );
-
+        // If email not in URL, prompt user to enter it
+        if (email == null) {
+          // In a real app, you'd try to get it from SharedPreferences first
           setState(() {
             isVerifying = false;
-            isSuccess = true;
-            message = "Email verified successfully! You can now use the app.";
+            message = "Please enter your email to complete verification";
           });
-
-          print("User signed in: ${userCredential.user?.uid}");
-        } else {
-          setState(() {
-            isVerifying = false;
-            message = "Could not find email parameter in the link.";
-          });
+          return;
         }
+
+        // Verify that it's a Purdue email
+        if (!email.toLowerCase().endsWith('@purdue.edu')) {
+          setState(() {
+            isVerifying = false;
+            isSuccess = false;
+            message = "Only Purdue email addresses can be verified.";
+          });
+          return;
+        }
+
+        // Sign in with email link
+        final userCredential = await _auth.signInWithEmailLink(
+          email: email,
+          emailLink: currentUrl,
+        );
+
+        final user = userCredential.user;
+        
+        // Update user profile with display name from email (optional)
+        if (user != null) {
+          final displayName = email.split('@')[0]; // username part of email
+          await user.updateDisplayName(displayName);
+          
+          // You could also store additional info in Firestore
+          // await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          //   'email': email,
+          //   'isPurdueVerified': true,
+          //   'verifiedAt': FieldValue.serverTimestamp(),
+          // });
+        }
+
+        setState(() {
+          isVerifying = false;
+          isSuccess = true;
+          message = "Email verified successfully! You can now use the app.";
+        });
+
+        print("User signed in: ${userCredential.user?.uid}");
       } else {
         setState(() {
           isVerifying = false;
@@ -580,199 +611,48 @@ class _EmailVerificationHandlerState extends State<EmailVerificationHandler> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (isVerifying)
-                const CircularProgressIndicator()
-              else
-                Icon(
-                  isSuccess ? Icons.check_circle : Icons.error,
-                  color: isSuccess ? Colors.green : Colors.red,
-                  size: 80,
-                ),
+                const CircularProgressIndicator(),
               const SizedBox(height: 20),
               Text(
                 message,
-                style: const TextStyle(fontSize: 18),
+                style: const TextStyle(fontSize: 16),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacementNamed('/');
-                },
-                child: const Text("Return to Home"),
-              ),
+              if (!isVerifying)
+                ElevatedButton(
+                  onPressed: () {
+                    if (isSuccess) {
+                      // Navigate to the main app screen
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => const MainNavigation()),
+                        (route) => false,
+                      );
+                    } else {
+                      // Go back to the home screen
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (context) => MyHomePage(title: "Flutter Demo Home Page"),
+                        ),
+                        (route) => false,
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 183, 228, 245),
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 32,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(isSuccess ? 'Continue to App' : 'Go Back'),
+                ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// Add this new class at the end of the file
-class VerificationCodeScreen extends StatefulWidget {
-  final String email;
-  final String expectedCode;
-
-  const VerificationCodeScreen({
-    super.key, 
-    required this.email, 
-    required this.expectedCode
-  });
-
-  @override
-  State<VerificationCodeScreen> createState() => _VerificationCodeScreenState();
-}
-
-class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
-  final TextEditingController codeController = TextEditingController();
-  bool isVerifying = false;
-  bool isVerified = false;
-
-  @override
-  void dispose() {
-    codeController.dispose();
-    super.dispose();
-  }
-
-  Future<void> verifyCode() async {
-    final enteredCode = codeController.text.trim();
-    
-    if (enteredCode.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please enter the verification code"),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      isVerifying = true;
-    });
-
-    try {
-      // In a real app, you would verify against Firestore or your backend
-      // For now, we'll just compare with the expected code
-      await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
-      
-      if (enteredCode == widget.expectedCode) {
-        // Code is correct
-        setState(() {
-          isVerified = true;
-        });
-        
-        // In a real app, you would update Firestore and create a user record
-        print('Email verified successfully: ${widget.email}');
-        
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Email verified successfully!"),
-            backgroundColor: Colors.green,
-          ),
-        );
-        
-        // Wait a moment before navigating
-        await Future.delayed(const Duration(seconds: 2));
-        
-        if (mounted) {
-          // Navigate to the main app or profile creation
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const MainNavigation()),
-            (route) => false,
-          );
-        }
-      } else {
-        // Code is incorrect
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Invalid verification code. Please try again."),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error verifying code: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error: ${e.toString()}"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          isVerifying = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Verify Your Email"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              "Enter Verification Code",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "We've sent a verification code to ${widget.email}. Please enter it below.",
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 30),
-            TextField(
-              controller: codeController,
-              decoration: InputDecoration(
-                labelText: "Verification Code",
-                hintText: "Enter the code sent to your email",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                prefixIcon: const Icon(Icons.security),
-              ),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: isVerifying || isVerified ? null : verifyCode,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 183, 228, 245),
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 16,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: isVerifying 
-                ? const CircularProgressIndicator() 
-                : isVerified
-                  ? const Text('Verified ✓')
-                  : const Text('Verify Code'),
-            ),
-            const SizedBox(height: 20),
-            // Debug info
-            Text(
-              "Debug: Expected code is ${widget.expectedCode}",
-              style: const TextStyle(color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
-          ],
         ),
       ),
     );
