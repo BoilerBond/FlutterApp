@@ -1,108 +1,100 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
+class EditProfile extends StatefulWidget {
+  const EditProfile({super.key});
 
-class MyProfileScreen extends StatelessWidget {
-  const MyProfileScreen({super.key});
+  @override
+  State<EditProfile> createState() => _EditProfileScreen();
+}
+
+class _EditProfileScreen extends State<EditProfile> {
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(height: 20),
-            Text(
-              'BBond',
-              style: TextStyle(
-                fontFamily: 'Raleway',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF5E77DF),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Edit Profile', style: TextStyle(color: Colors.blueAccent)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.blueAccent),
+      ),
+      body: SingleChildScrollView( 
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 20),
+              
+              GestureDetector(
+                onTap: () {
+                  // TODO: Implement profile picture update
+                },
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.grey.shade300,
+                  child: const Icon(Icons.person, size: 50, color: Colors.white),
+                ),
               ),
-              textAlign: TextAlign.left,
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Welcome back, [username]',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Raleway',
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {},
+                child: const Text('Edit profile picture', style: TextStyle(color: Colors.blueAccent)),
               ),
-            ),
-            SizedBox(height: 20),
-            Container(
-              height: 200,
-              width: 200,
-              child: Icon(Icons.image, size: 200, color: Color(0xFFCDFCFF)),
-            ),
-            SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextButton(
+              const SizedBox(height: 20),
+
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: 'Name:',
+                  filled: true,
+                  fillColor: Colors.grey.shade200,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              DropdownButtonFormField<int>(
+                decoration: InputDecoration(
+                  labelText: 'Age:',
+                  filled: true,
+                  fillColor: Colors.grey.shade200,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+                items: List.generate(100, (index) => index + 1)
+                    .map((age) => DropdownMenuItem<int>(
+                          value: age,
+                          child: Text(age.toString()),
+                        ))
+                    .toList(),
+                onChanged: (value) {},
+              ),
+              const SizedBox(height: 10),
+
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: 'etc:',
+                  filled: true,
+                  fillColor: Colors.grey.shade200,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 30),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
                   onPressed: () {},
-                  child: Text(
-                    'Edit profile',
-                    style: TextStyle(fontFamily: 'Raleway', color: Color(0xFF2C519C)),
+                  child: const Text('Save', style: TextStyle(fontSize: 16)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
-                Text('|', style: TextStyle(fontFamily: 'Raleway', color: Color(0xFFE7EFEE))),
-                TextButton(
-                  onPressed: () {},
-                  child: Text(
-                    'View profile',
-                    style: TextStyle(fontFamily: 'Raleway', color: Color(0xFF2C519C)),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 20),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: Color(0xFFE7EFEE),
-                borderRadius: BorderRadius.circular(5),
               ),
-              child: Column(
-                children: [
-                  Text(
-                    'Prompt of the day',
-                    style: TextStyle(
-                      color: Color(0xFF2C519C),
-                      fontFamily: 'Raleway',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  Text(
-                    '[Personal question]?',
-                    style: TextStyle(
-                      color: Color(0xFF2C519C),
-                      fontFamily: 'Raleway',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  Text(
-                    'My answer...',
-                    style: TextStyle(
-                      color: Color(0xFF454746),
-                      fontFamily: 'Raleway',
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );

@@ -50,7 +50,7 @@ class _MainNavigationState extends State<MainNavigation> {
         ],
       ),
       body: _screens[_selectedIndex],
-      appBar: AppBar(title: Text('My Profile')),
+      appBar: AppBar(title: Text('Main Nav')),
     );
   }
 }
