@@ -11,10 +11,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Explore'),
-        automaticallyImplyLeading: false,
-      ),
       body: Center(
         child: Text('Explore Screen'),
       ),
