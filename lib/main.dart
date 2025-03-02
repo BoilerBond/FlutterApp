@@ -2,6 +2,7 @@ import "package:datingapp/presentation/screens/main%20navigation/main_nav.dart";
 import "package:flutter/material.dart";
 import "package:firebase_core/firebase_core.dart";
 import "package:firebase_auth/firebase_auth.dart";
+import "package:firebase_dynamic_links/firebase_dynamic_links.dart";
 import 'firebase_options.dart';
 
 void main() async {
@@ -14,6 +15,29 @@ void main() async {
     );
     print('Firebase initialized successfully');
     print('Firebase Auth instance: ${FirebaseAuth.instance}');
+    
+    // Initialize Firebase Dynamic Links
+    final dynamicLinks = FirebaseDynamicLinks.instance;
+    
+    // Handle dynamic links when the app is opened from a link
+    dynamicLinks.onLink.listen((dynamicLinkData) {
+      // Handle dynamic link data
+      print('Dynamic link received: ${dynamicLinkData.link}');
+      
+      // You can navigate to appropriate screens based on the link data
+      // For example, you could navigate to the email verification screen
+      
+    }).onError((error) {
+      print('Error handling dynamic link: $error');
+    });
+    
+    // Check for initial dynamic link (when app is opened from a dynamic link)
+    final initialLink = await dynamicLinks.getInitialLink();
+    if (initialLink != null) {
+      print('Initial dynamic link: ${initialLink.link}');
+      // Handle initial dynamic link if needed
+    }
+    
   } catch (e) {
     print('Error initializing Firebase: $e');
   }
@@ -293,9 +317,10 @@ class _PurdueVerificationPageState extends State<PurdueVerificationPage> {
     });
 
     try {
-      // Configure the action code settings
+      // Configure the action code settings with updated dynamic link URL
       final actionCodeSettings = ActionCodeSettings(
-        url: 'https://boilerbond.page.link/verify?email=$email',
+        // Updated URL format that works better with Firebase Dynamic Links
+        url: 'https://boilerbond.page.link/?link=https://boilerbond.com/verify?email=$email',
         handleCodeInApp: true,
         androidPackageName: 'com.example.boilerbond',
         androidInstallApp: true,
@@ -342,6 +367,13 @@ class _PurdueVerificationPageState extends State<PurdueVerificationPage> {
       }
     } catch (e) {
       print('Error sending email verification link: ${e.toString()}');
+      print('Error type: ${e.runtimeType}');
+      
+      // Check for specific Firebase auth errors
+      if (e is FirebaseAuthException) {
+        print('Firebase Auth Error Code: ${e.code}');
+        print('Firebase Auth Error Message: ${e.message}');
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -495,6 +527,58 @@ class _PurdueVerificationPageState extends State<PurdueVerificationPage> {
               ),
               child: const Text('Check Firebase Connection'),
             ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () async {
+                final email = emailController.text.trim();
+                if (!email.endsWith('@purdue.edu')) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Please enter a valid Purdue email first"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                
+                try {
+                  // Use simplified ActionCodeSettings for testing with correct Dynamic Link format
+                  final actionCodeSettings = ActionCodeSettings(
+                    url: 'https://boilerbond.page.link/?link=https://boilerbond.com/verify?email=$email',
+                    handleCodeInApp: true,
+                    androidPackageName: 'com.example.boilerbond',
+                    androidInstallApp: true,
+                    iOSBundleId: 'com.example.boilerbond',
+                  );
+                  
+                  print('Testing basic email verification with simplified settings');
+                  await _auth.sendSignInLinkToEmail(
+                    email: email,
+                    actionCodeSettings: actionCodeSettings,
+                  );
+                  
+                  print('Basic email verification test succeeded');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Test email sent successfully"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  print('Basic email verification test failed: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Test failed: ${e.toString()}"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[300],
+              ),
+              child: const Text('Test Basic Email Verification'),
+            ),
           ],
         ),
       ),
@@ -524,16 +608,35 @@ class _EmailVerificationHandlerState extends State<EmailVerificationHandler> {
 
   Future<void> _handleEmailLink() async {
     try {
-      final currentUrl = Uri.base.toString();
-      // Check if the link is a sign-in with email link
-      if (_auth.isSignInWithEmailLink(currentUrl)) {
+      setState(() {
+        message = "Checking dynamic link...";
+      });
+      
+      // Get the dynamic link data - this is important for handling deep links properly
+      final PendingDynamicLinkData? data = await FirebaseDynamicLinks.instance.getInitialLink();
+      
+      if (data == null) {
+        print("No dynamic link found");
+        setState(() {
+          isVerifying = false;
+          message = "No verification link found. Please try again.";
+        });
+        return;
+      }
+      
+      final Uri deepLink = data.link;
+      print("Deep link found: $deepLink");
+      
+      // For email verification, we need to check if Firebase Auth recognizes this as a sign-in link
+      final dynamicLinkUrl = deepLink.toString();
+      
+      if (_auth.isSignInWithEmailLink(dynamicLinkUrl)) {
         setState(() {
           message = "Processing your verification...";
         });
 
         // Extract email from URL parameters
-        final uri = Uri.parse(currentUrl);
-        String? email = uri.queryParameters['email'];
+        String? email = deepLink.queryParameters['email'];
 
         // If email not in URL, prompt user to enter it
         if (email == null) {
@@ -558,7 +661,7 @@ class _EmailVerificationHandlerState extends State<EmailVerificationHandler> {
         // Sign in with email link
         final userCredential = await _auth.signInWithEmailLink(
           email: email,
-          emailLink: currentUrl,
+          emailLink: dynamicLinkUrl,
         );
 
         final user = userCredential.user;

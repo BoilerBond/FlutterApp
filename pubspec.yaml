@@ -38,6 +38,7 @@ dependencies:
   # Firebase dependencies
   firebase_core: ^2.25.4
   firebase_auth: ^4.17.4
+  firebase_dynamic_links: ^5.4.8
   cloud_firestore: ^4.15.4
 
 dev_dependencies:
