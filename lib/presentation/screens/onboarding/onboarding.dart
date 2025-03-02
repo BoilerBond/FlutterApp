@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import 'package:datingapp/utils/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 class OnBoarding extends StatefulWidget {
   const OnBoarding({super.key});
@@ -156,9 +157,25 @@ class _Step6State extends State<Step6> {
   Uint8List? _image;
 
   void selectImage() async {
-    Uint8List img = await pickImage(ImageSource.gallery);
+    XFile img = await pickImage(ImageSource.gallery);
+    CroppedFile? croppedFile = await ImageCropper().cropImage(
+      sourcePath: img.path,
+      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
+      compressQuality: 50,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop your image',
+          toolbarColor: Colors.deepOrange,
+          toolbarWidgetColor: Colors.white,
+        ),
+        IOSUiSettings(
+          title: 'Crop your image',
+        ),
+      ],
+    );
+
     setState(() {
-      _image = img;
+      _image = croppedFile!.readAsBytes() as Uint8List?;
     });
   }
 
