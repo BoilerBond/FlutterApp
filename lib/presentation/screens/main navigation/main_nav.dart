@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'screens/exploreScreen.dart';
-import 'screens/matchScreen.dart';
+import 'screens/bondScreen.dart';
 import 'screens/profileScreen.dart';
 import 'screens/settingsScreen.dart';
 
@@ -44,7 +44,7 @@ class _MainNavigationState extends State<MainNavigation> {
         onTap: _onItemTapped,
       items: const [
           BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Explore'),
-          BottomNavigationBarItem(icon: Icon(Icons.check_circle), label: 'Tasks'),
+          BottomNavigationBarItem(icon: Icon(Icons.check_circle), label: 'My Bond'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         ],

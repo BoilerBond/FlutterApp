@@ -94,10 +94,11 @@ class _MyProfilePageState extends State<_MyProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Profile', style: TextStyle(color: Colors.black)),
+        title: const Text("BBond", style: TextStyle(color: Color(0xFF5E77DF), fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
+        automaticallyImplyLeading: false,
       ),
       body: DefaultTextStyle(
         style: const TextStyle(
@@ -112,16 +113,6 @@ class _MyProfilePageState extends State<_MyProfilePage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
-              const Text(
-                'BBond',
-                style: TextStyle(
-                  fontFamily: 'Raleway',
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF5E77DF),
-                ),
-              ),
-              const SizedBox(height: 10),
               const Text(
                 'Welcome back, [username]',
                 textAlign: TextAlign.center,
