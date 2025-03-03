@@ -8,13 +8,12 @@ class EditProfile extends StatefulWidget {
 }
 
 class _EditProfileScreen extends State<EditProfile> {
-  // Sample profile information
+  // Sample profile
   String name = "Purdue Pete";
   int age = 21;
   String major = "Computer Science";
   String biography = "Computer Scientist by day, Purdue Pete by night.";
 
-  // Temporary values for editing
   late String tempName;
   late int tempAge;
   late String tempMajor;

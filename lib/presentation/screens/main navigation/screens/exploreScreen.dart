@@ -53,7 +53,7 @@ void _reportProfile() {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 85, // Also attempted to fix to 85% of the display to minimize overflow, did not work
+          maxWidth: MediaQuery.of(context).size.width * 0.85, // Also attempted to fix to 85% of the display to minimize overflow, did not work
         ),
         child: Padding(
           padding: const EdgeInsets.all(20.0),

@@ -19,7 +19,7 @@ class _MainNavigationState extends State<MainNavigation> {
   // List of screens corresponding to each BottomNavigationBarItem
   final List<Widget> _screens = [
     ExploreScreen(),
-    MyMatchScreen(),
+    MyBondScreen(),
     MyProfileScreen(),
     SettingsScreen(),
   ];

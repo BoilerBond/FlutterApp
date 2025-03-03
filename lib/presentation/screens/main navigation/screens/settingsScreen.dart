@@ -108,11 +108,32 @@ class _SettingsPageState extends State<_SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: Center(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text("BBond", style: TextStyle(color: Color(0xFF5E77DF), fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
+        automaticallyImplyLeading: false,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Divider(),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "Settings",
+                style: TextStyle(
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w100,
+                  fontSize: 16,
+                  color: Color(0xFF454746),
+                ),
+              ),
+            ),
+            const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
             TextButton.icon(
               style: TextButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.onPrimary,
