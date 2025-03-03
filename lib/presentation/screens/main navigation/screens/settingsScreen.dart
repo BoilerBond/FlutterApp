@@ -134,69 +134,135 @@ class _SettingsPageState extends State<_SettingsPage> {
               ),
             ),
             const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
-            TextButton.icon(
-              style: TextButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.6,
+              child: OutlinedButton(
+                onPressed:() {}, // Implement functionality
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFE7EFEE)),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Row( 
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 10),
+                    Icon(Icons.desktop_windows, color: Color(0xFF2C519C)),
+                    const SizedBox(width: 10),
+                    Text("App Settings", style: const TextStyle(color: Color(0xFF2C519C), fontSize: 16, fontWeight: FontWeight.w100)),
+                  ],
+                ),
               ),
-              onPressed: () {},
-              icon: Icon(Icons.desktop_windows),
-              label: const Text('App Settings'),
             ),
             Spacer(),
-            TextButton.icon(
-              style: TextButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.6,
+              child: OutlinedButton(
+                onPressed:() {
+                  MyRouterDelegate.of(context).showLoginPage = true;
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFE7EFEE)),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Row( 
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 10),
+                    Icon(Icons.alternate_email, color: Color(0xFF2C519C)),
+                    const SizedBox(width: 10),
+                    Text("Login Settings", style: const TextStyle(color: Color(0xFF2C519C), fontSize: 16, fontWeight: FontWeight.w100)),
+                  ],
+                ),
               ),
-              onPressed: () {
-                MyRouterDelegate.of(context).showLoginPage = true;
-              },
-              icon: Icon(Icons.alternate_email),
-              label: const Text('Login Settings'),
             ),
             Spacer(),
-            TextButton.icon(
-              style: TextButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.6,
+              child: OutlinedButton(
+                onPressed:() {
+                  MyRouterDelegate.of(context).showPrivacyPage = true;
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFE7EFEE)),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Row( 
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 10),
+                    Icon(Icons.no_photography, color: Color(0xFF2C519C)),
+                    const SizedBox(width: 10),
+                    Text("Privacy Settings", style: const TextStyle(color: Color(0xFF2C519C), fontSize: 16, fontWeight: FontWeight.w100)),
+                  ],
+                ),
               ),
-              onPressed: () {
-                MyRouterDelegate.of(context).showPrivacyPage = true;
-              },
-              icon: Icon(Icons.no_photography),
-              label: const Text('Privacy Settings'),
             ),
             Spacer(),
-            TextButton.icon(
-              style: TextButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.6,
+              child: OutlinedButton(
+                onPressed:() {}, // Implement functionality
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFE7EFEE)),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Row( 
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 10),
+                    Icon(Icons.key, color: Color(0xFF2C519C)),
+                    const SizedBox(width: 10),
+                    Text("Safety Settings", style: const TextStyle(color: Color(0xFF2C519C), fontSize: 16, fontWeight: FontWeight.w100)),
+                  ],
+                ),
               ),
-              onPressed: () {},
-              icon: Icon(Icons.key),
-              label: const Text('Safety Settings'),
             ),
             Spacer(),
-            TextButton.icon(
-              style: TextButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.6,
+              child: OutlinedButton(
+                onPressed:() {}, // Implement functionality
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFE7EFEE)),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Row( 
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 10),
+                    Icon(Icons.list, color: Color(0xFF2C519C)),
+                    const SizedBox(width: 10),
+                    Text("Legal Information", style: const TextStyle(color: Color(0xFF2C519C), fontSize: 16, fontWeight: FontWeight.w100)),
+                  ],
+                ),
               ),
-              onPressed: () {},
-              icon: Icon(Icons.list),
-              label: const Text('Legal Information'),
             ),
             Spacer(),
-            TextButton.icon(
-              style: TextButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                fixedSize: Size(MediaQuery.of(context).size.width * 0.85, MediaQuery.of(context).size.height * 0.08), // Button width and height
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.6,
+              child: OutlinedButton(
+                onPressed:() {}, // Implement functionality
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFE7EFEE)),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Row( 
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 10),
+                    Icon(Icons.help_outline, color: Color(0xFF2C519C)),
+                    const SizedBox(width: 10),
+                    Text("BoilerBond Guide", style: const TextStyle(color: Color(0xFF2C519C), fontSize: 16, fontWeight: FontWeight.w100)),
+                  ],
+                ),
               ),
-              onPressed: () {},
-              icon: Icon(Icons.help_outline),
-              label: const Text('BoilerBond Guide'),
-            ), 
+            ),
             Spacer(flex: 5)
           ]
         ),
