@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum Gender { none, man, woman, other }
-class User {
+class AppUser {
   String uid;
   String username;
   String purdueEmail;
@@ -22,7 +22,7 @@ class User {
   bool messagingNotificationEnabled;
   bool eventNotificationEnabled;
 
-  User({
+  AppUser({
     required this.uid,
     this.username = '',
     this.purdueEmail = '',
@@ -44,10 +44,10 @@ class User {
     this.eventNotificationEnabled = true,
   });
 
-  factory User.fromSnapshot(DocumentSnapshot snapshot) {
+  factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
     final data = snapshot.data() as Map<String, dynamic>? ?? {};
 
-    return User(
+    return AppUser(
       uid: snapshot.id,
       username: data['username'] ?? '',
       purdueEmail: data['purdueEmail'] ?? '',
@@ -83,7 +83,7 @@ class User {
     }
   }
 
-  // Convert the User object to a Map for Firestore
+  // Convert the AppUser object to a Map for Firestore
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,

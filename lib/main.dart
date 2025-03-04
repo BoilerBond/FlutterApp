@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'firebase_options.dart';
@@ -18,6 +19,7 @@ Future<void> main() async {
   if (const bool.fromEnvironment("USE_FIREBASE_EMULATOR")) {
     await _configureFirebaseAuth();
     _configureFirebaseFirestore();
+    _configureFirebaseFunctions();
   }
 
   runApp(const MyApp());
@@ -57,4 +59,15 @@ void _configureFirebaseFirestore() {
     persistenceEnabled: false,
   );
   debugPrint('Using Firebase Firestore emulator on: $host:$port');
+}
+
+void _configureFirebaseFunctions() {
+  String configHost = const String.fromEnvironment("FIREBASE_EMULATOR_URL");
+  int configPort = const int.fromEnvironment("FUNCTIONS_EMULATOR_PORT");
+  var defaultHost = Platform.isAndroid ? '10.0.2.2' : 'localhost';
+  var host = configHost.isNotEmpty ? configHost : defaultHost;
+  var port = configPort != 0 ? configPort : 5001;
+
+  FirebaseFunctions.instance.useFunctionsEmulator(host, port);
+  debugPrint('Using Firebase Functions emulator on: $host:$port');
 }
