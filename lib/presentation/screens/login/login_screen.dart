@@ -1,8 +1,14 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:datingapp/utils/validators/email_validator.dart';
 import 'package:datingapp/utils/validators/password_validator.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -38,6 +44,18 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  String generateNonce([int length = 32]) {
+    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+  }
+
+  String sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
   Future<void> _loginWithApple() async {
     if (!_isFirebaseAvailable) {
       setState(() {
@@ -46,9 +64,33 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     // Apple login implementation would go here
-    setState(() {
-      _errorMessage = "Apple login not implemented yet";
-    });
+    try {
+      String clientId = "com.boilerbond"; // TODO: register client id in apple developer account
+      String redirectUri = "https://spiced-furry-crow.glitch.me/callbacks/sign_in_with_apple";
+      
+      final rawNonce = generateNonce();
+      final nonce = sha256ofString(rawNonce);
+      
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: Platform.isIOS ? nonce : null,
+        webAuthenticationOptions: Platform.isIOS ? null : WebAuthenticationOptions(clientId: clientId, redirectUri: Uri.parse(redirectUri)),
+      );
+
+      final oauthCredential = OAuthProvider("apple.com").credential(
+        idToken: credential.identityToken,
+        accessToken: credential.authorizationCode,
+      );
+
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(oauthCredential);
+
+      print("User: ${userCredential.user?.uid}");
+    } catch (e) {
+      print("Error: $e");
+    }
   }
 
   Future<void> _loginWithGoogle() async {

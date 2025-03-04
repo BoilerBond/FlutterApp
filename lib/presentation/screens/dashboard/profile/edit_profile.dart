@@ -3,6 +3,8 @@ import 'package:datingapp/utils/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:datingapp/presentation/screens/dashboard/profile/edit_interests.dart';
+
 
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});
@@ -109,6 +111,32 @@ class _EditProfileState extends State<EditProfile> {
                   )
                 ])
               )
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(
+                      width: 1,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditDisplayedInterests(),
+                      ),
+                    );
+                  },
+                  child: const Text("Edit Interests"),
+                ),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(16),
