@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum Gender { none, man, woman, other }
-
 class User {
   String uid;
   String username;
@@ -23,31 +22,31 @@ class User {
   bool messagingNotificationEnabled;
   bool eventNotificationEnabled;
 
-
   User({
     required this.uid,
-    required this.username,
-    required this.purdueEmail,
-    required this.firstName,
-    required this.lastName,
-    required this.bio,
-    required this.major,
-    required this.gender,
-    required this.age,
-    required this.profilePictureURL,
-    required this.photosURL,
-    required this.blockedUserUIDs,
-    required this.priorityLevel,
-    required this.hobbies,
-    required this.profileVisible,
-    required this.photoVisible,
-    required this.matchResultNotificationEnabled,
-    required this.messagingNotificationEnabled,
-    required this.eventNotificationEnabled
+    this.username = '',
+    this.purdueEmail = '',
+    this.firstName = '',
+    this.lastName = '',
+    this.bio = '',
+    this.major = '',
+    this.gender = Gender.none,
+    this.age = 0,
+    this.profilePictureURL = '',
+    this.photosURL = const [],
+    this.blockedUserUIDs = const [],
+    this.priorityLevel = 0,
+    this.hobbies = const [],
+    this.profileVisible = true,
+    this.photoVisible = true,
+    this.matchResultNotificationEnabled = true,
+    this.messagingNotificationEnabled = true,
+    this.eventNotificationEnabled = true,
   });
 
   factory User.fromSnapshot(DocumentSnapshot snapshot) {
-    final data = snapshot.data() as Map<String, dynamic>;
+    final data = snapshot.data() as Map<String, dynamic>? ?? {};
+
     return User(
       uid: snapshot.id,
       username: data['username'] ?? '',
@@ -71,11 +70,11 @@ class User {
     );
   }
 
-  static Gender _parseGender(String gender) {
+  static Gender _parseGender(String? gender) {
     switch (gender) {
-      case 'male':
+      case 'man':
         return Gender.man;
-      case 'female':
+      case 'woman':
         return Gender.woman;
       case 'other':
         return Gender.other;
@@ -84,6 +83,7 @@ class User {
     }
   }
 
+  // Convert the User object to a Map for Firestore
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -102,6 +102,9 @@ class User {
       'hobbies': hobbies,
       'profileVisible': profileVisible,
       'photoVisible': photoVisible,
+      'matchResultNotificationEnabled': matchResultNotificationEnabled,
+      'messagingNotificationEnabled': messagingNotificationEnabled,
+      'eventNotificationEnabled': eventNotificationEnabled,
     };
   }
 }
