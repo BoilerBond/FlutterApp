@@ -1,7 +1,7 @@
 import 'package:datingapp/presentation/screens/dashboard/bond/bond_screen.dart';
 import 'package:datingapp/presentation/screens/dashboard/explore/explore_screen.dart';
 import 'package:datingapp/presentation/screens/dashboard/profile/profile_screen.dart';
-import 'package:datingapp/presentation/screens/dashboard/settings/settingsScreen.dart';
+import 'package:datingapp/presentation/screens/dashboard/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
 
 class Dashboard extends StatefulWidget {
