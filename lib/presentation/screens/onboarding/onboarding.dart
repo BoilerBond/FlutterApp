@@ -16,7 +16,8 @@ class _OnBoardingState extends State<OnBoarding> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-            title: const Text('BBond')
+            title: const Text('BBond'),
+            automaticallyImplyLeading: false,
         ),
         body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +88,8 @@ class _Step2State extends State<Step2> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-            title: const Text('BBond')
+            title: const Text('BBond'),
+            automaticallyImplyLeading: false,
         ),
         body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,7 +185,8 @@ class _Step6State extends State<Step6> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-            title: const Text('BBond')
+            title: const Text('BBond'),
+            automaticallyImplyLeading: false,
         ),
         body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

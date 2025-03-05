@@ -21,8 +21,8 @@ class AuthMiddleware extends StatefulWidget {
 }
 
 class _AuthMiddlewareState extends State<AuthMiddleware> {
-  Future<bool> checkProfileExists(String uid) async {
-    return (await widget.db.collection("users").doc(uid).get()).exists;
+  Stream<bool> checkProfileExists(String uid) {
+    return widget.db.collection("users").doc(uid).snapshots().map((snapshot) => snapshot.exists);
   }
 
   @override
@@ -35,8 +35,8 @@ class _AuthMiddlewareState extends State<AuthMiddleware> {
           }
           if (snapshot.hasData) {
             final user = snapshot.data!;
-            return FutureBuilder<bool>(
-              future: checkProfileExists(user.uid),
+            return StreamBuilder<bool>(
+              stream: checkProfileExists(user.uid),
               builder: (context, profileSnapshot) {
                 if (profileSnapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());

@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:datingapp/utils/validators/email_validator.dart';
@@ -13,32 +14,42 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _emailValidator = EmailValidator(validatePurdueEmail: true);
-  
+
   bool _isLoading = false;
   String _errorMessage = '';
   String _successMessage = '';
-  
+
   @override
   void dispose() {
     _emailController.dispose();
     super.dispose();
   }
-  
+
+  void navigateToOnboarding() {
+    Navigator.pushReplacementNamed(context, "/onboarding");
+
+    // Create user profile in firestore
+    final callable = FirebaseFunctions.instance.httpsCallable('user-account-createAccountProfile');
+
+    // TODO: change this to the actual verified purdue email
+    callable.call({"purdueEmail": _emailController.text.trim()});
+  }
+
   Future<void> _verifyPurdueEmail() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = '';
       _successMessage = '';
     });
-    
+
     try {
       // Get the current user
       final user = FirebaseAuth.instance.currentUser;
-      
+
       if (user == null) {
         setState(() {
           _errorMessage = 'You must be logged in to verify your email.';
@@ -46,7 +57,7 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
         });
         return;
       }
-      
+
       // Send email verification link
       await FirebaseAuth.instance.sendSignInLinkToEmail(
         email: _emailController.text.trim(),
@@ -59,7 +70,7 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
           androidMinimumVersion: '12',
         ),
       );
-      
+
       setState(() {
         _successMessage = 'Verification email sent! Please check your inbox.';
         _isLoading = false;
@@ -76,7 +87,7 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
       });
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -135,9 +146,7 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text('Verify Email', style: TextStyle(fontSize: 16)),
+                child: _isLoading ? const CircularProgressIndicator() : const Text('Verify Email', style: TextStyle(fontSize: 16)),
               ),
             ],
           ),
@@ -145,4 +154,4 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
       ),
     );
   }
-} 
+}

@@ -35,7 +35,7 @@ class _AppSettingsState extends State<AppSettings> {
 
   Future<void> _updateNotificationSetting() async {
     if (currentUser != null) {
-      final callable = FirebaseFunctions.instance.httpsCallable('notification_settings-changeNotificationSettings');
+      final callable = FirebaseFunctions.instance.httpsCallable('user-notifications-changeNotificationSettings');
       await callable.call({
         "matchResultNotificationEnabled": _matchResultNotificationEnabled,
         "messagingNotificationEnabled": _messageNotificationEnabled,

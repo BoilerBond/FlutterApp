@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:datingapp/presentation/widgets/confirm_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ class DangerZone extends StatefulWidget {
 }
 
 class _DangerZoneState extends State<DangerZone> {
+  String errorMessage = "";
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +38,7 @@ class _DangerZoneState extends State<DangerZone> {
               ),
             ),
           ),
+          Text(errorMessage, style: TextStyle(color: Theme.of(context).colorScheme.error),),
         ],
       ),
     );
@@ -45,6 +48,15 @@ class _DangerZoneState extends State<DangerZone> {
   void _onDeleteAccountPress(BuildContext context) {
     confirmDialog(context, () async {
       // TODO: delete user information in Firebase
+      final callable = FirebaseFunctions.instance.httpsCallable('user-account-deleteAccountProfile');
+      final Map<String, dynamic> result = Map<String, dynamic>.from((await callable.call()).data);
+
+      if (result.containsKey("error")) {
+        setState(() {
+          errorMessage = result["error"];
+        });
+        return;
+      }
 
       // get current user
       final user = FirebaseAuth.instance.currentUser;
