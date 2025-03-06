@@ -119,6 +119,11 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _bypassLogin() {
+    // Navigate to the Purdue verification screen using the correct route
+    Navigator.pushReplacementNamed(context, '/purdue_verification');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -151,6 +156,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   label: const Text('Login with Google'),
                   style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                   onPressed: _loginWithGoogle,
+                ),
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.school, size: 24),
+                  label: const Text('Skip to Purdue Verification'),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    backgroundColor: Colors.grey[400],
+                  ),
+                  onPressed: _bypassLogin,
                 ),
               ),
               if (_errorMessage.isNotEmpty)

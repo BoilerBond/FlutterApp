@@ -7,6 +7,8 @@ import 'package:datingapp/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:datingapp/theme/theme.dart';
+import 'package:flutter/foundation.dart';
+import 'package:datingapp/utils/firebase_emulator_utils.dart';
 
 import 'dart:io';
 
@@ -16,10 +18,9 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   
-  if (const bool.fromEnvironment("USE_FIREBASE_EMULATOR")) {
-    await _configureFirebaseAuth();
-    _configureFirebaseFirestore();
-    _configureFirebaseFunctions();
+  // Use emulators in debug mode or when explicitly requested
+  if (kDebugMode || const bool.fromEnvironment("USE_FIREBASE_EMULATOR")) {
+    configureFirebaseEmulators();
   }
 
   runApp(const MyApp());
@@ -32,10 +33,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = View.of(context).platformDispatcher.platformBrightness;
     MaterialTheme theme = MaterialTheme(context);
-    return MaterialApp(routes: Routes.getRoutes(), theme: brightness == Brightness.light ? theme.light() : theme.dark());
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      routes: Routes.getRoutes(), 
+      theme: brightness == Brightness.light ? theme.light() : theme.dark()
+    );
   }
 }
 
+// Keep existing emulator configuration methods for backward compatibility
 Future<void> _configureFirebaseAuth() async {
   String configHost = const String.fromEnvironment("FIREBASE_EMULATOR_URL");
   int configPort = const int.fromEnvironment("AUTH_EMULATOR_PORT");

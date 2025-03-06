@@ -1,27 +1,25 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'screens/exploreScreen.dart';
-import 'screens/bondScreen.dart';
-import 'screens/profileScreen.dart';
-import 'screens/settingsScreen.dart';
+import 'screens/explore_screen.dart';
+import 'screens/bond_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/settings_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
 
   @override
-  _MainNavigationState createState() => _MainNavigationState();
+  MainNavigationState createState() => MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+class MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 2; // Default index set to Profile page
 
   // List of screens corresponding to each BottomNavigationBarItem
   final List<Widget> _screens = [
-    ExploreScreen(),
-    MyBondScreen(),
-    MyProfileScreen(),
-    SettingsScreen(),
+    const ExploreScreen(),
+    const BondScreen(),
+    const ProfileScreen(),
+    const SettingsScreen(),
   ];
 
   void _onItemTapped(int index) {
