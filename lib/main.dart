@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:datingapp/theme/theme.dart';
 
+import 'package:datingapp/presentation/screens/onboarding/onboarding.dart';
+
 import 'dart:io';
 
 Future<void> main() async {
@@ -31,8 +33,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = View.of(context).platformDispatcher.platformBrightness;
-    MaterialTheme theme = MaterialTheme(context);
-    return MaterialApp(routes: Routes.getRoutes(), theme: brightness == Brightness.light ? theme.light() : theme.dark());
+    ThemeData theme = Theme.of(context);
+    return MaterialApp(
+      title: 'BoilerBond Demo',
+      theme: theme,
+      home: const OnBoarding(),
+      onGenerateRoute: (settings) {
+        return Routes.onGenerateRoute(settings);
+      },
+    );
   }
 }
 

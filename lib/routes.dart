@@ -20,4 +20,30 @@ class Routes {
       '/purdue_verification': (context) => const PurdueVerificationScreen(),
     };
   }
+
+  static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case '/':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: Dashboard()));
+      case '/settings/app':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: AppSettings()));
+      case '/settings/danger_zone':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: DangerZone()));
+      case '/settings/privacy':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: PrivacySettings()));
+      case '/profile/edit_profile':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: EditProfile()));
+      case '/onboarding':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: OnBoarding()));
+      case '/purdue_verification':
+        return MaterialPageRoute(builder: (context) => const PurdueVerificationScreen());
+
+      default:
+        return MaterialPageRoute(
+          builder: (context) => const Scaffold(
+            body: Center(child: Text("404 - Page Not Found")),
+          ),
+        );
+    }
+  }
 }
