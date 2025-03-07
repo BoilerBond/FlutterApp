@@ -11,22 +11,36 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  AppUser? appUser;
+  bool isLoading = true;
 
-  Future<AppUser?> getAppUser() async {
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
-  
-    if (user == null) return null; // No authenticated user
+    if (user == null) return;
 
-    // Fetch the user document from Firestore
-    final docSnapshot = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final docSnapshot =
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
 
-    if (!docSnapshot.exists) {
-      print("⚠️ No Firestore document found for user ${user.uid}");
-      return null;
+    if (docSnapshot.exists) {
+      setState(() {
+        appUser = AppUser.fromSnapshot(docSnapshot);
+        isLoading = false;
+      });
+    } else {
+      setState(() => isLoading = false);
     }
+  }
 
-    // Convert Firestore document to AppUser instance
-    return AppUser.fromSnapshot(docSnapshot);
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _fetchUserData();
   }
 
   @override
@@ -34,137 +48,126 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final List<Map<String, dynamic>> buttons = [
       {
         'title': 'Edit Profile',
-        'onPressed': (BuildContext context) {
-          Navigator.pushNamed(context, "/profile/edit_profile");
+        'onPressed': (BuildContext context) async {
+          await Navigator.pushNamed(context, "/profile/edit_profile");
+          _fetchUserData();
         }
       },
       {'title': 'View Profile', 'onPressed': (BuildContext context) {}}
     ];
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-                  "My Profile",
-                  style: TextStyle(
-                    fontStyle: FontStyle.italic,
-                    fontWeight: FontWeight.w100,
-                    fontSize: 22,
-                    color: Color(0xFF454746),
-                  ),
-                ),
+          "My Profile",
+          style: TextStyle(
+            fontStyle: FontStyle.italic,
+            fontWeight: FontWeight.w100,
+            fontSize: 22,
+            color: Color(0xFF454746),
+          ),
+        ),
         automaticallyImplyLeading: false,
-        toolbarHeight: 40, 
+        toolbarHeight: 40,
       ),
       body: Center(
-        child: Column(
-          children: [
-            const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
-            FutureBuilder<AppUser?>(
-              future: getAppUser(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                }
-
-                if (snapshot.hasError) {
-                  return const Text("Error loading profile");
-                }
-
-                final appUser = snapshot.data;
-
-                
-                final displayName = (appUser?.firstName ?? '').trim().isEmpty ? "Guest" : appUser!.firstName;
-
-                return Text(
-                  "Welcome back, $displayName!",
-                  style: DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.8),
-                );
-              },
-            ),
-            CircleAvatar(
-              radius: MediaQuery.of(context).size.width * 0.2,
-              backgroundImage: NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"),
-            ),
-            Padding(
-                padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.02),
-                child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: Theme.of(context).colorScheme.tertiaryContainer,
-                    ),
-                    child: Padding(padding: EdgeInsets.all(16), 
-                    child: FutureBuilder<AppUser?>(
-                      future: getAppUser(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const CircularProgressIndicator();
-                        }
-
-                        if (snapshot.hasError) {
-                          return const Text("Error loading profile");
-                        }
-
-                        final appUser = snapshot.data;
-
-                        
-                        final bio = (appUser?.bio ?? '').trim().isEmpty ? "No bio yet." : appUser!.firstName;
-
-                        return Text(
-                          "$bio",
-                          style: DefaultTextStyle.of(context).style,
-                        );
-                      },
-                    ),
-                  ))),
-            IntrinsicHeight(
-                child: (Row(mainAxisSize: MainAxisSize.min, children: [
-              // edit profile button
-              Padding(padding: EdgeInsets.all(16), child: TextButton(onPressed: () => buttons[0]['onPressed'](context), child: Text("Edit Profile"))),
-              // vertical separator
-              VerticalDivider(
-                indent: 16,
-                endIndent: 16,
-              ),
-              // view profile button
-              Padding(padding: EdgeInsets.all(16), child: TextButton(onPressed: () => {}, child: Text("View Profile")))
-            ]))),
-            Divider(
-              indent: 16,
-              endIndent: 16,
-              thickness: 1,
-            ),
-            // prompt of the day
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Theme.of(context).colorScheme.tertiaryContainer,
+        child: isLoading
+            ? const CircularProgressIndicator()
+            : Column(
+                children: [
+                  const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
+                  Text(
+                    "Welcome back, ${appUser?.firstName ?? 'Guest'}!",
+                    style: DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.8),
                   ),
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Prompt of the day goes in here"),
-                          TextField(
-                            maxLines: 5,
-                            minLines: 1,
-                            style: TextStyle(height: 1),
-                            decoration: InputDecoration(hintText: "My answer...", border: InputBorder.none),
-                          ),
-                        ],
+                  CircleAvatar(
+                    radius: MediaQuery.of(context).size.width * 0.2,
+                    backgroundImage: NetworkImage(
+                      appUser?.profilePictureURL ??
+                          "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.02),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Theme.of(context).colorScheme.tertiaryContainer,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          appUser?.bio?.isNotEmpty == true ? appUser!.bio : "No bio yet.",
+                          style: DefaultTextStyle.of(context).style,
+                        ),
                       ),
                     ),
                   ),
-                ),
+                  IntrinsicHeight(
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      // edit profile button
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: TextButton(
+                          onPressed: () => buttons[0]['onPressed'](context),
+                          child: const Text("Edit Profile"),
+                        ),
+                      ),
+                      // vertical separator
+                      const VerticalDivider(
+                        indent: 16,
+                        endIndent: 16,
+                      ),
+                      // view profile button
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: TextButton(
+                          onPressed: () => {},
+                          child: const Text("View Profile"),
+                        ),
+                      ),
+                    ]),
+                  ),
+                  const Divider(
+                    indent: 16,
+                    endIndent: 16,
+                    thickness: 1,
+                  ),
+                  // prompt of the day
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Theme.of(context).colorScheme.tertiaryContainer,
+                        ),
+                        child: SingleChildScrollView(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text("Prompt of the day goes in here"),
+                                const TextField(
+                                  maxLines: 5,
+                                  minLines: 1,
+                                  style: TextStyle(height: 1),
+                                  decoration: InputDecoration(
+                                      hintText: "My answer...",
+                                      border: InputBorder.none),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                ],
               ),
-            )
-          ],
-        ),
       ),
     );
   }
