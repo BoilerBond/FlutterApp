@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:datingapp/presentation/screens/dashboard/profile/edit_interests.dart';
+import 'package:datingapp/presentation/screens/dashboard/profile/edit_bio.dart';
 import 'package:datingapp/data/entity/app_user.dart';
 import 'package:datingapp/utils/image_helper.dart';
 
@@ -38,8 +39,10 @@ class _EditProfileState extends State<EditProfile> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final docSnapshot =
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final docSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
 
     if (docSnapshot.exists) {
       setState(() {
@@ -50,9 +53,10 @@ class _EditProfileState extends State<EditProfile> {
         majorController.text = appUser?.major ?? "";
         instagramController.text = appUser?.instagramLink ?? "";
         facebookController.text = appUser?.facebookLink ?? "";
-        selectedAge = (appUser?.age != null && appUser!.age > 0 && appUser!.age <= 100)
-            ? appUser!.age
-            : 18;
+        selectedAge =
+            (appUser?.age != null && appUser!.age > 0 && appUser!.age <= 100)
+                ? appUser!.age
+                : 18;
         isLoading = false;
         _imageURL = appUser?.profilePictureURL;
       });
@@ -122,7 +126,8 @@ class _EditProfileState extends State<EditProfile> {
       {required String title,
       required TextEditingController controller,
       required String firestoreField}) async {
-    TextEditingController tempController = TextEditingController(text: controller.text);
+    TextEditingController tempController =
+        TextEditingController(text: controller.text);
 
     await showDialog(
       context: context,
@@ -172,7 +177,8 @@ class _EditProfileState extends State<EditProfile> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile', style: TextStyle(color: Color(0xFF5E77DF))),
+        title: const Text('Edit Profile',
+            style: TextStyle(color: Color(0xFF5E77DF))),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFF5E77DF)),
@@ -180,7 +186,8 @@ class _EditProfileState extends State<EditProfile> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -222,13 +229,47 @@ class _EditProfileState extends State<EditProfile> {
                   _buildTextField("Major", majorController),
                   const SizedBox(height: 10),
 
-                  _buildTextField("Biography", bioController, isMultiline: true),
-                  const SizedBox(height: 20),
+                  // display current bio and edit button
+                  if (appUser != null)
+                    ListTile(
+                      title: const Text("Bio"),
+                      subtitle: Text(appUser!.bio),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () async {
+                          final newBio = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  EditBioScreen(initialBio: appUser!.bio),
+                            ),
+                          );
+
+                          if (newBio != null && newBio != appUser!.bio) {
+                            setState(() {
+                              appUser = AppUser(
+                                uid: appUser!.uid,
+                                firstName: appUser!.firstName,
+                                lastName: appUser!.lastName,
+                                bio: newBio,
+                                major: appUser!.major,
+                                instagramLink: appUser!.instagramLink,
+                                facebookLink: appUser!.facebookLink,
+                                profilePictureURL: appUser!.profilePictureURL,
+                                age: appUser!.age,
+                              );
+                              bioController.text = newBio;
+                            });
+                          }
+                        },
+                      ),
+                    ),
 
                   _buildActionButton("Edit my interests", () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => EditDisplayedInterests()),
+                      MaterialPageRoute(
+                          builder: (_) => EditDisplayedInterests()),
                     );
                   }),
                   const SizedBox(height: 10),
@@ -273,7 +314,8 @@ class _EditProfileState extends State<EditProfile> {
                         backgroundColor: const Color(0xFF5E77DF),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                       ),
                       child: const Text('Save'),
                     ),
@@ -284,7 +326,8 @@ class _EditProfileState extends State<EditProfile> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {bool isMultiline = false}) {
+  Widget _buildTextField(String label, TextEditingController controller,
+      {bool isMultiline = false}) {
     return TextFormField(
       controller: controller,
       maxLines: isMultiline ? 5 : 1,
@@ -299,7 +342,8 @@ class _EditProfileState extends State<EditProfile> {
     );
   }
 
-  Widget _buildActionButtonWithIcon(IconData icon, String text, VoidCallback onPressed) {
+  Widget _buildActionButtonWithIcon(
+      IconData icon, String text, VoidCallback onPressed) {
     return OutlinedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, color: Theme.of(context).colorScheme.outlineVariant),
@@ -316,25 +360,22 @@ class _EditProfileState extends State<EditProfile> {
     );
   }
 
-    Widget _buildActionButton(String text, VoidCallback onPressed) {
+  Widget _buildActionButton(String text, VoidCallback onPressed) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
         style: OutlinedButton.styleFrom(
-        side: BorderSide(
-          width: 1,
-          color: Theme.of(context).colorScheme.outlineVariant,
+          side: BorderSide(
+            width: 1,
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-      onPressed: onPressed,
-      child: Text(text, style: const TextStyle(fontSize: 16)),
+        onPressed: onPressed,
+        child: Text(text, style: const TextStyle(fontSize: 16)),
       ),
     );
   }
 }
-
-
-
