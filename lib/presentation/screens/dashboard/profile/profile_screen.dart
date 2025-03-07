@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:datingapp/data/entity/app_user.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -8,6 +11,24 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+
+  Future<AppUser?> getAppUser() async {
+    final user = FirebaseAuth.instance.currentUser;
+  
+    if (user == null) return null; // No authenticated user
+
+    // Fetch the user document from Firestore
+    final docSnapshot = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+
+    if (!docSnapshot.exists) {
+      print("⚠️ No Firestore document found for user ${user.uid}");
+      return null;
+    }
+
+    // Convert Firestore document to AppUser instance
+    return AppUser.fromSnapshot(docSnapshot);
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> buttons = [
@@ -37,9 +58,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           children: [
             const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
-            Text(
-              "Welcome back, [User]!",
-              style: DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.8),
+            FutureBuilder<AppUser?>(
+              future: getAppUser(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const CircularProgressIndicator();
+                }
+
+                if (snapshot.hasError) {
+                  return const Text("Error loading profile");
+                }
+
+                final appUser = snapshot.data;
+
+                
+                final displayName = (appUser?.firstName ?? '').trim().isEmpty ? "Guest" : appUser!.firstName;
+
+                return Text(
+                  "Welcome back, $displayName!",
+                  style: DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.8),
+                );
+              },
             ),
             CircleAvatar(
               radius: MediaQuery.of(context).size.width * 0.2,
@@ -53,7 +92,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(10),
                       color: Theme.of(context).colorScheme.tertiaryContainer,
                     ),
-                    child: Padding(padding: EdgeInsets.all(16), child: Text("Bio")))),
+                    child: Padding(padding: EdgeInsets.all(16), 
+                    child: FutureBuilder<AppUser?>(
+                      future: getAppUser(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const CircularProgressIndicator();
+                        }
+
+                        if (snapshot.hasError) {
+                          return const Text("Error loading profile");
+                        }
+
+                        final appUser = snapshot.data;
+
+                        
+                        final bio = (appUser?.bio ?? '').trim().isEmpty ? "No bio yet." : appUser!.firstName;
+
+                        return Text(
+                          "$bio",
+                          style: DefaultTextStyle.of(context).style,
+                        );
+                      },
+                    ),
+                  ))),
             IntrinsicHeight(
                 child: (Row(mainAxisSize: MainAxisSize.min, children: [
               // edit profile button
