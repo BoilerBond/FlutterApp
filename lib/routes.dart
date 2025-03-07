@@ -1,3 +1,4 @@
+import 'package:datingapp/presentation/screens/dashboard/profile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:datingapp/utils/middlewares/auth_middleware.dart';
 import 'package:datingapp/presentation/screens/dashboard/dashboard.dart';

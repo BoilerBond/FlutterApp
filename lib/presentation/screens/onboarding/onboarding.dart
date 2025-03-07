@@ -1,11 +1,11 @@
 import "package:flutter/material.dart";
-import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
-import 'package:datingapp/utils/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:datingapp/utils/image_helper.dart';
+
 
 class OnBoarding extends StatefulWidget {
   const OnBoarding({super.key});
@@ -693,76 +693,17 @@ class Step6 extends StatefulWidget {
 
 class _Step6State extends State<Step6> {
   Uint8List? _image;
-  bool _uploading = false;
-  String? _imageURL;
-
   void selectImage() async {
-    XFile img = await pickImage(ImageSource.gallery);
-    CroppedFile? croppedFile = await ImageCropper().cropImage(
-      sourcePath: img.path,
-      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
-      compressQuality: 50,
-      uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: 'Crop your image',
-          toolbarColor: const Color.fromARGB(255, 34, 122, 255),
-          toolbarWidgetColor: Colors.white,
-        ),
-        IOSUiSettings(
-          title: 'Crop your image',
-        ),
-      ],
-    );
-    if (croppedFile == null) return; // User canceled cropping
-
-    Uint8List imageBytes = await croppedFile.readAsBytes();
-    setState(() {
-      _image = imageBytes;
-    });
-    await _uploadImage(_image!);
+    Uint8List? imageBytes = await ImageHelper().selectImage();
+    if (imageBytes != null) {
+      setState(() {
+        _image = imageBytes;
+      });
+    }
   }
 
   Future<void> _uploadImage(Uint8List image) async {
-    setState(() {
-      _uploading = true;
-    });
-
-    try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        print("User is not logged in");
-        return;
-      }
-      print("Uploading image for user ${user.uid}");
-
-      // get firebase storage reference with user id
-      Reference ref = FirebaseStorage.instance
-          .ref()
-          .child("profile_pictures")
-          .child("${user.uid}.jpg");
-
-      UploadTask uploadTask = ref.putData(image);
-      TaskSnapshot snapshot = await uploadTask;
-
-      String downloadUrl = await snapshot.ref.getDownloadURL();
-
-      setState(() {
-        _imageURL = downloadUrl;
-        _uploading = false;
-      });
-
-      // Update Firestore document with profile picture URL
-      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
-        'profileImageUrl': downloadUrl,
-      });
-
-      print("Image uploaded successfully");
-    } catch (e) {
-      print("Error uploading image: $e");
-      setState(() {
-        _uploading = false;
-      });
-    }
+    await ImageHelper().uploadImage(image);
   }
 
   @override
@@ -835,7 +776,10 @@ class _Step6State extends State<Step6> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    onPressed: () => Navigator.of(context).push(_createRoute(Step7())),
+                    onPressed: () async {
+                      await _uploadImage(_image!);
+                      Navigator.of(context).push(_createRoute(Step7()));
+                    },
                     child: Text("Next")),
               ),
             ),

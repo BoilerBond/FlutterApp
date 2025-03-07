@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
 /// Configure Firebase to use emulators when in debug mode
@@ -16,6 +17,9 @@ void configureFirebaseEmulators() async {
     
     // Configure Cloud Functions Emulator
     _configureFirebaseFunctions();
+
+    // Configure Cloud Functions Emulator
+    _configureFirebaseStorage();
   }
 } 
 
@@ -54,4 +58,15 @@ void _configureFirebaseFunctions() {
 
   FirebaseFunctions.instance.useFunctionsEmulator(host, port);
   debugPrint('🔥 Using Firebase Functions emulator on: $host:$port');
+}
+
+void _configureFirebaseStorage() {
+  String configHost = const String.fromEnvironment("FIREBASE_EMULATOR_URL");
+  int configPort = const int.fromEnvironment("FUNCTIONS_EMULATOR_PORT");
+  var defaultHost = Platform.isAndroid ? '10.0.2.2' : 'localhost';
+  var host = configHost.isNotEmpty ? configHost : defaultHost;
+  var port = configPort != 0 ? configPort : 9199;
+
+  FirebaseStorage.instance.useStorageEmulator(host, port);
+  debugPrint('🔥 Using Firebase Storage emulator on: $host:$port');
 }
