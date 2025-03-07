@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class MoreProfileScreen extends StatelessWidget {
   final String name;
@@ -16,8 +18,12 @@ class MoreProfileScreen extends StatelessWidget {
     required this.displayedInterests,
   });
 
+
   @override
   Widget build(BuildContext context) {
+
+    
+    
     return Scaffold(
       appBar: AppBar(
         title: Text('$name\'s Profile', style: const TextStyle(color: Color(0xFF5E77DF))),
@@ -41,6 +47,30 @@ class MoreProfileScreen extends StatelessWidget {
                 backgroundColor: const Color(0xFFCDFCFF),
               ),
               const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: _buildSocialMediaButton(
+                          context,
+                          icon: Icons.camera_alt,
+                          label: "Instagram",
+                          url: "",
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildSocialMediaButton(
+                          context,
+                          icon: Icons.facebook,
+                          label: "Facebook",
+                          url: "",
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
 
               _buildProfileField("Name", name),
               _buildProfileField("Age", age),
@@ -88,6 +118,32 @@ class MoreProfileScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildSocialMediaButton(BuildContext context, {required IconData icon, required String label, required String url}) {
+    return OutlinedButton.icon(
+      onPressed: url.isNotEmpty ? () => _launchURL(context, url) : null,
+      icon: Icon(icon, color: url.isNotEmpty ? Colors.blueAccent : Colors.grey),
+      label: Text(label, style: TextStyle(fontSize: 16, color: url.isNotEmpty ? Colors.blueAccent : Colors.grey)),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(
+          width: 1,
+          color: url.isNotEmpty ? Colors.blueAccent : Colors.grey,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _launchURL(BuildContext context, String url) async {
+  if (url.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("No link available")),
+    );
+    return;
+  }
+}
 
   Widget _buildInterestsSection() {
     return Column(

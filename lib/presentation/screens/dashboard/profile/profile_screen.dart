@@ -14,6 +14,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   AppUser? appUser;
   bool isLoading = true;
+  String? _imageURL = "";
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         appUser = AppUser.fromSnapshot(docSnapshot);
         isLoading = false;
+        _imageURL = appUser?.profilePictureURL;
       });
     } else {
       setState(() => isLoading = false);
@@ -81,13 +83,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     "Welcome back, ${appUser?.firstName ?? 'Guest'}!",
                     style: DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.8),
                   ),
-                  CircleAvatar(
-                    radius: MediaQuery.of(context).size.width * 0.2,
-                    backgroundImage: NetworkImage(
-                      appUser?.profilePictureURL ??
-                          "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-                    ),
-                  ),
+                  Stack(children: [
+                        (_imageURL!.isNotEmpty)
+                            ? CircleAvatar(radius: MediaQuery.of(context).size.width * 0.2, backgroundImage: NetworkImage(_imageURL!))
+                            : CircleAvatar(
+                                radius: MediaQuery.of(context).size.width * 0.2,
+                                backgroundImage: NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"),
+                              )
+                      ]),
                   Padding(
                     padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.02),
                     child: Container(

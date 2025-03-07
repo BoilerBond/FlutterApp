@@ -2,12 +2,9 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
-import 'package:datingapp/utils/image_picker.dart';
 import 'package:datingapp/presentation/screens/dashboard/profile/edit_interests.dart';
 import 'package:datingapp/data/entity/app_user.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:datingapp/utils/image_helper.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});
@@ -18,6 +15,7 @@ class EditProfile extends StatefulWidget {
 
 class _EditProfileState extends State<EditProfile> {
   Uint8List? _image;
+  String? _imageURL = "";
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController bioController = TextEditingController();
@@ -25,6 +23,7 @@ class _EditProfileState extends State<EditProfile> {
   final TextEditingController instagramController = TextEditingController();
   final TextEditingController facebookController = TextEditingController();
   int? selectedAge;
+  final db = FirebaseFirestore.instance;
 
   bool isLoading = true;
   AppUser? appUser;
@@ -55,59 +54,69 @@ class _EditProfileState extends State<EditProfile> {
             ? appUser!.age
             : 18;
         isLoading = false;
+        _imageURL = appUser?.profilePictureURL;
       });
     } else {
       setState(() => isLoading = false);
     }
   }
 
-  Future<void> _saveProfile() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+  Future<void> _handleProfileSubmit(BuildContext context) async {
+    if (_image != null) {
+      await _uploadImage(_image!);
+      _image = null;
+    }
 
-    try {
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-        'firstName': firstNameController.text.trim(),
-        'lastName': lastNameController.text.trim(),
-        'bio': bioController.text.trim(),
-        'major': majorController.text.trim(),
-        'age': selectedAge,
-        'instagramLink': instagramController.text.trim(),
-        'facebookLink': facebookController.text.trim(),
+    final userSnapshot = await db.collection("users").doc(appUser?.uid).get();
+    final user = AppUser.fromSnapshot(userSnapshot);
+
+    if (firstNameController.text.isNotEmpty) {
+      user.firstName = firstNameController.text;
+    }
+
+    if (lastNameController.text.isNotEmpty) {
+      user.lastName = lastNameController.text;
+    }
+
+    if (selectedAge != null && selectedAge! > 0 && selectedAge! <= 100) {
+      user.age = selectedAge!;
+    }
+
+    if (bioController.text.isNotEmpty) {
+      user.bio = bioController.text;
+    }
+
+    if (facebookController.text.isNotEmpty) {
+      user.facebookLink = facebookController.text;
+    }
+
+    if (instagramController.text.isNotEmpty) {
+      user.instagramLink = instagramController.text;
+    }
+
+
+    await db.collection("users").doc(appUser?.uid).update(user.toMap());
+    Navigator.pushReplacementNamed(context, "/profile");
+  }
+
+
+  void selectImage() async {
+    Uint8List? imageBytes = await ImageHelper().selectImage();
+    if (imageBytes != null) {
+      setState(() {
+        _image = imageBytes;
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Profile updated successfully!")),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to update profile: $e")),
-      );
     }
   }
 
-  void selectImage() async {
-    XFile img = await pickImage(ImageSource.gallery);
-    CroppedFile? croppedFile = await ImageCropper().cropImage(
-      sourcePath: img.path,
-      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-      compressQuality: 50,
-      uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: 'Crop your image',
-          toolbarColor: Theme.of(context).colorScheme.primaryContainer,
-          toolbarWidgetColor: Colors.white,
-        ),
-        IOSUiSettings(title: 'Crop your image'),
-      ],
-    );
-
-    Uint8List? cf = await croppedFile?.readAsBytes();
+  Future<void> _uploadImage(Uint8List image) async {
+    String downloadUrl = await ImageHelper().uploadImage(image);
 
     setState(() {
-      _image = cf;
+      _imageURL = downloadUrl;
     });
   }
+
 
   Future<void> _showSocialMediaDialog(
       {required String title,
@@ -177,27 +186,15 @@ class _EditProfileState extends State<EditProfile> {
                 children: [
                   const SizedBox(height: 10),
 
-                  GestureDetector(
-                    onTap: selectImage,
-                    child: CircleAvatar(
-                      radius: MediaQuery.of(context).size.width * 0.2,
-                      backgroundImage: _image != null
-                          ? MemoryImage(_image!)
-                          : NetworkImage(appUser?.profilePictureURL ??
-                              "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png") as ImageProvider,
-                      backgroundColor: const Color(0xFFCDFCFF),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: selectImage,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      elevation: 0,
-                      shape: const CircleBorder(),
-                    ),
-                    child: const Icon(Icons.edit, color: Color(0xFF5E77DF)),
-                  ),
+                      Stack(children: [
+                        (_image != null || _imageURL!.isNotEmpty)
+                            ? CircleAvatar(radius: MediaQuery.of(context).size.width * 0.2, backgroundImage: _image != null ? MemoryImage(_image!) : NetworkImage(_imageURL!))
+                            : CircleAvatar(
+                                radius: MediaQuery.of(context).size.width * 0.2,
+                                backgroundImage: NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"),
+                              )
+                      ]),
+                      Padding(padding: EdgeInsets.only(bottom: 16), child: TextButton(onPressed: selectImage, child: Text("Edit Profile Picture"))),
                   const SizedBox(height: 20),
 
                   _buildTextField("First Name", firstNameController),
@@ -269,7 +266,9 @@ class _EditProfileState extends State<EditProfile> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _saveProfile,
+                      onPressed: () {
+                        _handleProfileSubmit(context);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF5E77DF),
                         foregroundColor: Colors.white,
