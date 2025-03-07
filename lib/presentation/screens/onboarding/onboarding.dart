@@ -18,9 +18,48 @@ class _OnBoardingState extends State<OnBoarding> {
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController ageController = TextEditingController();
-  final TextEditingController bioController = TextEditingController();
+  final TextEditingController majorController = TextEditingController();
+  
+  Map<String, String> _errors = {};
+  bool _formSubmitted = false;
 
   void saveProfile() async {
+    setState(() {
+      _formSubmitted = true;
+      _errors = {};
+    });
+    
+    // Validate all fields
+    if (firstNameController.text.trim().isEmpty) {
+      _errors['firstName'] = 'First name is required';
+    }
+    if (lastNameController.text.trim().isEmpty) {
+      _errors['lastName'] = 'Last name is required';
+    }
+    if (ageController.text.trim().isEmpty) {
+      _errors['age'] = 'Age is required';
+    } else {
+      try {
+        int age = int.parse(ageController.text.trim());
+        if (age < 18 || age > 100) {
+          _errors['age'] = 'Enter a valid age (18-100)';
+        }
+      } catch (e) {
+        _errors['age'] = 'Enter a valid number';
+      }
+    }
+    if (majorController.text.trim().isEmpty) {
+      _errors['major'] = 'Major is required';
+    }
+    
+    // Check if there are any errors
+    if (_errors.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please fix the errors in the form')),
+      );
+      return;
+    }
+    
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       print("User is not logged in");
@@ -31,13 +70,12 @@ class _OnBoardingState extends State<OnBoarding> {
       'firstName': firstNameController.text,
       'lastName': lastNameController.text,
       'age': int.parse(ageController.text),
-      'bio': bioController.text,
+      'major': majorController.text,
     });
 
     Navigator.of(context).push(_createRoute(Step2()));
   }
 
-  
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
@@ -59,9 +97,12 @@ class _OnBoardingState extends State<OnBoarding> {
                   width: width * 0.4,
                   child: TextField(
                     controller: firstNameController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: "Enter your first name",
+                      errorText: _formSubmitted && _errors.containsKey('firstName') 
+                          ? _errors['firstName'] 
+                          : null,
                     ),
                   ),
                 ),
@@ -76,9 +117,12 @@ class _OnBoardingState extends State<OnBoarding> {
                   width: width * 0.4,
                   child: TextField(
                     controller: lastNameController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: "Enter your last name",
+                      errorText: _formSubmitted && _errors.containsKey('lastName') 
+                          ? _errors['lastName'] 
+                          : null,
                     ),
                   ),
                 ),
@@ -93,9 +137,12 @@ class _OnBoardingState extends State<OnBoarding> {
                   width: width * 0.4,
                   child: TextField(
                     controller: ageController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: "Enter your age",
+                      errorText: _formSubmitted && _errors.containsKey('age') 
+                          ? _errors['age'] 
+                          : null,
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -103,17 +150,20 @@ class _OnBoardingState extends State<OnBoarding> {
               ],
             ),
             const SizedBox(height: 20),
-            // Bio
+            // Major
             Row(
               children: [
-                const Expanded(child: Text("Bio:")),
+                const Expanded(child: Text("Major:")),
                 SizedBox(
                   width: width * 0.4,
                   child: TextField(
-                    controller: bioController,
-                    decoration: const InputDecoration(
+                    controller: majorController,
+                    decoration: InputDecoration(
                       border: OutlineInputBorder(),
-                      hintText: "Tell us about yourself",
+                      hintText: "Enter your major",
+                      errorText: _formSubmitted && _errors.containsKey('major') 
+                          ? _errors['major'] 
+                          : null,
                     ),
                   ),
                 ),
@@ -133,7 +183,7 @@ class _OnBoardingState extends State<OnBoarding> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: () {saveProfile();},
+                onPressed: saveProfile,
                 child: const Text("Save Changes"),
               ),
             ),
@@ -143,7 +193,6 @@ class _OnBoardingState extends State<OnBoarding> {
     );
   }
 }
-
 class Step2 extends StatefulWidget {
   const Step2({super.key});
 
