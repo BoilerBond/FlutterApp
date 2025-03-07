@@ -19,7 +19,7 @@ Future<void> main() async {
   );
   
   // Use emulators in debug mode or when explicitly requested
-  if (kDebugMode || const bool.fromEnvironment("USE_FIREBASE_EMULATOR")) {
+  if (const bool.fromEnvironment("USE_FIREBASE_EMULATOR")) {
     configureFirebaseEmulators();
   }
 
@@ -39,41 +39,4 @@ class MyApp extends StatelessWidget {
       theme: brightness == Brightness.light ? theme.light() : theme.dark()
     );
   }
-}
-
-// Keep existing emulator configuration methods for backward compatibility
-Future<void> _configureFirebaseAuth() async {
-  String configHost = const String.fromEnvironment("FIREBASE_EMULATOR_URL");
-  int configPort = const int.fromEnvironment("AUTH_EMULATOR_PORT");
-  var defaultHost = Platform.isAndroid ? '10.0.2.2' : 'localhost';
-  var host = configHost.isNotEmpty ? configHost : defaultHost;
-  var port = configPort != 0 ? configPort : 9099;
-  await FirebaseAuth.instance.useAuthEmulator(host, port);
-  debugPrint('Using Firebase Auth emulator on: $host:$port');
-}
-
-void _configureFirebaseFirestore() {
-  String configHost = const String.fromEnvironment("FIREBASE_EMULATOR_URL");
-  int configPort = const int.fromEnvironment("FIRESTORE_EMULATOR_PORT");
-  var defaultHost = Platform.isAndroid ? '10.0.2.2' : 'localhost';
-  var host = configHost.isNotEmpty ? configHost : defaultHost;
-  var port = configPort != 0 ? configPort : 8080;
-
-  FirebaseFirestore.instance.settings = Settings(
-    host: '$host:$port',
-    sslEnabled: false,
-    persistenceEnabled: false,
-  );
-  debugPrint('Using Firebase Firestore emulator on: $host:$port');
-}
-
-void _configureFirebaseFunctions() {
-  String configHost = const String.fromEnvironment("FIREBASE_EMULATOR_URL");
-  int configPort = const int.fromEnvironment("FUNCTIONS_EMULATOR_PORT");
-  var defaultHost = Platform.isAndroid ? '10.0.2.2' : 'localhost';
-  var host = configHost.isNotEmpty ? configHost : defaultHost;
-  var port = configPort != 0 ? configPort : 5001;
-
-  FirebaseFunctions.instance.useFunctionsEmulator(host, port);
-  debugPrint('Using Firebase Functions emulator on: $host:$port');
 }

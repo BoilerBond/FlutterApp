@@ -86,7 +86,6 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final userCredential = await FirebaseAuth.instance.signInWithCredential(oauthCredential);
-
       print("User: ${userCredential.user?.uid}");
     } catch (e) {
       print("Error: $e");

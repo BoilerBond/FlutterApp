@@ -47,11 +47,12 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
       }
 
       // Call Firebase Function to check verification status
-      final callable = FirebaseFunctions.instance.httpsCallable('checkPurdueEmailVerification');
-      final result = await callable.call();
+      final token = await user.getIdToken();
+      final callable = FirebaseFunctions.instance.httpsCallable('user-verification-checkPurdueEmailVerification');
+      final result = await callable.call({"uid" : user.uid});
       
       final data = result.data as Map<String, dynamic>;
-      
+            
       setState(() {
         _isVerified = data['verified'] ?? false;
         _verifiedEmail = data['purdueEmail'];
@@ -61,7 +62,7 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
       if (_isVerified && _verifiedEmail != null) {
         // Already verified, automatically navigate to the next screen after a delay
         Future.delayed(const Duration(seconds: 2), () {
-          navigateToOnboarding();
+          Navigator.pushReplacementNamed(context, "/onboarding");
         });
       }
     } catch (e) {
@@ -77,16 +78,6 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
     _emailController.dispose();
     _codeController.dispose();
     super.dispose();
-  }
-
-  void navigateToOnboarding() {
-    Navigator.pushReplacementNamed(context, "/onboarding");
-
-    // Create user profile in firestore
-    final callable = FirebaseFunctions.instance.httpsCallable('user-account-createAccountProfile');
-
-    // Use the verified Purdue email
-    callable.call({"purdueEmail": _emailController.text.isEmpty ? _verifiedEmail : _emailController.text.trim()});
   }
 
   Future<void> _sendVerificationCode() async {
@@ -113,7 +104,7 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
       }
 
       // Call Firebase Function to send verification code
-      final callable = FirebaseFunctions.instance.httpsCallable('sendPurdueVerificationCode');
+      final callable = FirebaseFunctions.instance.httpsCallable('user-verification-sendPurdueVerificationCode');
       final result = await callable.call({
         'email': _emailController.text.trim(),
       });
@@ -146,7 +137,7 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
 
     try {
       // Call Firebase Function to verify the code
-      final callable = FirebaseFunctions.instance.httpsCallable('verifyPurdueEmail');
+      final callable = FirebaseFunctions.instance.httpsCallable('user-verification-verifyPurdueEmail');
       final result = await callable.call({
         'email': _emailController.text.trim(),
         'code': _codeController.text.trim(),
@@ -161,7 +152,7 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
 
       // Wait a moment to show the success message, then navigate
       Future.delayed(const Duration(seconds: 2), () {
-        navigateToOnboarding();
+        Navigator.pushReplacementNamed(context, "/onboarding");
       });
     } catch (e) {
       setState(() {
@@ -178,6 +169,7 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Purdue Email Verification'),
+        automaticallyImplyLeading: false,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

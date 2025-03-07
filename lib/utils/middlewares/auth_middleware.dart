@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:datingapp/presentation/screens/app_description/app_description_screen.dart';
 import 'package:datingapp/presentation/screens/login/login_screen.dart';
 import 'package:datingapp/presentation/screens/purdue_verification/purdue_verification_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -45,8 +46,7 @@ class _AuthMiddlewareState extends State<AuthMiddleware> {
                 if (profileSnapshot.hasData && profileSnapshot.data!) {
                   return widget.child;
                 } else {
-                  // TODO: change this to app description and TOS screen
-                  return PurdueVerificationScreen();
+                  return AppDescriptionScreen(navigatePath: "/purdue_verification");
                 }
               },
             );
