@@ -20,20 +20,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
     // Create a query against the collection.
     try {
-      usersRef.where("profileVisible", isEqualTo: true).get().then(
-              (querySnapshot) {
-            for (var docSnapshot in querySnapshot.docs) {
-              AppUser user = AppUser.fromSnapshot(docSnapshot);
-              result.add(user);
-            }
+      usersRef.where("profileVisible", isEqualTo: true).get().then((querySnapshot) {
+        for (var docSnapshot in querySnapshot.docs) {
+          AppUser user = AppUser.fromSnapshot(docSnapshot);
+          result.add(user);
+        }
 
-            setState(() {
-              users = result;
-            });
-          }
-      );
-    }
-    catch (e) {
+        setState(() {
+          users = result;
+        });
+      });
+    } catch (e) {
       print("failed to get visible users");
     }
   }
@@ -51,25 +48,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.center,
-          children: users!
-            .map(
-              (user) =>
-              Column (
-                children: [
-                  Text(user.firstName + " " + user.lastName),
-                  Text(user.bio),
-                  CircleAvatar(
-                      radius: MediaQuery
-                          .of(context)
-                          .size
-                          .width * 0.1,
-                      backgroundImage: user.profilePictureURL.isNotEmpty ?
-                        NetworkImage(user.profilePictureURL) : NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png")
-                  )
-                ]
+          children: (users != null ? users! : [])
+              .map(
+                (user) => Column(
+                  children: [
+                    Text(user.firstName + " " + user.lastName),
+                    Text(user.bio),
+                    CircleAvatar(
+                      radius: MediaQuery.of(context).size.width * 0.1,
+                      backgroundImage: user.profilePictureURL.isNotEmpty
+                          ? NetworkImage(user.profilePictureURL)
+                          : NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"),
+                    ),
+                  ],
+                ),
               )
-            ).toList()
-        )
+              .toList(),
+        ),
       ),
     );
   }
