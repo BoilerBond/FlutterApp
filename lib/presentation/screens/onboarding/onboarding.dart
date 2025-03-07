@@ -372,7 +372,7 @@ class _Step3State extends State<Step3> {
       await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
         'interests': _selectedInterests.toList(),
       });
-      Navigator.of(context).push(_createRoute(Step6()));
+      Navigator.of(context).push(_createRoute(Step4()));
 
     } catch (e) {
       print("Failed to save interests: $e");
@@ -484,6 +484,205 @@ class _Step3State extends State<Step3> {
   }
 }
 
+class Step4 extends StatefulWidget {
+  const Step4({Key? key}) : super(key: key);
+
+  @override
+  State<Step4> createState() => _Step4State();
+}
+
+class _Step4State extends State<Step4> {
+  final TextEditingController studySpotController = TextEditingController();
+  String? _selectedDiningCourt;
+  final TextEditingController petPeeveController = TextEditingController();
+  final TextEditingController bestMemoryController = TextEditingController();
+
+  Map<String, String> _errors = {};
+  bool _formSubmitted = false;
+  bool _isSaving = false;
+
+  Future<void> _savePurdueInfo() async {
+    setState(() {
+      _formSubmitted = true;
+      _errors = {};
+    });
+
+    if (studySpotController.text.trim().isEmpty) {
+      _errors['studySpot'] = 'Study spot is required';
+    }
+    if (_selectedDiningCourt == null) {
+      _errors['diningCourt'] = 'Please select a dining court';
+    }
+
+    if (_errors.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fix the errors in the form")),
+      );
+      return;
+    }
+
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print("User is not logged in");
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
+        'favoriteStudySpot': studySpotController.text.trim(),
+        'favoriteDiningCourt': _selectedDiningCourt,
+        'purduePetPeeve': petPeeveController.text.trim(),
+        'bestPurdueMemory': bestMemoryController.text.trim(),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Purdue information saved successfully")),
+      );
+      Navigator.of(context).push(_createRoute(Step6()));
+    } catch (e) {
+      print("Error saving Purdue info: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to save Purdue info: $e")),
+      );
+    } finally {
+      setState(() {
+        _isSaving = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    return Scaffold(
+      appBar: AppBar(title: const Text("Step 4: Purdue Info")),
+      body: _isSaving
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(width * 0.1),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("4. Purdue-Specific Questions", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                  const Divider(),
+                  const SizedBox(height: 20),
+                  
+                  // Favorite Study Spot
+                  Row(
+                    children: [
+                      const Expanded(child: Text("Favorite Study Spot:")),
+                      SizedBox(
+                        width: width * 0.4,
+                        child: TextField(
+                          controller: studySpotController,
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            hintText: "e.g., WALC, HSSE",
+                            errorText: _formSubmitted && _errors.containsKey('studySpot')
+                                ? _errors['studySpot']
+                                : null,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Favorite Dining Court
+                  Row(
+                    children: [
+                      const Expanded(child: Text("Best Dining Court:")),
+                      SizedBox(
+                        width: width * 0.4,
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedDiningCourt,
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            errorText: _formSubmitted && _errors.containsKey('diningCourt')
+                                ? _errors['diningCourt']
+                                : null,
+                          ),
+                          hint: Text("Select dining court"),
+                          isExpanded: true,
+                          items: ['Wiley', 'Earhart', 'Windsor', 'Ford', 'Hillenbrand'].map((court) {
+                            return DropdownMenuItem(
+                              value: court,
+                              child: Text(court),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedDiningCourt = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Biggest Purdue Pet Peeve
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Biggest Purdue Pet Peeve (optional):"),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: petPeeveController,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: "What annoys you at Purdue?",
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Best Purdue Memory
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Best Purdue Memory (optional):"),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: bestMemoryController,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: "Your favorite Purdue moment",
+                        ),
+                        maxLines: 2,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  // Save Changes
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          width: 1,
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: _savePurdueInfo,
+                      child: const Text("Save Changes"),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+}
+
 
 class Step6 extends StatefulWidget {
   const Step6({super.key});
@@ -552,21 +751,14 @@ class _Step6State extends State<Step6> {
         _uploading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Profile picture uploaded successfully!")),
-      );
-
-      await FirebaseFirestore.instance
-          .collection("users")
-          .doc(user.uid)
-          .update({
-        'profilePicture': downloadUrl,
+      // Update Firestore document with profile picture URL
+      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
+        'profileImageUrl': downloadUrl,
       });
+
+      print("Image uploaded successfully");
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to upload image")),
-      );
-    } finally {
+      print("Error uploading image: $e");
       setState(() {
         _uploading = false;
       });
@@ -643,13 +835,192 @@ class _Step6State extends State<Step6> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    onPressed: () =>
-                        {Navigator.pushReplacementNamed(context, "/")},
-                    child: Text("Finish")),
+                    onPressed: () => Navigator.of(context).push(_createRoute(Step7())),
+                    child: Text("Next")),
               ),
             ),
           ),
         ]));
+  }
+}
+
+class Step7 extends StatefulWidget {
+  const Step7({super.key});
+
+  @override
+  State<Step7> createState() => _Step7State();
+}
+
+class _Step7State extends State<Step7> {
+  // Personal traits ratings (-5 to 5)
+  final Map<String, int> _personalTraits = {
+    "I enjoy socializing and being around people.": 0,
+    "Having a family is a top priority for me.": 0,
+    "I like an active lifestyle with lots of physical activity.": 0,
+    "I tend to stay calm and steady, even under pressure.": 0,
+    "I love trying new things and taking risks.": 0,
+  };
+
+  // Partner preferences ratings (-5 to 5)
+  final Map<String, int> _partnerPreferences = {
+    "I want someone who is outgoing and talkative.": 0,
+    "I'm looking for someone who values building a family.": 0,
+    "I'd like a partner who enjoys staying active and fit.": 0,
+    "I prefer someone who is emotionally expressive.": 0,
+    "I want a partner who is spontaneous and adventurous.": 0,
+  };
+
+  Future<void> _savePreferencesAndFinish() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print("User is not logged in");
+      return;
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
+        'personalTraits': _personalTraits,
+        'partnerPreferences': _partnerPreferences,
+      });
+      
+      // Navigate to the dashboard or finish onboarding
+      Navigator.pushReplacementNamed(context, "/");
+    } catch (e) {
+      print("Failed to save preferences: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to save preferences")),
+      );
+    }
+  }
+
+  Widget _buildSlider(String question, Map<String, int> targetMap) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Text(
+            question,
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("-5", style: TextStyle(fontWeight: FontWeight.bold)),
+            Expanded(
+              child: Slider(
+                min: -5,
+                max: 5,
+                divisions: 10,
+                value: targetMap[question]!.toDouble(),
+                label: targetMap[question].toString(),
+                onChanged: (double value) {
+                  setState(() {
+                    targetMap[question] = value.toInt();
+                  });
+                },
+              ),
+            ),
+            Text("5", style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        const Divider(),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    
+    return Scaffold(
+      appBar: AppBar(title: const Text('BBond')),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: EdgeInsets.only(left: width * 0.05, top: 16),
+            child: const Text(
+              "Onboarding",
+              style: TextStyle(fontSize: 30),
+            ),
+          ),
+          Divider(
+            indent: width * 0.04,
+            endIndent: width * 0.04,
+          ),
+          
+          // Main content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(width * 0.05),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Tell us about yourself and what you're looking for",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 24),
+                  
+                  const Text(
+                    "About You",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 16),
+                  
+                  // Personal traits sliders
+                  ..._personalTraits.keys.map((question) => 
+                    _buildSlider(question, _personalTraits)
+                  ).toList(),
+                  
+                  SizedBox(height: 24),
+                  
+                  const Text(
+                    "What You're Looking For",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 16),
+                  
+                  // Partner preference sliders
+                  ..._partnerPreferences.keys.map((question) => 
+                    _buildSlider(question, _partnerPreferences)
+                  ).toList(),
+                ],
+              ),
+            ),
+          ),
+          
+          // Finish Button
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: width * 0.3,
+                height: width * 0.1,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xffCDFCFF),
+                    side: BorderSide(
+                      width: 1,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: _savePreferencesAndFinish,
+                  child: const Text("Finish"),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
