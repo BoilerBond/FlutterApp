@@ -201,6 +201,45 @@ class Step2 extends StatefulWidget {
 }
 
 class _Step2State extends State<Step2> {
+  final TextEditingController _bioController = TextEditingController();
+  bool _saving = false; 
+  Future<void> _saveBioAndContinue() async {
+    setState(() {
+      _saving = true; 
+    });
+
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("You must be logged in to continue.")),
+      );
+      setState(() {
+        _saving = false;
+      });
+      return;
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
+        "bio": _bioController.text.trim(),
+      });
+
+      print("bio updated for ${user.uid}");
+
+      Navigator.of(context).push(_createRoute(Step6()));
+
+    } catch (e) {
+      print("firestore error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to save bio. Try again.")),
+      );
+    } finally {
+      setState(() {
+        _saving = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,7 +255,19 @@ class _Step2State extends State<Step2> {
           Expanded(
               child: Center(
                   child: Column(children: [
-            Text("2. placeholder"),
+            Text("2. Tell us about yourself!", style: TextStyle(fontSize: 20)),
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: TextField(
+                controller: _bioController,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: "Enter your bio...",
+                ),
+                maxLength: 150,
+                maxLines: 3,
+              ),
+            ),
           ]))),
           Center(
             child: Padding(
@@ -236,9 +287,10 @@ class _Step2State extends State<Step2> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    onPressed: () =>
-                        {Navigator.of(context).push(_createRoute(Step6()))},
-                    child: Icon(Icons.arrow_forward)),
+                    onPressed: _saving ? null : _saveBioAndContinue, // Disable button while saving
+                    child: _saving
+                        ? CircularProgressIndicator()
+                        : Icon(Icons.arrow_forward)),
               ),
             ),
           ),
