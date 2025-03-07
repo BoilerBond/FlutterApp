@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum Gender { none, man, woman, other }
+
 class AppUser {
   String uid;
   String username;
@@ -21,6 +22,9 @@ class AppUser {
   bool matchResultNotificationEnabled;
   bool messagingNotificationEnabled;
   bool eventNotificationEnabled;
+  bool termsAccepted;
+  String instagramLink; // NEW FIELD
+  String facebookLink; // NEW FIELD
 
   AppUser({
     required this.uid,
@@ -42,6 +46,9 @@ class AppUser {
     this.matchResultNotificationEnabled = true,
     this.messagingNotificationEnabled = true,
     this.eventNotificationEnabled = true,
+    this.termsAccepted = false,
+    this.instagramLink = '', // Default to empty
+    this.facebookLink = '', // Default to empty
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -67,6 +74,9 @@ class AppUser {
       matchResultNotificationEnabled: data['matchResultNotificationEnabled'] ?? true,
       messagingNotificationEnabled: data['messagingNotificationEnabled'] ?? true,
       eventNotificationEnabled: data['eventNotificationEnabled'] ?? true,
+      termsAccepted: data['termsAccepted'] ?? false,
+      instagramLink: data['instagramLink'] ?? '', // Fetch from Firestore
+      facebookLink: data['facebookLink'] ?? '', // Fetch from Firestore
     );
   }
 
@@ -83,7 +93,7 @@ class AppUser {
     }
   }
 
-  // Convert the AppUser object to a Map for Firestore
+  /// Convert AppUser object to Map for Firestore
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -105,6 +115,9 @@ class AppUser {
       'matchResultNotificationEnabled': matchResultNotificationEnabled,
       'messagingNotificationEnabled': messagingNotificationEnabled,
       'eventNotificationEnabled': eventNotificationEnabled,
+      'termsAccepted': termsAccepted,
+      'instagramLink': instagramLink, // Save to Firestore
+      'facebookLink': facebookLink, // Save to Firestore
     };
   }
 }

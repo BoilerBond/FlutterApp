@@ -7,6 +7,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:datingapp/utils/image_picker.dart';
 import 'package:datingapp/presentation/screens/dashboard/profile/edit_interests.dart';
 import 'package:datingapp/data/entity/app_user.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});
@@ -21,6 +22,8 @@ class _EditProfileState extends State<EditProfile> {
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController bioController = TextEditingController();
   final TextEditingController majorController = TextEditingController();
+  final TextEditingController instagramController = TextEditingController();
+  final TextEditingController facebookController = TextEditingController();
   int? selectedAge;
 
   bool isLoading = true;
@@ -32,7 +35,6 @@ class _EditProfileState extends State<EditProfile> {
     _fetchUserData();
   }
 
-  // To get appUser for currentUser in firestore
   Future<void> _fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -47,10 +49,11 @@ class _EditProfileState extends State<EditProfile> {
         lastNameController.text = appUser?.lastName ?? "";
         bioController.text = appUser?.bio ?? "";
         majorController.text = appUser?.major ?? "";
-              selectedAge = (appUser?.age != null && appUser!.age > 0 && appUser!.age <= 100)
-          ? appUser!.age
-          : 18; // Default
-        isLoading = false;
+        instagramController.text = appUser?.instagramLink ?? "";
+        facebookController.text = appUser?.facebookLink ?? "";
+        selectedAge = (appUser?.age != null && appUser!.age > 0 && appUser!.age <= 100)
+            ? appUser!.age
+            : 18;
         isLoading = false;
       });
     } else {
@@ -58,7 +61,6 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
-  
   Future<void> _saveProfile() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -70,6 +72,8 @@ class _EditProfileState extends State<EditProfile> {
         'bio': bioController.text.trim(),
         'major': majorController.text.trim(),
         'age': selectedAge,
+        'instagramLink': instagramController.text.trim(),
+        'facebookLink': facebookController.text.trim(),
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -82,7 +86,6 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
-  
   void selectImage() async {
     XFile img = await pickImage(ImageSource.gallery);
     CroppedFile? croppedFile = await ImageCropper().cropImage(
@@ -104,6 +107,56 @@ class _EditProfileState extends State<EditProfile> {
     setState(() {
       _image = cf;
     });
+  }
+
+  Future<void> _showSocialMediaDialog(
+      {required String title,
+      required TextEditingController controller,
+      required String firestoreField}) async {
+    TextEditingController tempController = TextEditingController(text: controller.text);
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Enter $title Link"),
+          content: TextField(
+            controller: tempController,
+            decoration: const InputDecoration(
+              hintText: "https://www.website.com/yourprofile",
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final user = FirebaseAuth.instance.currentUser;
+                if (user == null) return;
+
+                await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user.uid)
+                    .update({firestoreField: tempController.text.trim()});
+
+                setState(() {
+                  controller.text = tempController.text.trim();
+                });
+
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("$title link updated successfully!")),
+                );
+              },
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -147,13 +200,11 @@ class _EditProfileState extends State<EditProfile> {
                   ),
                   const SizedBox(height: 20),
 
-                  
                   _buildTextField("First Name", firstNameController),
                   const SizedBox(height: 10),
                   _buildTextField("Last Name", lastNameController),
                   const SizedBox(height: 10),
 
-                  
                   DropdownButtonFormField<int>(
                     value: selectedAge ?? 18,
                     decoration: _inputDecoration("Age"),
@@ -185,25 +236,49 @@ class _EditProfileState extends State<EditProfile> {
                   }),
                   const SizedBox(height: 10),
 
-                  _buildActionButton("Edit onboarding information", () {
-                    // TODO: Navigate to onboarding edit screen
-                  }),
+                  _buildActionButton("Edit onboarding information", () {}),
+                  const SizedBox(height: 20),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildActionButtonWithIcon(
+                          Icons.camera_alt,
+                          "Link Instagram",
+                          () => _showSocialMediaDialog(
+                              title: "Instagram",
+                              controller: instagramController,
+                              firestoreField: "instagramLink"),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildActionButtonWithIcon(
+                          Icons.facebook,
+                          "Link Facebook",
+                          () => _showSocialMediaDialog(
+                              title: "Facebook",
+                              controller: facebookController,
+                              firestoreField: "facebookLink"),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 20),
 
                   SizedBox(
-                    width: MediaQuery.of(context).size.width,
-                    child: OutlinedButton(
+                    width: double.infinity,
+                    child: ElevatedButton(
                       onPressed: _saveProfile,
-                      child: const Text('Save', style: TextStyle(fontSize: 16, color: Colors.white)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF5E77DF),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
+                      child: const Text('Save'),
                     ),
                   ),
-                  const SizedBox(height: 10),
                 ],
               ),
             ),
@@ -221,30 +296,46 @@ class _EditProfileState extends State<EditProfile> {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      filled: false,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0XFFE7EFEE)),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+    );
+  }
+
+  Widget _buildActionButtonWithIcon(IconData icon, String text, VoidCallback onPressed) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, color: Theme.of(context).colorScheme.outlineVariant),
+      label: Text(text, style: const TextStyle(fontSize: 16)),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(
+          width: 1,
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
       ),
     );
   }
 
-  Widget _buildActionButton(String text, VoidCallback onPressed) {
+    Widget _buildActionButton(String text, VoidCallback onPressed) {
     return SizedBox(
       width: double.infinity,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          width: 1,
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: onPressed,
-        child: Text(text, style: const TextStyle(fontSize: 16)),
+      child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+        side: BorderSide(
+          width: 1,
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      onPressed: onPressed,
+      child: Text(text, style: const TextStyle(fontSize: 16)),
       ),
     );
   }
 }
+
+
+
