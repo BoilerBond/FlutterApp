@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,131 +12,115 @@ class EditDisplayedInterests extends StatefulWidget {
 }
 
 class _EditDisplayedInterestsState extends State<EditDisplayedInterests> {
-  final List<String> _allInterests = [
+  final List<String> allInterests = [
     'Animals', 'Music', 'Sports', 'Outdoor activities', 'Dancing', 'Yoga',
-    'Health', 'Gym & Fitness', 'Art', 'Gaming', 'Writing', 'Books',
-    'Movies', 'Space', 'Science', 'Design', 'Food', 'Camping',
-    'Photography', 'Fashion', 'Comedy', 'Politics', 'News',
-    'Technology', 'Entertainment', 'Architecture', 'Business'
+    'Health', 'Gym & Fitness', 'Art', 'Gaming', 'Writing', 'Books', 'Movies',
+    'Gardening', 'Cooking', 'Space', 'Science', 'Design', 'Food', 'Camping',
+    'Photography', 'Fashion', 'Comedy', 'Politics', 'News', 'Technology',
+    'Entertainment', 'Architecture', 'Business'
   ];
 
-  Map<String, bool> selectedMap = {};
+  Set<String> selectedInterests = {};
   bool _isSaving = false;
   bool _isLoading = true;
+  late String _userId;
 
   @override
   void initState() {
     super.initState();
-    for (var interest in _allInterests) {
-      selectedMap[interest] = false;
-    }
-    _loadInterestsFromFirestore();
+    _userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    _loadUserInterests();
   }
 
-  Future<void> _loadInterestsFromFirestore() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        DocumentSnapshot doc = await FirebaseFirestore.instance
-            .collection("users")
-            .doc(user.uid)
-            .get();
-        if (doc.exists && doc.data() != null && doc.get("interests") != null) {
-          List<dynamic> interests = doc.get("interests");
-          setState(() {
-            // Mark the previously saved interests as selected.
-            for (var interest in interests) {
-              if (selectedMap.containsKey(interest)) {
-                selectedMap[interest] = true;
-              }
-            }
-          });
-        }
-      } catch (e) {
-        print("Error loading interests: $e");
+  Future<void> _loadUserInterests() async {
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_userId)
+          .get();
+
+      if (userDoc.exists) {
+        List<String> userInterests =
+            List<String>.from(userDoc.get('displayedInterests') ?? []);
+
+        setState(() {
+          selectedInterests = userInterests.toSet();
+          _isLoading = false;
+        });
       }
+    } catch (e) {
+      debugPrint("Error loading interests: $e");
+      setState(() => _isLoading = false);
     }
-    setState(() {
-      _isLoading = false;
-    });
   }
 
-  void _onInterestSelected(bool selected, String interest) {
-    setState(() {
-      selectedMap[interest] = selected;
-    });
-  }
-
+  // Firestore
   Future<void> saveChangesToFirebase() async {
-    setState(() {
-      _isSaving = true;
-    });
+    setState(() => _isSaving = true);
 
     try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("User not logged in")),
-        );
-        return;
-      }
-
-      List<String> selectedInterests = selectedMap.entries
-          .where((entry) => entry.value)
-          .map((entry) => entry.key)
-          .toList();
-
       await FirebaseFirestore.instance
-          .collection("users")
-          .doc(user.uid)
-          .update({'interests': selectedInterests});
+          .collection('users')
+          .doc(_userId)
+          .update({'displayedInterests': selectedInterests.toList()});
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Interests updated successfully')),
       );
-      Navigator.of(context).pop();
     } catch (e) {
-      print("Failed to save interests: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving interests: $e')),
       );
-    } finally {
-      setState(() {
-        _isSaving = false;
-      });
     }
+
+    setState(() => _isSaving = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text("Edit Displayed Interests")),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Edit Displayed Interests"),
-      ),
-      body: _isSaving
+      appBar: AppBar(title: const Text("Edit Displayed Interests")),
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: _allInterests.length,
-                    itemBuilder: (context, index) {
-                      final interest = _allInterests[index];
-                      final isSelected = selectedMap[interest] ?? false;
-                      return CheckboxListTile(
-                        title: Text(interest),
-                        value: isSelected,
-                        onChanged: (bool? value) {
-                          _onInterestSelected(value ?? false, interest);
-                        },
-                      );
-                    },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Wrap(
+                      spacing: 10.0,
+                      runSpacing: 10.0,
+                      children: allInterests.map((interest) {
+                        final isSelected = selectedInterests.contains(interest);
+                        return ChoiceChip(
+                          label: Text(
+                            interest,
+                            style: TextStyle(
+                              color: isSelected ? Color(0xFF2C519C) : Color(0xFF2C519C),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          selected: isSelected,
+                          onSelected: (bool selected) {
+                            setState(() {
+                              if (selected) {
+                                selectedInterests.add(interest);
+                              } else {
+                                selectedInterests.remove(interest);
+                              }
+                            });
+                          },
+                          selectedColor: Theme.of(context).colorScheme.tertiary,
+                          backgroundColor: Color(0xFFE7EFEE),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
                 Padding(
@@ -142,8 +128,10 @@ class _EditDisplayedInterestsState extends State<EditDisplayedInterests> {
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: saveChangesToFirebase,
-                      child: const Text("Modify"),
+                      onPressed: _isSaving ? null : saveChangesToFirebase,
+                      child: _isSaving
+                            ? const CircularProgressIndicator()
+                          : const Text("Save Interests"),
                     ),
                   ),
                 ),

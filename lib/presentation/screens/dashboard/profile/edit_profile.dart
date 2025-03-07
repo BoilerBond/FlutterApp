@@ -85,7 +85,7 @@ class _EditProfileState extends State<EditProfile> {
     }
 
     await db.collection("users").doc(currentUser?.uid).update(user.toMap());
-    Navigator.pushReplacementNamed(context, "/profile");
+    Navigator.pop(context);
   }
 
   @override

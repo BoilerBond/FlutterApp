@@ -13,7 +13,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-
   void _onAppSettingsPress(BuildContext context) {
     Navigator.pushNamed(context, "/settings/app");
   }
@@ -35,47 +34,82 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> buttons = [
-      {'title': 'App Settings', 'type': ButtonType.normal, 'onPressed': _onAppSettingsPress},
-      {'title': 'Privacy Settings', 'type': ButtonType.normal, 'onPressed': _onPrivacySettingsPress},
-      {'title': 'Legal Information', 'type': ButtonType.normal, 'onPressed': (BuildContext context) {}},
-      {'title': 'BoilerBond Guide', 'type': ButtonType.normal, 'onPressed': (BuildContext context) {}},
-      {'title': 'Danger Zone', 'type': ButtonType.danger, 'onPressed': _onDangerZonePress},
-      {'title': 'Log Out', 'type': ButtonType.warning, 'onPressed': _onLogoutPress},
+      {'title': 'App Settings', 'type': ButtonType.normal, 'icon': Icons.desktop_windows, 'onPressed': _onAppSettingsPress},
+      {'title': 'Privacy Settings', 'type': ButtonType.normal, 'icon': Icons.no_photography, 'onPressed': _onPrivacySettingsPress},
+      {'title': 'Legal Information', 'type': ButtonType.normal, 'icon': Icons.list, 'onPressed': (BuildContext context) {}},
+      {'title': 'BoilerBond Guide', 'type': ButtonType.normal, 'icon': Icons.help_outline, 'onPressed': (BuildContext context) {}},
+      {'title': 'Danger Zone', 'type': ButtonType.danger, 'icon': Icons.warning_amber_rounded, 'onPressed': _onDangerZonePress},
+      {'title': 'Log Out', 'type': ButtonType.warning, 'icon': Icons.exit_to_app, 'onPressed': _onLogoutPress},
     ];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
-        automaticallyImplyLeading: false,
-      ),
-      body: Center(
-        child: Column(
-          children: buttons
-              .map(
-                (button) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0).copyWith(bottom: 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(width: 1, color: Theme.of(context).colorScheme.outlineVariant),
-                        foregroundColor: button['type'] == ButtonType.normal
-                            ? Theme.of(context).colorScheme.primary
-                            : button['type'] == ButtonType.warning
-                                ? MaterialTheme.warning
-                                : Theme.of(context).colorScheme.error,
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () => button['onPressed'](context),
-                      child: Text(button['title']),
-                    ),
+        title: const Text(
+                  "Settings",
+                  style: TextStyle(
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w100,
+                    fontSize: 22,
+                    color: Color(0xFF454746),
                   ),
                 ),
-              )
-              .toList(),
+        automaticallyImplyLeading: false,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
+        toolbarHeight: 40, 
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
+
+            ...buttons.map((button) => Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFE7EFEE)),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () => button['onPressed'](context),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(width: 10),
+                      Icon(
+                        button['icon'],
+                        color: button['type'] == ButtonType.warning
+                            ? Colors.orange
+                            : button['type'] == ButtonType.danger
+                                ? Theme.of(context).colorScheme.error
+                                : Color(0xFF2C519C),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        button['title'],
+                        style: TextStyle(
+                          color: button['type'] == ButtonType.warning
+                              ? Colors.orange
+                              : button['type'] == ButtonType.danger
+                                  ? Theme.of(context).colorScheme.error 
+                                  : Color(0xFF2C519C),
+                          fontSize: 16,
+                          //fontFamily: "Raleway",
+                          //fontWeight: FontWeight.w100,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )).toList(),
+
+            const Spacer(flex: 5),
+          ],
         ),
       ),
     );
