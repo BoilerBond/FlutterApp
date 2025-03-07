@@ -2,6 +2,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:datingapp/presentation/widgets/confirm_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class DangerZone extends StatefulWidget {
   const DangerZone({super.key});
@@ -47,24 +48,27 @@ class _DangerZoneState extends State<DangerZone> {
     );
   }
 
+
   void _onDeleteAccountPress(BuildContext context) {
     confirmDialog(context, () async {
+      final user = FirebaseAuth.instance.currentUser;
       try {
         final callable = FirebaseFunctions.instance.httpsCallable('user-account-deleteAccountProfile');
         await callable.call();
-
-        // get current user
-        final user = FirebaseAuth.instance.currentUser;
-        // requires user data to be stored in paths with their uid
         await user?.delete();
       } on FirebaseAuthException {
         // user signed-in too long ago
-        // log them out so they sign-in again
-        await FirebaseAuth.instance.signOut();
-      } catch (e) {
-        setState(() {
-          _errorMessage = e is FirebaseFunctionsException ? e.message ?? 'An error occurred. Please try again.' : 'An unexpected error occurred. Please try again.';
-        });
+        // need to reauthenticate
+        final googleUser = await GoogleSignIn().signIn();
+        if (googleUser == null) return;
+
+        final googleAuth = await googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        await user!.reauthenticateWithCredential(credential);
+        await user.delete();
       }
 
       await FirebaseAuth.instance.signOut();
