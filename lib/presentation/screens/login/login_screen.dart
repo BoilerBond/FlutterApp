@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final userCredential = await FirebaseAuth.instance.signInWithCredential(oauthCredential);
-
+      Navigator.pushReplacementNamed(context, "/dashboard");
       print("User: ${userCredential.user?.uid}");
     } catch (e) {
       print("Error: $e");
@@ -112,11 +112,17 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
+      Navigator.pushReplacementNamed(context, "/");
     } catch (e) {
       setState(() {
         _errorMessage = "Failed to sign in with Google: ${e.toString()}";
       });
     }
+  }
+
+  void _bypassLogin() {
+    // Navigate to the Purdue verification screen using the correct route
+    Navigator.pushReplacementNamed(context, '/purdue_verification');
   }
 
   @override
@@ -151,6 +157,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   label: const Text('Login with Google'),
                   style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                   onPressed: _loginWithGoogle,
+                ),
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.school, size: 24),
+                  label: const Text('Skip to Purdue Verification'),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    backgroundColor: Colors.grey[400],
+                  ),
+                  onPressed: _bypassLogin,
                 ),
               ),
               if (_errorMessage.isNotEmpty)
