@@ -19,7 +19,8 @@ class _OnBoardingState extends State<OnBoarding> {
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController ageController = TextEditingController();
   final TextEditingController majorController = TextEditingController();
-  
+
+  String? _selectedGender;
   Map<String, String> _errors = {};
   bool _formSubmitted = false;
 
@@ -28,7 +29,7 @@ class _OnBoardingState extends State<OnBoarding> {
       _formSubmitted = true;
       _errors = {};
     });
-    
+
     // Validate all fields
     if (firstNameController.text.trim().isEmpty) {
       _errors['firstName'] = 'First name is required';
@@ -51,11 +52,14 @@ class _OnBoardingState extends State<OnBoarding> {
     if (majorController.text.trim().isEmpty) {
       _errors['major'] = 'Major is required';
     }
-    
+    if (_selectedGender == null) {
+      _errors['gender'] = 'Gender is required';
+    }
+
     // Check if there are any errors
     if (_errors.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fix the errors in the form')),
+        const SnackBar(content: Text('Please fix the errors in the form')),
       );
       return;
     }
@@ -71,6 +75,7 @@ class _OnBoardingState extends State<OnBoarding> {
       'lastName': lastNameController.text,
       'age': int.parse(ageController.text),
       'major': majorController.text,
+      'gender': _selectedGender,
     });
 
     Navigator.of(context).push(_createRoute(Step2()));
@@ -100,8 +105,8 @@ class _OnBoardingState extends State<OnBoarding> {
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: "Enter your first name",
-                      errorText: _formSubmitted && _errors.containsKey('firstName') 
-                          ? _errors['firstName'] 
+                      errorText: _formSubmitted && _errors.containsKey('firstName')
+                          ? _errors['firstName']
                           : null,
                     ),
                   ),
@@ -120,8 +125,8 @@ class _OnBoardingState extends State<OnBoarding> {
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: "Enter your last name",
-                      errorText: _formSubmitted && _errors.containsKey('lastName') 
-                          ? _errors['lastName'] 
+                      errorText: _formSubmitted && _errors.containsKey('lastName')
+                          ? _errors['lastName']
                           : null,
                     ),
                   ),
@@ -140,8 +145,8 @@ class _OnBoardingState extends State<OnBoarding> {
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: "Enter your age",
-                      errorText: _formSubmitted && _errors.containsKey('age') 
-                          ? _errors['age'] 
+                      errorText: _formSubmitted && _errors.containsKey('age')
+                          ? _errors['age']
                           : null,
                     ),
                     keyboardType: TextInputType.number,
@@ -161,10 +166,40 @@ class _OnBoardingState extends State<OnBoarding> {
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: "Enter your major",
-                      errorText: _formSubmitted && _errors.containsKey('major') 
-                          ? _errors['major'] 
+                      errorText: _formSubmitted && _errors.containsKey('major')
+                          ? _errors['major']
                           : null,
                     ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Gender Dropdown
+            Row(
+              children: [
+                const Expanded(child: Text("Gender:")),
+                SizedBox(
+                  width: width * 0.4,
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedGender,
+                    decoration: InputDecoration(
+                      border: const OutlineInputBorder(),
+                      errorText: _formSubmitted && _errors.containsKey('gender')
+                          ? _errors['gender']
+                          : null,
+                    ),
+                    items: ['Male', 'Female', 'Other'].map((gender) {
+                      return DropdownMenuItem(
+                        value: gender,
+                        child: Text(gender),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedGender = value;
+                      });
+                    },
                   ),
                 ),
               ],
@@ -193,6 +228,7 @@ class _OnBoardingState extends State<OnBoarding> {
     );
   }
 }
+
 class Step2 extends StatefulWidget {
   const Step2({super.key});
 
