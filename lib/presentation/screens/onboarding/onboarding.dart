@@ -260,8 +260,10 @@ class _Step6State extends State<Step6> {
                           ),
                         ),
                         onPressed: () async => {
-                          _uploadImage(_image!),
-                          Navigator.pushReplacementNamed(context, "/")
+                          if (_image != null) {
+                            _uploadImage(_image!),
+                            Navigator.pushReplacementNamed(context, "/")
+                          }
                         },
                         child: Text("Finish")
                     ),

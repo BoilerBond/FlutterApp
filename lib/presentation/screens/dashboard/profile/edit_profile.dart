@@ -3,9 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:datingapp/data/entity/app_user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:datingapp/presentation/screens/dashboard/profile/edit_interests.dart';
 import 'package:datingapp/utils/image_helper.dart';
-
 
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});
@@ -22,9 +20,7 @@ class _EditProfileState extends State<EditProfile> {
 
   Future<void> getProfile() async {
     if (currentUser != null) {
-      final userSnapshot = await db.collection("users")
-          .doc(currentUser?.uid)
-          .get();
+      final userSnapshot = await db.collection("users").doc(currentUser?.uid).get();
       final user = AppUser.fromSnapshot(userSnapshot);
       setState(() {
         _imageURL = user.profilePictureURL;
@@ -41,6 +37,7 @@ class _EditProfileState extends State<EditProfile> {
 
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController ageContainer = TextEditingController();
   // final TextEditingController ageController = TextEditingController();
   // might want to do age through drop down instead later
   final TextEditingController bioController = TextEditingController();
@@ -62,129 +59,87 @@ class _EditProfileState extends State<EditProfile> {
     });
   }
 
+  Future<void> _handleProfileSubmit(BuildContext context) async {
+    if (_image != null) {
+      await _uploadImage(_image!);
+      _image = null;
+    }
+
+    final userSnapshot = await db.collection("users").doc(currentUser?.uid).get();
+    final user = AppUser.fromSnapshot(userSnapshot);
+
+    if (firstNameController.text.isNotEmpty) {
+      user.firstName = firstNameController.text;
+    }
+
+    if (lastNameController.text.isNotEmpty) {
+      user.lastName = lastNameController.text;
+    }
+
+    if (ageContainer.text.isNotEmpty) {
+      user.age = int.parse(ageContainer.text);
+    }
+
+    if (bioController.text.isNotEmpty) {
+      user.bio = bioController.text;
+    }
+
+    await db.collection("users").doc(currentUser?.uid).update(user.toMap());
+    Navigator.pushReplacementNamed(context, "/profile");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile')),
+        appBar: AppBar(title: const Text('Profile')),
         body: Column(
           children: [
             Expanded(
                 child: SingleChildScrollView(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: Column(children: [
-                      Stack(
-                          children: [
-                            (_image != null || _imageURL!.isNotEmpty) ?
-                            CircleAvatar(
-                              radius: MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width * 0.2,
-                              backgroundImage: _image != null ? MemoryImage(_image!) : NetworkImage(_imageURL!)
-                            ) :
-                            CircleAvatar(
-                              radius: MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width * 0.2,
-                              backgroundImage: NetworkImage(
-                                  "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"),
-                            )
-                          ]
-                      ),
+                      Stack(children: [
+                        (_image != null || _imageURL!.isNotEmpty)
+                            ? CircleAvatar(radius: MediaQuery.of(context).size.width * 0.2, backgroundImage: _image != null ? MemoryImage(_image!) : NetworkImage(_imageURL!))
+                            : CircleAvatar(
+                                radius: MediaQuery.of(context).size.width * 0.2,
+                                backgroundImage: NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"),
+                              )
+                      ]),
+                      Padding(padding: EdgeInsets.only(bottom: 16), child: TextButton(onPressed: selectImage, child: Text("Edit Profile Picture"))),
                       Padding(
-                          padding: EdgeInsets.only(bottom: 16),
-                          child: TextButton(onPressed: selectImage,
-                              child: Text("Edit Profile Picture"))
-                      ),
-                      Padding(
-                          padding: EdgeInsets.all(MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.1),
+                          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.1),
                           child: Row(children: [
                             Expanded(child: Text("First Name: ")),
                             SizedBox(
-                                width: MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width * 0.4,
-                                child: TextField(
-                                    controller: firstNameController,
-                                    decoration: InputDecoration(
-                                        border: OutlineInputBorder(),
-                                        hintText: "current first name")
-                                )
-                            )
-                          ])
-                      ),
+                                width: MediaQuery.of(context).size.width * 0.4,
+                                child: TextField(controller: firstNameController, decoration: InputDecoration(border: OutlineInputBorder(), hintText: "current first name")))
+                          ])),
                       Padding(
-                          padding: EdgeInsets.all(MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.1),
+                          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.1),
                           child: Row(children: [
                             Expanded(child: Text("Last Name: ")),
                             SizedBox(
-                                width: MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width * 0.4,
-                                child: TextField(
-                                    controller: lastNameController,
-                                    decoration: InputDecoration(
-                                        border: OutlineInputBorder(),
-                                        hintText: "current last name")
-                                )
-                            )
-                          ])
-                      ),
+                                width: MediaQuery.of(context).size.width * 0.4,
+                                child: TextField(controller: lastNameController, decoration: InputDecoration(border: OutlineInputBorder(), hintText: "current last name")))
+                          ])),
                       Padding(
-                          padding: EdgeInsets.all(MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.1),
+                          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.1),
                           child: Row(children: [
                             Expanded(child: Text("Age: ")),
                             SizedBox(
-                                width: MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width * 0.4,
-                                child: TextField(
-                                    decoration: InputDecoration(
-                                        border: OutlineInputBorder(),
-                                        hintText: "current age")
-                                )
-                            )
-                          ])
-                      ),
+                                width: MediaQuery.of(context).size.width * 0.4,
+                                child: TextField(controller: ageContainer, decoration: InputDecoration(border: OutlineInputBorder(), hintText: "current age")))
+                          ])),
                       Padding(
-                          padding: EdgeInsets.all(MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.1),
+                          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.1),
                           child: Row(children: [
                             Expanded(child: Text("Bio: ")),
                             SizedBox(
-                                width: MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width * 0.4,
-                                child: TextField(
-                                    controller: bioController,
-                                    decoration: InputDecoration(
-                                        border: OutlineInputBorder(),
-                                        hintText: "current bio"
-                                    )
-                                )
-                            )
-                          ])
-                      )
-                    ])
-                )
-            ),
+                                width: MediaQuery.of(context).size.width * 0.4,
+                                child: TextField(controller: bioController, decoration: InputDecoration(border: OutlineInputBorder(), hintText: "current bio")))
+                          ]))
+                    ]))),
             Padding(
               padding: const EdgeInsets.all(16),
               child: SizedBox(
@@ -193,28 +148,20 @@ class _EditProfileState extends State<EditProfile> {
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(
                       width: 1,
-                      color: Theme
-                          .of(context)
-                          .colorScheme
-                          .outlineVariant,
+                      color: Theme.of(context).colorScheme.outlineVariant,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  onPressed: () async {
-                    if (_image != null) {
-                      _uploadImage(_image!);
-                      _image = null;
-                    }
-                    Navigator.pushReplacementNamed(context, "/profile");
-                    }, // save function
+                  onPressed: () {
+                    _handleProfileSubmit(context);
+                  }, // save function
                   child: Text("Save Changes"),
                 ),
               ),
             ),
           ],
-        )
-    );
+        ));
   }
 }
