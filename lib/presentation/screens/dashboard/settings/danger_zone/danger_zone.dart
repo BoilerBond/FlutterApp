@@ -1,6 +1,7 @@
 import 'package:datingapp/presentation/widgets/confirm_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class DangerZone extends StatefulWidget {
   const DangerZone({super.key});
@@ -54,8 +55,17 @@ class _DangerZoneState extends State<DangerZone> {
       }
       on FirebaseAuthException {
         // user signed-in too long ago
-        // log them out so they sign-in again
-        await FirebaseAuth.instance.signOut();
+        // need to reauthenticate
+        final googleUser = await GoogleSignIn().signIn();
+        if (googleUser == null) return;
+
+        final googleAuth = await googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        await user!.reauthenticateWithCredential(credential);
+        await user.delete();
       }
       await FirebaseAuth.instance.signOut();
     });
