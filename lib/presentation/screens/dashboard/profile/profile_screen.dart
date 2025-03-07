@@ -157,7 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text("Prompt of the day goes in here"),
+                                const Text("Prompt of the day: ..."),
                                 const TextField(
                                   maxLines: 5,
                                   minLines: 1,
