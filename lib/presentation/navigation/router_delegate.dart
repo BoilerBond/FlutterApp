@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:datingapp/presentation/screens/dashboard/settings/my_profile/edit_profile.dart';
 import 'package:datingapp/presentation/screens/dashboard/settings/login_settings/login_settings.dart';
 import 'package:datingapp/presentation/screens/dashboard/settings/privacy_settings/privacy_settings.dart';
-
+import 'package:datingapp/presentation/screens/dashboard/profile/edit_profile.dart';
 class AppRouterDelegate extends RouterDelegate<Object>
     with PopNavigatorRouterDelegateMixin<Object>, ChangeNotifier {
   @override
