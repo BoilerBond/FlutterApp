@@ -7,9 +7,7 @@ import 'package:flutter/foundation.dart';
 
 /// Configure Firebase to use emulators when in debug mode
 void configureFirebaseEmulators() async {
-  if (kDebugMode) {
-    const String host = '127.0.0.1';
-    
+  if (kDebugMode) {    
     // Configure Auth Emulator
     await _configureFirebaseAuth();
     

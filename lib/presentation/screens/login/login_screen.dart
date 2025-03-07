@@ -86,6 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final userCredential = await FirebaseAuth.instance.signInWithCredential(oauthCredential);
+      Navigator.pushReplacementNamed(context, "/dashboard");
       print("User: ${userCredential.user?.uid}");
     } catch (e) {
       print("Error: $e");
@@ -111,6 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
+      Navigator.pushReplacementNamed(context, "/");
     } catch (e) {
       setState(() {
         _errorMessage = "Failed to sign in with Google: ${e.toString()}";

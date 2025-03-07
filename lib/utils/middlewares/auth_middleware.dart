@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:datingapp/presentation/screens/app_description/app_description_screen.dart';
-import 'package:datingapp/presentation/screens/login/login_screen.dart';
-import 'package:datingapp/presentation/screens/purdue_verification/purdue_verification_screen.dart';
+import 'package:datingapp/presentation/screens/start/start_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -46,13 +45,12 @@ class _AuthMiddlewareState extends State<AuthMiddleware> {
                 if (profileSnapshot.hasData && profileSnapshot.data!) {
                   return widget.child;
                 } else {
-                  return AppDescriptionScreen(navigatePath: "/purdue_verification");
+                  return AppDescriptionScreen(navigatePath: "/purdue_verification", navigateToTos: true);
                 }
               },
             );
           } else {
-            // TODO: Return home screen instead of login
-            return LoginScreen();
+            return StartScreen();
           }
         });
   }
