@@ -10,14 +10,14 @@ import 'package:datingapp/utils/validators/email_validator.dart';
 import 'package:datingapp/utils/validators/password_validator.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  _RegisterScreenState createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
   String _errorMessage = "";
   bool _isFirebaseAvailable = true;
 
@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final userCredential = await FirebaseAuth.instance.signInWithCredential(oauthCredential);
-      Navigator.pushReplacementNamed(context, "/");
+      Navigator.pushReplacementNamed(context, "/purdue_verification");
       print("User: ${userCredential.user?.uid}");
     } catch (e) {
       print("Error: $e");
@@ -112,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-      Navigator.pushReplacementNamed(context, "/");
+      Navigator.pushReplacementNamed(context, "/purdue_verification");
     } catch (e) {
       setState(() {
         _errorMessage = "Failed to sign in with Google: ${e.toString()}";
@@ -138,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Column(
                     children: [
-                      Text("Welcome Back", style: Theme.of(context).textTheme.headlineLarge),
+                      Text("Create an account", style: Theme.of(context).textTheme.headlineLarge),
                       Text("Please select a login method", style: Theme.of(context).textTheme.bodySmall),
                     ],
                   ),

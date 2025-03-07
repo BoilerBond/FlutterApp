@@ -22,7 +22,6 @@ class _AppDescriptionScreenState extends State<AppDescriptionScreen> {
       appBar: AppBar(
         title: Text('About Boiler Bond', style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer)),
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-        automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -124,7 +123,7 @@ class _AppDescriptionScreenState extends State<AppDescriptionScreen> {
                   bool finalNavigateToTos = widget.navigateToTos || navigateToTosFromRoute;
 
                   if (finalNavigateToTos) {
-                    Navigator.pushReplacementNamed(context, "/terms_of_service", arguments: finalNavigatePath);
+                    Navigator.pushNamed(context, "/terms_of_service", arguments: finalNavigatePath);
                   } else {
                     if (finalNavigatePath.isNotEmpty) {
                       Navigator.pushReplacementNamed(context, finalNavigatePath);

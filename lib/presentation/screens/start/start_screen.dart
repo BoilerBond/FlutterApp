@@ -48,7 +48,7 @@ class StartScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {Navigator.pushNamed(context, "/app_description", arguments: {"navigatePath" : "/register", "navigateToTos" : true});},
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 40,

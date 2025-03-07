@@ -18,7 +18,6 @@ class TermsOfServicePageState extends State<TermsOfServicePage> {
       appBar: AppBar(
         title: Text('Terms of Service', style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer)),
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-        automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
