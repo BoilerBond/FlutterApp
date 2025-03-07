@@ -128,7 +128,7 @@ class _EditDisplayedInterestsState extends State<EditDisplayedInterests> {
                     child: ElevatedButton(
                       onPressed: _isSaving ? null : saveChangesToFirebase,
                       child: _isSaving
-                          ? const CircularProgressIndicator()
+                            ? const CircularProgressIndicator()
                           : const Text("Save Interests"),
                     ),
                   ),

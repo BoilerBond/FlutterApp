@@ -98,7 +98,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ? Theme.of(context).colorScheme.error 
                                   : Color(0xFF2C519C),
                           fontSize: 16,
-                          fontWeight: FontWeight.w100,
+                          //fontFamily: "Raleway",
+                          //fontWeight: FontWeight.w100,
                         ),
                       ),
                     ],

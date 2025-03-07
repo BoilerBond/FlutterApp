@@ -108,12 +108,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   IntrinsicHeight(
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       // edit profile button
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: TextButton(
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width / 3,
+                        child: Padding(padding: const EdgeInsets.all(16), child: TextButton(
                           onPressed: () => buttons[0]['onPressed'](context),
                           child: const Text("Edit Profile"),
-                        ),
+                        ),),
                       ),
                       // vertical separator
                       const VerticalDivider(
@@ -121,9 +121,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         endIndent: 16,
                       ),
                       // view profile button
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: TextButton(
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width / 3,
+                        
+                        child: Padding(padding: const EdgeInsets.all(16), child: TextButton(
                           onPressed: () => {
                             Navigator.push(
                               context,
@@ -131,7 +132,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             )
                           },
                           child: const Text("View Profile"),
-                        ),
+                        ),),
                       ),
                     ]),
                   ),
