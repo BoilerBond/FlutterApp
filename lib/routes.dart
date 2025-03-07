@@ -7,24 +7,22 @@ import 'package:datingapp/presentation/screens/dashboard/profile/edit_profile.da
 import 'package:datingapp/presentation/screens/dashboard/settings/danger_zone/danger_zone.dart';
 import 'package:datingapp/presentation/screens/dashboard/settings/app_settings/app_settings.dart';
 import 'package:datingapp/presentation/screens/purdue_verification/purdue_verification_screen.dart';
+import 'package:datingapp/presentation/screens/app_description/app_description_screen.dart';
+import 'package:datingapp/presentation/screens/login/login_screen.dart';
+import 'package:datingapp/presentation/screens/register/register_screen.dart';
+import 'package:datingapp/presentation/screens/tos/terms_of_service.dart';
 
 class Routes {
-  static Map<String, WidgetBuilder> getRoutes() {
-    return {
-      '/': (context) => AuthMiddleware(child: Dashboard()),
-      '/settings/app': (context) => AuthMiddleware(child: AppSettings()),
-      '/settings/danger_zone': (context) => AuthMiddleware(child: DangerZone()),
-      '/settings/privacy': (context) => AuthMiddleware(child: PrivacySettings()),
-      '/profile/edit_profile': (context) => AuthMiddleware(child: EditProfile()),
-      '/onboarding': (context) => AuthMiddleware(child: OnBoarding()),
-      '/purdue_verification': (context) => const PurdueVerificationScreen(),
-    };
-  }
-
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+    final Map<dynamic, dynamic> arguments = (settings.arguments ?? {}) as Map<dynamic, dynamic>;
+
     switch (settings.name) {
       case '/':
         return MaterialPageRoute(builder: (context) => AuthMiddleware(child: Dashboard()));
+      case '/register':
+        return MaterialPageRoute(builder: (context) => RegisterScreen());
+      case '/login':
+        return MaterialPageRoute(builder: (context) => LoginScreen());
       case '/settings/app':
         return MaterialPageRoute(builder: (context) => AuthMiddleware(child: AppSettings()));
       case '/settings/danger_zone':
@@ -35,6 +33,10 @@ class Routes {
         return MaterialPageRoute(builder: (context) => AuthMiddleware(child: EditProfile()));
       case '/onboarding':
         return MaterialPageRoute(builder: (context) => AuthMiddleware(child: OnBoarding()));
+      case '/app_description':
+        return MaterialPageRoute(builder: (context) => AppDescriptionScreen(arguments: arguments));
+      case '/terms_of_service':
+        return MaterialPageRoute(builder: (context) => TermsOfServicePage(arguments: arguments));
       case '/purdue_verification':
         return MaterialPageRoute(builder: (context) => const PurdueVerificationScreen());
 
