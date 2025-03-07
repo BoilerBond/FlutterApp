@@ -76,7 +76,7 @@ class _OnBoardingState extends State<OnBoarding> {
       'age': int.parse(ageController.text),
       'major': majorController.text,
       'gender': _selectedGender,
-    });
+    }, SetOptions(merge: true));
 
     Navigator.of(context).push(_createRoute(Step2()));
   }
@@ -370,7 +370,7 @@ class _Step3State extends State<Step3> {
 
     try {
       await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
-        'interests': _selectedInterests.toList(),
+        'hobbies': _selectedInterests.toList(),
       });
       Navigator.of(context).push(_createRoute(Step4()));
 
