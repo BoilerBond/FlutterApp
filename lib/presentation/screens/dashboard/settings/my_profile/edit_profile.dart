@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});
@@ -13,6 +15,7 @@ class _EditProfileScreen extends State<EditProfile> {
   int age = 21;
   String major = "Computer Science";
   String biography = "Computer Scientist by day, Purdue Pete by night.";
+  //final user = FirebaseAuth.instance.currentUser;
 
   late String tempName;
   late int tempAge;

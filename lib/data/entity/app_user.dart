@@ -116,8 +116,8 @@ class AppUser {
       'messagingNotificationEnabled': messagingNotificationEnabled,
       'eventNotificationEnabled': eventNotificationEnabled,
       'termsAccepted': termsAccepted,
-      'instagramLink': instagramLink, // Save to Firestore
-      'facebookLink': facebookLink, // Save to Firestore
+      'instagramLink': instagramLink,
+      'facebookLink': facebookLink,
     };
   }
 }
