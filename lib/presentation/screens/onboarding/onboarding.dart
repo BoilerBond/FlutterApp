@@ -484,7 +484,6 @@ class _Step3State extends State<Step3> {
   }
 }
 
-
 class Step6 extends StatefulWidget {
   const Step6({super.key});
 
@@ -552,21 +551,14 @@ class _Step6State extends State<Step6> {
         _uploading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Profile picture uploaded successfully!")),
-      );
-
-      await FirebaseFirestore.instance
-          .collection("users")
-          .doc(user.uid)
-          .update({
-        'profilePicture': downloadUrl,
+      // Update Firestore document with profile picture URL
+      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
+        'profileImageUrl': downloadUrl,
       });
+
+      print("Image uploaded successfully");
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to upload image")),
-      );
-    } finally {
+      print("Error uploading image: $e");
       setState(() {
         _uploading = false;
       });
@@ -643,13 +635,192 @@ class _Step6State extends State<Step6> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    onPressed: () =>
-                        {Navigator.pushReplacementNamed(context, "/")},
-                    child: Text("Finish")),
+                    onPressed: () => Navigator.of(context).push(_createRoute(Step7())),
+                    child: Text("Next")),
               ),
             ),
           ),
         ]));
+  }
+}
+
+class Step7 extends StatefulWidget {
+  const Step7({super.key});
+
+  @override
+  State<Step7> createState() => _Step7State();
+}
+
+class _Step7State extends State<Step7> {
+  // Personal traits ratings (-5 to 5)
+  final Map<String, int> _personalTraits = {
+    "I enjoy socializing and being around people.": 0,
+    "Having a family is a top priority for me.": 0,
+    "I like an active lifestyle with lots of physical activity.": 0,
+    "I tend to stay calm and steady, even under pressure.": 0,
+    "I love trying new things and taking risks.": 0,
+  };
+
+  // Partner preferences ratings (-5 to 5)
+  final Map<String, int> _partnerPreferences = {
+    "I want someone who is outgoing and talkative.": 0,
+    "I'm looking for someone who values building a family.": 0,
+    "I'd like a partner who enjoys staying active and fit.": 0,
+    "I prefer someone who is emotionally expressive.": 0,
+    "I want a partner who is spontaneous and adventurous.": 0,
+  };
+
+  Future<void> _savePreferencesAndFinish() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print("User is not logged in");
+      return;
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
+        'personalTraits': _personalTraits,
+        'partnerPreferences': _partnerPreferences,
+      });
+      
+      // Navigate to the dashboard or finish onboarding
+      Navigator.pushReplacementNamed(context, "/");
+    } catch (e) {
+      print("Failed to save preferences: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to save preferences")),
+      );
+    }
+  }
+
+  Widget _buildSlider(String question, Map<String, int> targetMap) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Text(
+            question,
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("-5", style: TextStyle(fontWeight: FontWeight.bold)),
+            Expanded(
+              child: Slider(
+                min: -5,
+                max: 5,
+                divisions: 10,
+                value: targetMap[question]!.toDouble(),
+                label: targetMap[question].toString(),
+                onChanged: (double value) {
+                  setState(() {
+                    targetMap[question] = value.toInt();
+                  });
+                },
+              ),
+            ),
+            Text("5", style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        const Divider(),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    
+    return Scaffold(
+      appBar: AppBar(title: const Text('BBond')),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: EdgeInsets.only(left: width * 0.05, top: 16),
+            child: const Text(
+              "Onboarding",
+              style: TextStyle(fontSize: 30),
+            ),
+          ),
+          Divider(
+            indent: width * 0.04,
+            endIndent: width * 0.04,
+          ),
+          
+          // Main content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(width * 0.05),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Tell us about yourself and what you're looking for",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 24),
+                  
+                  const Text(
+                    "About You",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 16),
+                  
+                  // Personal traits sliders
+                  ..._personalTraits.keys.map((question) => 
+                    _buildSlider(question, _personalTraits)
+                  ).toList(),
+                  
+                  SizedBox(height: 24),
+                  
+                  const Text(
+                    "What You're Looking For",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 16),
+                  
+                  // Partner preference sliders
+                  ..._partnerPreferences.keys.map((question) => 
+                    _buildSlider(question, _partnerPreferences)
+                  ).toList(),
+                ],
+              ),
+            ),
+          ),
+          
+          // Finish Button
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: width * 0.3,
+                height: width * 0.1,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xffCDFCFF),
+                    side: BorderSide(
+                      width: 1,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: _savePreferencesAndFinish,
+                  child: const Text("Finish"),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
