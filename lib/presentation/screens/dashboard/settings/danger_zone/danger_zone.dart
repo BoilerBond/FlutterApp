@@ -12,6 +12,7 @@ class DangerZone extends StatefulWidget {
 }
 
 class _DangerZoneState extends State<DangerZone> {
+  String _errorMessage = "";
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +38,10 @@ class _DangerZoneState extends State<DangerZone> {
                 ),
               ),
             ),
+          ),
+          Text(
+            _errorMessage,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
         ],
       ),
