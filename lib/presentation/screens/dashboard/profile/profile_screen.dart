@@ -12,6 +12,8 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String? _imageURL = "";
+  String? userName = "";
+  String? bio = "";
   final db = FirebaseFirestore.instance;
   final currentUser = FirebaseAuth.instance.currentUser;
 
@@ -22,6 +24,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .get();
       final user = AppUser.fromSnapshot(userSnapshot);
       setState(() {
+        userName = user.firstName + " " + user.lastName;
+        bio = user.bio;
         _imageURL = user.profilePictureURL;
       });
     }
@@ -51,8 +55,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           children: [
             Text(
-              "Welcome back, [User]!",
-              style: TextStyle(height: 2, fontSize: 34),
+              "Welcome back, " + userName! + "!",
+              style: TextStyle(height: 2, fontSize: 25),
             ),
             CircleAvatar(
               radius: MediaQuery.of(context).size.width * 0.2,
@@ -66,7 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(10),
                       color: Theme.of(context).colorScheme.tertiaryContainer,
                     ),
-                    child: Padding(padding: EdgeInsets.all(16), child: Text("Bio")))),
+                    child: Padding(padding: EdgeInsets.all(16), child: Text(bio!)))),
             IntrinsicHeight(
                 child: (Row(mainAxisSize: MainAxisSize.min, children: [
               // edit profile button
