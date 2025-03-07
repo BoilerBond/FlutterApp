@@ -33,7 +33,6 @@ class MoreProfileScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 10),
 
-              // Centered Profile Picture
               CircleAvatar(
                 radius: MediaQuery.of(context).size.width * 0.2,
                 backgroundImage: const NetworkImage(
@@ -43,7 +42,6 @@ class MoreProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // Profile Information
               _buildProfileField("Name", name),
               _buildProfileField("Age", age),
               _buildProfileField("Major", major),
@@ -51,7 +49,6 @@ class MoreProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // Display Interests (if available)
               _buildInterestsSection(),
 
               const SizedBox(height: 20),
@@ -62,7 +59,6 @@ class MoreProfileScreen extends StatelessWidget {
     );
   }
 
-  /// Styled profile field display
   Widget _buildProfileField(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -93,7 +89,6 @@ class MoreProfileScreen extends StatelessWidget {
     );
   }
 
-  /// Displayed Interests Section
   Widget _buildInterestsSection() {
     return Column(
       children: [
