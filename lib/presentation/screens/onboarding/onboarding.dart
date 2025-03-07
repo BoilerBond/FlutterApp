@@ -15,48 +15,132 @@ class OnBoarding extends StatefulWidget {
 }
 
 class _OnBoardingState extends State<OnBoarding> {
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController ageController = TextEditingController();
+  final TextEditingController bioController = TextEditingController();
+
+  void saveProfile() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print("User is not logged in");
+      return;
+    }
+
+    await FirebaseFirestore.instance.collection("users").doc(user.uid).set({
+      'firstName': firstNameController.text,
+      'lastName': lastNameController.text,
+      'age': int.parse(ageController.text),
+      'bio': bioController.text,
+    });
+
+    Navigator.of(context).push(_createRoute(Step2()));
+  }
+
+  
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
     return Scaffold(
-        appBar: AppBar(title: const Text('BBond')),
-        body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(
-              padding: EdgeInsets.only(
-                  left: MediaQuery.of(context).size.width * 0.05),
-              child: Text("Onboarding", style: TextStyle(fontSize: 30))),
-          Divider(
-              indent: MediaQuery.of(context).size.width * 0.04,
-              endIndent: MediaQuery.of(context).size.width * 0.04),
-          Expanded(
-              child: Center(
-                  child: Column(children: [
-            Text("1. Build your profile"),
-          ]))),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.3,
-                height: MediaQuery.of(context).size.width * 0.1,
-                child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Color(0xffCDFCFF),
-                      side: BorderSide(
-                        width: 1,
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+      appBar: AppBar(title: const Text('BBond')),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(width * 0.1),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Onboarding", style: TextStyle(fontSize: 30)),
+            const Divider(),
+            const SizedBox(height: 20),
+            // First Name
+            Row(
+              children: [
+                const Expanded(child: Text("First Name:")),
+                SizedBox(
+                  width: width * 0.4,
+                  child: TextField(
+                    controller: firstNameController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: "Enter your first name",
                     ),
-                    onPressed: () =>
-                        {Navigator.of(context).push(_createRoute(Step2()))},
-                    child: Icon(Icons.arrow_forward)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Last Name
+            Row(
+              children: [
+                const Expanded(child: Text("Last Name:")),
+                SizedBox(
+                  width: width * 0.4,
+                  child: TextField(
+                    controller: lastNameController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: "Enter your last name",
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Age
+            Row(
+              children: [
+                const Expanded(child: Text("Age:")),
+                SizedBox(
+                  width: width * 0.4,
+                  child: TextField(
+                    controller: ageController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: "Enter your age",
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Bio
+            Row(
+              children: [
+                const Expanded(child: Text("Bio:")),
+                SizedBox(
+                  width: width * 0.4,
+                  child: TextField(
+                    controller: bioController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: "Tell us about yourself",
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 40),
+            // Save Changes Button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    width: 1,
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () {saveProfile();},
+                child: const Text("Save Changes"),
               ),
             ),
-          ),
-        ]));
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -152,52 +236,54 @@ class _Step6State extends State<Step6> {
   }
 
   Future<void> _uploadImage(Uint8List image) async {
-  setState(() {
-    _uploading = true;
-  });
+    setState(() {
+      _uploading = true;
+    });
 
-  try {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      print("User is not logged in");
-      return;
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        print("User is not logged in");
+        return;
+      }
+      print("Uploading image for user ${user.uid}");
+
+      // get firebase storage reference with user id
+      Reference ref = FirebaseStorage.instance
+          .ref()
+          .child("profile_pictures")
+          .child("${user.uid}.jpg");
+
+      UploadTask uploadTask = ref.putData(image);
+      TaskSnapshot snapshot = await uploadTask;
+
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      setState(() {
+        _imageURL = downloadUrl;
+        _uploading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Profile picture uploaded successfully!")),
+      );
+
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(user.uid)
+          .update({
+        'profilePicture': downloadUrl,
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to upload image")),
+      );
+    } finally {
+      setState(() {
+        _uploading = false;
+      });
     }
-    print("Uploading image for user ${user.uid}");
-
-    // get firebase storage reference with user id
-    Reference ref = FirebaseStorage.instance
-        .ref()
-        .child("profile_pictures")
-        .child("${user.uid}.jpg");
-
-    UploadTask uploadTask = ref.putData(image);
-    TaskSnapshot snapshot = await uploadTask;
-
-    String downloadUrl = await snapshot.ref.getDownloadURL();
-
-    setState(() {
-      _imageURL = downloadUrl;
-      _uploading = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Profile picture uploaded successfully!")),
-    );
-
-    await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
-      'profilePicture': downloadUrl,
-    });
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Failed to upload image")),
-    );
-  } finally {
-    setState(() {
-      _uploading = false;
-    });
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
