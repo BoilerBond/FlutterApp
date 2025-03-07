@@ -15,6 +15,7 @@ class _AppSettingsState extends State<AppSettings> {
   final currentUser = FirebaseAuth.instance.currentUser;
   final db = FirebaseFirestore.instance;
 
+  String _errorMessage = "";
   bool _notificationsEnabled = false;
   bool _matchResultNotificationEnabled = false;
   bool _messageNotificationEnabled = false;
@@ -35,12 +36,15 @@ class _AppSettingsState extends State<AppSettings> {
 
   Future<void> _updateNotificationSetting() async {
     if (currentUser != null) {
-      final callable = FirebaseFunctions.instance.httpsCallable('user-notifications-changeNotificationSettings');
-      await callable.call({
-        "matchResultNotificationEnabled": _matchResultNotificationEnabled,
-        "messagingNotificationEnabled": _messageNotificationEnabled,
-        "eventNotificationEnabled": _eventsNotificationsEnabled
-      });
+      try {
+        final callable = FirebaseFunctions.instance.httpsCallable('user-notifications-changeNotificationSettings');
+        await callable.call(
+            {"matchResultNotificationEnabled": _matchResultNotificationEnabled, "messagingNotificationEnabled": _messageNotificationEnabled, "eventNotificationEnabled": _eventsNotificationsEnabled});
+      } catch (e) {
+        setState(() {
+          _errorMessage = e is FirebaseFunctionsException ? e.message ?? 'An error occurred. Please try again.' : 'An unexpected error occurred. Please try again.';
+        });
+      }
     }
   }
 
@@ -103,6 +107,7 @@ class _AppSettingsState extends State<AppSettings> {
               _buildNotificationSwitch('Messaging notifications', _messageNotificationEnabled, 'message'),
               _buildNotificationSwitch('Event notifications', _eventsNotificationsEnabled, 'event'),
             ],
+            Text(_errorMessage),
           ],
         ),
       ),

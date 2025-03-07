@@ -62,7 +62,7 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
       if (_isVerified && _verifiedEmail != null) {
         // Already verified, automatically navigate to the next screen after a delay
         Future.delayed(const Duration(seconds: 2), () {
-          Navigator.pushReplacementNamed(context, "/onboarding");
+          Navigator.pushReplacementNamed(context, "/");
         });
       }
     } catch (e) {
@@ -324,7 +324,7 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    backgroundColor: Colors.grey[300],
+                    backgroundColor: Theme.of(context).colorScheme.outlineVariant,
                   ),
                   child: const Text('Resend Code', style: TextStyle(fontSize: 16)),
                 ),
@@ -362,12 +362,12 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
             padding: const EdgeInsets.all(8),
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: Colors.red.shade100,
+              color: Theme.of(context).colorScheme.errorContainer,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               _errorMessage,
-              style: TextStyle(color: Colors.red.shade900),
+              style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
             ),
           ),
         if (_successMessage.isNotEmpty)
@@ -375,12 +375,12 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
             padding: const EdgeInsets.all(8),
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: Colors.green.shade100,
+              color: Theme.of(context).colorScheme.tertiaryContainer,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               _successMessage,
-              style: TextStyle(color: Colors.green.shade900),
+              style: TextStyle(color: Theme.of(context).colorScheme.onTertiaryContainer),
             ),
           ),
       ],

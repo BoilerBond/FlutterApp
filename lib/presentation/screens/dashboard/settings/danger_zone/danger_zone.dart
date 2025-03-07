@@ -11,7 +11,7 @@ class DangerZone extends StatefulWidget {
 }
 
 class _DangerZoneState extends State<DangerZone> {
-  String errorMessage = "";
+  String _errorMessage = "";
 
   @override
   Widget build(BuildContext context) {
@@ -38,37 +38,35 @@ class _DangerZoneState extends State<DangerZone> {
               ),
             ),
           ),
-          Text(errorMessage, style: TextStyle(color: Theme.of(context).colorScheme.error),),
+          Text(
+            _errorMessage,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
         ],
       ),
     );
   }
 
-
   void _onDeleteAccountPress(BuildContext context) {
     confirmDialog(context, () async {
-      // TODO: delete user information in Firebase
-      final callable = FirebaseFunctions.instance.httpsCallable('user-account-deleteAccountProfile');
-      final Map<String, dynamic> result = Map<String, dynamic>.from((await callable.call()).data);
-
-      if (result.containsKey("error")) {
-        setState(() {
-          errorMessage = result["error"];
-        });
-        return;
-      }
-
-      // get current user
-      final user = FirebaseAuth.instance.currentUser;
       try {
+        final callable = FirebaseFunctions.instance.httpsCallable('user-account-deleteAccountProfile');
+        await callable.call();
+
+        // get current user
+        final user = FirebaseAuth.instance.currentUser;
         // requires user data to be stored in paths with their uid
         await user?.delete();
-      }
-      on FirebaseAuthException {
+      } on FirebaseAuthException {
         // user signed-in too long ago
         // log them out so they sign-in again
         await FirebaseAuth.instance.signOut();
+      } catch (e) {
+        setState(() {
+          _errorMessage = e is FirebaseFunctionsException ? e.message ?? 'An error occurred. Please try again.' : 'An unexpected error occurred. Please try again.';
+        });
       }
+
       await FirebaseAuth.instance.signOut();
     });
   }
