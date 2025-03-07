@@ -49,14 +49,11 @@ Future<void> _launchURL(String url) async {
     return;
   }
 
-  // Debug print to check if URL is correct
-  print("Attempting to launch: $url");
+  //print("Attempting to launch: $url");
 
   if (kIsWeb) {
-    // Flutter Web: Open in a new tab
     await launchUrlString(url, webOnlyWindowName: '_blank');
   } else {
-    // Mobile/Desktop: Use normal launcher
     final Uri uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -86,7 +83,6 @@ Future<void> _launchURL(String url) async {
                 children: [
                   const SizedBox(height: 10),
 
-                  // Profile Picture
                   CircleAvatar(
                     radius: MediaQuery.of(context).size.width * 0.2,
                     backgroundImage: NetworkImage(appUser?.profilePictureURL ??
@@ -123,6 +119,57 @@ Future<void> _launchURL(String url) async {
                   _buildProfileField("Major", appUser?.major ?? "N/A"),
                   _buildProfileField("Biography", appUser?.bio ?? "No bio yet."),
                   
+                  const SizedBox(height: 10),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Interests",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w300,
+                            color: Colors.grey[600],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 4),
+                        if (appUser?.displayedInterests.isEmpty ?? true)
+                          const Text(
+                            "No interests selected.",
+                            style: TextStyle(color: Colors.grey, fontSize: 16),
+                          )
+                          else
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              child: Wrap(
+                                spacing: 10.0,
+                                runSpacing: 10.0,
+                                alignment: WrapAlignment.center,
+                                children: appUser!.displayedInterests.map((interest) {
+                                  return Chip(
+                                    label: Text(
+                                      interest,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    backgroundColor: const Color(0xFF5E77DF),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
+                        ),
+                  ),
                   const SizedBox(height: 20),
                 ],
               ),

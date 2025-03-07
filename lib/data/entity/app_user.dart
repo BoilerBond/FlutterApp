@@ -17,14 +17,15 @@ class AppUser {
   List<String> blockedUserUIDs;
   int priorityLevel;
   List<String> hobbies;
+  List<String> displayedInterests;
   bool profileVisible;
   bool photoVisible;
   bool matchResultNotificationEnabled;
   bool messagingNotificationEnabled;
   bool eventNotificationEnabled;
   bool termsAccepted;
-  String instagramLink; // NEW FIELD
-  String facebookLink; // NEW FIELD
+  String instagramLink;
+  String facebookLink;
 
   AppUser({
     required this.uid,
@@ -41,14 +42,15 @@ class AppUser {
     this.blockedUserUIDs = const [],
     this.priorityLevel = 0,
     this.hobbies = const [],
+    this.displayedInterests = const [],
     this.profileVisible = true,
     this.photoVisible = true,
     this.matchResultNotificationEnabled = true,
     this.messagingNotificationEnabled = true,
     this.eventNotificationEnabled = true,
     this.termsAccepted = false,
-    this.instagramLink = '', // Default to empty
-    this.facebookLink = '', // Default to empty
+    this.instagramLink = '',
+    this.facebookLink = '',
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -69,14 +71,15 @@ class AppUser {
       blockedUserUIDs: List<String>.from(data['blockedUserUIDs'] ?? []),
       priorityLevel: data['priorityLevel'] ?? 0,
       hobbies: List<String>.from(data['hobbies'] ?? []),
+      displayedInterests: List<String>.from(data['displayedInterests'] ?? []), // Fetch from Firestore
       profileVisible: data['profileVisible'] ?? true,
       photoVisible: data['photoVisible'] ?? true,
       matchResultNotificationEnabled: data['matchResultNotificationEnabled'] ?? true,
       messagingNotificationEnabled: data['messagingNotificationEnabled'] ?? true,
       eventNotificationEnabled: data['eventNotificationEnabled'] ?? true,
       termsAccepted: data['termsAccepted'] ?? false,
-      instagramLink: data['instagramLink'] ?? '', // Fetch from Firestore
-      facebookLink: data['facebookLink'] ?? '', // Fetch from Firestore
+      instagramLink: data['instagramLink'] ?? '',
+      facebookLink: data['facebookLink'] ?? '',
     );
   }
 
@@ -93,7 +96,6 @@ class AppUser {
     }
   }
 
-  /// Convert AppUser object to Map for Firestore
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -110,6 +112,7 @@ class AppUser {
       'blockedUserUIDs': blockedUserUIDs,
       'priorityLevel': priorityLevel,
       'hobbies': hobbies,
+      'displayedInterests': displayedInterests,
       'profileVisible': profileVisible,
       'photoVisible': photoVisible,
       'matchResultNotificationEnabled': matchResultNotificationEnabled,

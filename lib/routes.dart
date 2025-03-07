@@ -16,6 +16,7 @@ class Routes {
     return {
       '/': (context) => AuthMiddleware(child: Dashboard()),
       '/login': (context) => LoginScreen(),
+      '/dashboard': (context) => AuthMiddleware(child: Dashboard()),
       '/settings/app': (context) => AuthMiddleware(child: AppSettings()),
       '/settings/danger_zone': (context) => AuthMiddleware(child: DangerZone()),
       '/settings/privacy': (context) => AuthMiddleware(child: PrivacySettings()),
