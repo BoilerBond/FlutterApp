@@ -8,17 +8,25 @@ import 'package:datingapp/presentation/screens/dashboard/profile/edit_profile.da
 import 'package:datingapp/presentation/screens/dashboard/settings/danger_zone/danger_zone.dart';
 import 'package:datingapp/presentation/screens/dashboard/settings/app_settings/app_settings.dart';
 import 'package:datingapp/presentation/screens/purdue_verification/purdue_verification_screen.dart';
+import 'package:datingapp/presentation/screens/app_description/app_description_screen.dart';
+import 'package:datingapp/presentation/screens/login/login_screen.dart';
+import 'package:datingapp/presentation/screens/register/register_screen.dart';
+import 'package:datingapp/presentation/screens/tos/terms_of_service.dart';
 
 class Routes {
   static Map<String, WidgetBuilder> getRoutes() {
     return {
       '/': (context) => AuthMiddleware(child: Dashboard()),
+      '/register': (context) => RegisterScreen(),
+      '/login': (context) => LoginScreen(),
       '/settings/app': (context) => AuthMiddleware(child: AppSettings()),
       '/settings/danger_zone': (context) => AuthMiddleware(child: DangerZone()),
       '/settings/privacy': (context) => AuthMiddleware(child: PrivacySettings()),
       '/profile': (context) => AuthMiddleware(child: ProfileScreen()),
       '/profile/edit_profile': (context) => AuthMiddleware(child: EditProfile()),
       '/onboarding': (context) => AuthMiddleware(child: OnBoarding()),
+      '/app_description': (context) => AppDescriptionScreen(),
+      '/terms_of_service': (context) => TermsOfServicePage(),
       '/purdue_verification': (context) => const PurdueVerificationScreen(),
     };
   }

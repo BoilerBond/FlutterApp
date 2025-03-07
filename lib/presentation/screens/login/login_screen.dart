@@ -67,10 +67,10 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       String clientId = "com.boilerbond"; // TODO: register client id in apple developer account
       String redirectUri = "https://spiced-furry-crow.glitch.me/callbacks/sign_in_with_apple";
-      
+
       final rawNonce = generateNonce();
       final nonce = sha256ofString(rawNonce);
-      
+
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final userCredential = await FirebaseAuth.instance.signInWithCredential(oauthCredential);
-
+      Navigator.pushReplacementNamed(context, "/");
       print("User: ${userCredential.user?.uid}");
     } catch (e) {
       print("Error: $e");
@@ -112,6 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
+      Navigator.pushReplacementNamed(context, "/");
     } catch (e) {
       setState(() {
         _errorMessage = "Failed to sign in with Google: ${e.toString()}";
@@ -124,42 +125,51 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Column(
+        child: Stack(
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              child: TextButton(onPressed: () => {Navigator.pop(context)}, child: Text("Back"))
+            ),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("Welcome Back", style: Theme.of(context).textTheme.headlineLarge),
-                  Text("Please select a login method", style: Theme.of(context).textTheme.bodySmall),
+                  Column(
+                    children: [
+                      Text("Welcome Back", style: Theme.of(context).textTheme.headlineLarge),
+                      Text("Please select a login method", style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                  ),
+                  const SizedBox(height: 16.0),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.apple, size: 24),
+                      label: const Text('Login with Apple'),
+                      style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                      onPressed: _loginWithApple,
+                    ),
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.g_mobiledata_rounded, size: 24),
+                      label: const Text('Login with Google'),
+                      style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                      onPressed: _loginWithGoogle,
+                    ),
+                  ),
+                  if (_errorMessage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Text(_errorMessage, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    ),
                 ],
               ),
-              const SizedBox(height: 16.0),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.apple, size: 24),
-                  label: const Text('Login with Apple'),
-                  style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                  onPressed: _loginWithApple,
-                ),
-              ),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.g_mobiledata_rounded, size: 24),
-                  label: const Text('Login with Google'),
-                  style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                  onPressed: _loginWithGoogle,
-                ),
-              ),
-              if (_errorMessage.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16.0),
-                  child: Text(_errorMessage, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
