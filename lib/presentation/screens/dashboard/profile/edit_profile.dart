@@ -98,11 +98,9 @@ class _EditProfileState extends State<EditProfile> {
       user.instagramLink = instagramController.text;
     }
 
-
     await db.collection("users").doc(appUser?.uid).update(user.toMap());
     Navigator.pushReplacementNamed(context, "/profile");
   }
-
 
   void selectImage() async {
     Uint8List? imageBytes = await ImageHelper().selectImage();
@@ -120,7 +118,6 @@ class _EditProfileState extends State<EditProfile> {
       _imageURL = downloadUrl;
     });
   }
-
 
   Future<void> _showSocialMediaDialog(
       {required String title,
@@ -192,23 +189,29 @@ class _EditProfileState extends State<EditProfile> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 10),
-
-                      Stack(children: [
-                        (_image != null || _imageURL!.isNotEmpty)
-                            ? CircleAvatar(radius: MediaQuery.of(context).size.width * 0.2, backgroundImage: _image != null ? MemoryImage(_image!) : NetworkImage(_imageURL!))
-                            : CircleAvatar(
-                                radius: MediaQuery.of(context).size.width * 0.2,
-                                backgroundImage: NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"),
-                              )
-                      ]),
-                      Padding(padding: EdgeInsets.only(bottom: 16), child: TextButton(onPressed: selectImage, child: Text("Edit Profile Picture"))),
+                  Stack(children: [
+                    (_image != null || _imageURL!.isNotEmpty)
+                        ? CircleAvatar(
+                            radius: MediaQuery.of(context).size.width * 0.2,
+                            backgroundImage: _image != null
+                                ? MemoryImage(_image!)
+                                : NetworkImage(_imageURL!))
+                        : CircleAvatar(
+                            radius: MediaQuery.of(context).size.width * 0.2,
+                            backgroundImage: NetworkImage(
+                                "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"),
+                          )
+                  ]),
+                  Padding(
+                      padding: EdgeInsets.only(bottom: 16),
+                      child: TextButton(
+                          onPressed: selectImage,
+                          child: Text("Edit Profile Picture"))),
                   const SizedBox(height: 20),
-
                   _buildTextField("First Name", firstNameController),
                   const SizedBox(height: 10),
                   _buildTextField("Last Name", lastNameController),
                   const SizedBox(height: 10),
-
                   DropdownButtonFormField<int>(
                     value: selectedAge ?? 18,
                     decoration: _inputDecoration("Age"),
@@ -225,46 +228,17 @@ class _EditProfileState extends State<EditProfile> {
                     },
                   ),
                   const SizedBox(height: 10),
-
                   _buildTextField("Major", majorController),
                   const SizedBox(height: 10),
-
-                  // display current bio and edit button
-                  if (appUser != null)
-                    ListTile(
-                      title: const Text("Bio"),
-                      subtitle: Text(appUser!.bio),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () async {
-                          final newBio = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  EditBioScreen(initialBio: appUser!.bio),
-                            ),
-                          );
-
-                          if (newBio != null && newBio != appUser!.bio) {
-                            setState(() {
-                              appUser = AppUser(
-                                uid: appUser!.uid,
-                                firstName: appUser!.firstName,
-                                lastName: appUser!.lastName,
-                                bio: newBio,
-                                major: appUser!.major,
-                                instagramLink: appUser!.instagramLink,
-                                facebookLink: appUser!.facebookLink,
-                                profilePictureURL: appUser!.profilePictureURL,
-                                age: appUser!.age,
-                              );
-                              bioController.text = newBio;
-                            });
-                          }
-                        },
-                      ),
-                    ),
-
+                  _buildActionButton("Edit my bio", () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) =>
+                              EditBioScreen(initialBio: appUser!.bio)),
+                    );
+                  }),
+                  const SizedBox(height: 10),
                   _buildActionButton("Edit my interests", () {
                     Navigator.push(
                       context,
@@ -273,10 +247,8 @@ class _EditProfileState extends State<EditProfile> {
                     );
                   }),
                   const SizedBox(height: 10),
-
                   _buildActionButton("Edit onboarding information", () {}),
                   const SizedBox(height: 20),
-
                   Row(
                     children: [
                       Expanded(
@@ -303,7 +275,6 @@ class _EditProfileState extends State<EditProfile> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
