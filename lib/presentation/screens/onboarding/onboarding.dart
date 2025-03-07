@@ -226,8 +226,7 @@ class _Step2State extends State<Step2> {
 
       print("bio updated for ${user.uid}");
 
-      Navigator.of(context).push(_createRoute(Step6()));
-
+      Navigator.of(context).push(_createRoute(Step3()));
     } catch (e) {
       print("firestore error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -297,6 +296,158 @@ class _Step2State extends State<Step2> {
         ]));
   }
 }
+
+class Step3 extends StatefulWidget {
+  const Step3({super.key});
+
+  @override
+  _Step3State createState() => _Step3State();
+}
+
+class _Step3State extends State<Step3> {
+  final List<String> _allInterests = [
+    'Animals', 'Music', 'Sports', 'Outdoor activities', 'Dancing', 'Yoga',
+    'Health', 'Gym & Fitness', 'Art', 'Gaming', 'Writing', 'Books',
+    'Movies', 'Space', 'Science', 'Design', 'Food', 'Camping',
+    'Photography', 'Fashion', 'Comedy', 'Politics', 'News',
+    'Technology', 'Entertainment', 'Architecture', 'Business'
+  ];
+
+  final Set<String> _selectedInterests = {};
+
+  void _onInterestSelected(bool selected, String interest) {
+    setState(() {
+      if (selected) {
+        _selectedInterests.add(interest);
+      } else {
+        _selectedInterests.remove(interest);
+      }
+    });
+  }
+
+  Future<void> saveInterests() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print("User is not logged in");
+      return;
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
+        'interests': _selectedInterests.toList(),
+      });
+      Navigator.of(context).push(_createRoute(Step6()));
+
+    } catch (e) {
+      print("Failed to save interests: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to save interests")),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    return Scaffold(
+      appBar: AppBar(title: const Text('BBond')),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Header
+          Padding(
+            padding: EdgeInsets.only(left: width * 0.05, top: 16),
+            child: const Text(
+              "Onboarding",
+              style: TextStyle(fontSize: 30),
+            ),
+          ),
+          Divider(
+            indent: width * 0.04,
+            endIndent: width * 0.04,
+          ),
+
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: width * 0.07),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  const Text(
+                    "3. Your interests",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Select your interests",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8.0,
+                    runSpacing: 8.0,
+                    children: _allInterests.map((interest) {
+                      final isSelected = _selectedInterests.contains(interest);
+                      return FilterChip(
+                        label: Text(interest),
+                        selected: isSelected,
+                        backgroundColor: Colors.white,
+                        selectedColor: const Color(0xffCDFCFF),
+                        checkmarkColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                            color: isSelected ? Colors.transparent : Colors.grey.shade300,
+                          ),
+                        ),
+                        onSelected: (selected) => _onInterestSelected(selected, interest),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+
+          // Next Button
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: width * 0.3,
+                height: width * 0.1,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xffCDFCFF),
+                    side: BorderSide(
+                      width: 1,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: saveInterests,
+                  child: const Icon(Icons.arrow_forward),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
 class Step6 extends StatefulWidget {
   const Step6({super.key});
