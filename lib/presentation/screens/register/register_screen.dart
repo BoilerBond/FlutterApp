@@ -86,7 +86,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       final userCredential = await FirebaseAuth.instance.signInWithCredential(oauthCredential);
-      Navigator.pushReplacementNamed(context, "/");
+      Navigator.pushReplacementNamed(context, "/purdue_verification");
       print("User: ${userCredential.user?.uid}");
     } catch (e) {
       print("Error: $e");
@@ -112,7 +112,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-      Navigator.pushReplacementNamed(context, "/");
+      Navigator.pushReplacementNamed(context, "/purdue_verification");
     } catch (e) {
       setState(() {
         _errorMessage = "Failed to sign in with Google: ${e.toString()}";
