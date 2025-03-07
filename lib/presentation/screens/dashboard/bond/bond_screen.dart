@@ -16,14 +16,31 @@ class _BondScreenState extends State<BondScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Bond'),
+        title: const Text(
+                  "My Bond",
+                  style: TextStyle(
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w100,
+                    fontSize: 22,
+                    color: Color(0xFF454746),
+                  ),
+                ),
         automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_horiz, color: Colors.black54),
+            onPressed: () {
+              _reportProfile(context);
+            },
+          ),
+        ],
+        toolbarHeight: 40, 
       ),
       body: Padding(
         padding: EdgeInsets.all(16).copyWith(top: 0),
         child: Column(
           children: [
-            Divider(),
+            const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
             SizedBox(height: 16),
             Stack(children: [
               _image != null
@@ -52,7 +69,7 @@ class _BondScreenState extends State<BondScreen> {
                   ),
                   SizedBox(
                     width: MediaQuery.of(context).size.width / 3,
-                    child: Padding(padding: EdgeInsets.all(16), child: TextButton(onPressed: () => {}, child: Text("Unbond"))),
+                    child: Padding(padding: EdgeInsets.all(16), child: TextButton(onPressed: () => {_confirmUnbondDialog(context)}, child: Text("Unbond"))),
                   ),
                 ],
               ),
@@ -120,4 +137,147 @@ class _BondScreenState extends State<BondScreen> {
       ),
     );
   }
+}
+
+
+  void _confirmUnbondDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.85,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Are you sure you want to unbond?",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 15),
+                const Text(
+                  "This action will remove your bond and cannot be undone.",
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Cancel"),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _unbond();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2C519C),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text("Yes, Unbond"),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _unbond() {
+    // Implement the logic to unbond the user
+  }
+
+void _reportProfile(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.85,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Report [name]'s Profile",
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 15),
+
+              SizedBox(
+                width: double.infinity,
+                child: DropdownButtonFormField<int>(
+                  decoration: InputDecoration(
+                    labelText: 'Why do you want to report this profile?',
+                    filled: true,
+                    fillColor: Colors.grey.shade200,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 1,
+                      child: Text("Profile goes against one of my non-negotiables."),
+                    ),
+                    DropdownMenuItem(
+                      value: 2,
+                      child: Text("Profile appears to be fake or catfishing."),
+                    ),
+                    DropdownMenuItem(
+                      value: 3,
+                      child: Text("Offensive content against community standards."),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Close"),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                       // implement reporting logic
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF2C519C),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text("Report"),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }

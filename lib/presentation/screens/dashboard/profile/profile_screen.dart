@@ -20,19 +20,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
       {'title': 'View Profile', 'onPressed': (BuildContext context) {}}
     ];
     return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+                  "My Profile",
+                  style: TextStyle(
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w100,
+                    fontSize: 22,
+                    color: Color(0xFF454746),
+                  ),
+                ),
+        automaticallyImplyLeading: false,
+        toolbarHeight: 40, 
+      ),
       body: Center(
         child: Column(
           children: [
+            const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
             Text(
               "Welcome back, [User]!",
-              style: DefaultTextStyle.of(context).style.apply(fontSizeFactor: 2.0),
+              style: DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.8),
             ),
             CircleAvatar(
               radius: MediaQuery.of(context).size.width * 0.2,
               backgroundImage: NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"),
             ),
             Padding(
-                padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.03),
+                padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.02),
                 child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
