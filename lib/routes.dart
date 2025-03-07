@@ -1,3 +1,4 @@
+import 'package:datingapp/presentation/screens/dashboard/profile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:datingapp/utils/middlewares/auth_middleware.dart';
 import 'package:datingapp/presentation/screens/dashboard/dashboard.dart';
@@ -15,6 +16,7 @@ class Routes {
       '/settings/app': (context) => AuthMiddleware(child: AppSettings()),
       '/settings/danger_zone': (context) => AuthMiddleware(child: DangerZone()),
       '/settings/privacy': (context) => AuthMiddleware(child: PrivacySettings()),
+      '/profile': (context) => AuthMiddleware(child: ProfileScreen()),
       '/profile/edit_profile': (context) => AuthMiddleware(child: EditProfile()),
       '/onboarding': (context) => AuthMiddleware(child: OnBoarding()),
       '/purdue_verification': (context) => const PurdueVerificationScreen(),

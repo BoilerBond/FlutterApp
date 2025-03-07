@@ -1,8 +1,7 @@
 import "package:flutter/material.dart";
-import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
-import 'package:datingapp/utils/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
+import 'package:datingapp/utils/image_helper.dart';
+
 
 class OnBoarding extends StatefulWidget {
   const OnBoarding({super.key});
@@ -155,28 +154,17 @@ class Step6 extends StatefulWidget {
 
 class _Step6State extends State<Step6> {
   Uint8List? _image;
-
   void selectImage() async {
-    XFile img = await pickImage(ImageSource.gallery);
-    CroppedFile? croppedFile = await ImageCropper().cropImage(
-      sourcePath: img.path,
-      aspectRatio: CropAspectRatio(ratioX: 1, ratioY: 1),
-      compressQuality: 50,
-      uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: 'Crop your image',
-          toolbarColor: Colors.deepOrange,
-          toolbarWidgetColor: Colors.white,
-        ),
-        IOSUiSettings(
-          title: 'Crop your image',
-        ),
-      ],
-    );
+    Uint8List? imageBytes = await ImageHelper().selectImage();
+    if (imageBytes != null) {
+      setState(() {
+        _image = imageBytes;
+      });
+    }
+  }
 
-    setState(() {
-      _image = croppedFile!.readAsBytes() as Uint8List?;
-    });
+  Future<void> _uploadImage(Uint8List image) async {
+    await ImageHelper().uploadImage(image);
   }
 
   @override
@@ -220,7 +208,7 @@ class _Step6State extends State<Step6> {
                                   _image != null ?
                                   CircleAvatar(
                                     radius: MediaQuery.of(context).size.width * 0.3,
-                                    backgroundImage: MemoryImage(_image!),
+                                    backgroundImage: MemoryImage(_image!)
                                   ) :
                                   CircleAvatar(
                                     radius: MediaQuery.of(context).size.width * 0.3,
@@ -268,7 +256,8 @@ class _Step6State extends State<Step6> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        onPressed: () => {
+                        onPressed: () async => {
+                          _uploadImage(_image!),
                           Navigator.pushReplacementNamed(context, "/")
                         },
                         child: Text("Finish")

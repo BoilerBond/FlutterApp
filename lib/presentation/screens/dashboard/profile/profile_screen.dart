@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../../../data/entity/app_user.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -8,6 +11,30 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  String? _imageURL = "";
+  final db = FirebaseFirestore.instance;
+  final currentUser = FirebaseAuth.instance.currentUser;
+
+  Future<void> getProfile() async {
+    if (currentUser != null) {
+      final userSnapshot = await db.collection("users")
+          .doc(currentUser?.uid)
+          .get();
+      final user = AppUser.fromSnapshot(userSnapshot);
+      setState(() {
+        _imageURL = user.profilePictureURL;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    getProfile();
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> buttons = [
@@ -25,11 +52,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Text(
               "Welcome back, [User]!",
-              style: DefaultTextStyle.of(context).style.apply(fontSizeFactor: 2.0),
+              style: TextStyle(height: 2, fontSize: 34),
             ),
             CircleAvatar(
               radius: MediaQuery.of(context).size.width * 0.2,
-              backgroundImage: NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"),
+              backgroundImage: NetworkImage(_imageURL!),
             ),
             Padding(
                 padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.03),
