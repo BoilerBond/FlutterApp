@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-// ignore: must_be_immutable
 class TermsOfServicePage extends StatefulWidget {
-  String navigatePath;
-  TermsOfServicePage({super.key, this.navigatePath = ""});
+  final Map<dynamic, dynamic> arguments;
+  TermsOfServicePage({super.key, required this.arguments});
 
   @override
   TermsOfServicePageState createState() => TermsOfServicePageState();
@@ -167,10 +166,8 @@ class TermsOfServicePageState extends State<TermsOfServicePage> {
             ElevatedButton(
               onPressed: _isConfirmed
                   ? () {
-                      String pathFromRoute = ModalRoute.of(context)?.settings.arguments as String;
-                      String finalNavigatePath = widget.navigatePath.isNotEmpty ? widget.navigatePath : pathFromRoute;
-                      if (finalNavigatePath.isNotEmpty) {
-                        Navigator.pushReplacementNamed(context, finalNavigatePath);
+                      if (widget.arguments["navigatePath"].isNotEmpty) {
+                        Navigator.pushReplacementNamed(context, widget.arguments["navigatePath"]);
                       } else {
                         Navigator.pop(context);
                       }

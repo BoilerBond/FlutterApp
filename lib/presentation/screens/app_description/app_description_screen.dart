@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 
 // ignore: must_be_immutable
 class AppDescriptionScreen extends StatefulWidget {
-  String navigatePath;
-  bool navigateToTos;
-  AppDescriptionScreen({super.key, this.navigatePath = "", this.navigateToTos = false});
+  final Map<dynamic, dynamic> arguments;
+  AppDescriptionScreen({super.key, required this.arguments});
 
   @override
   _AppDescriptionScreenState createState() => _AppDescriptionScreenState();
@@ -116,17 +115,11 @@ class _AppDescriptionScreenState extends State<AppDescriptionScreen> {
                 label: const Text('Next'),
                 style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                 onPressed: () {
-                  Map<String, dynamic> argsFromRoute = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {};
-                  String pathFromRoute = argsFromRoute.containsKey("navigatePath") ? argsFromRoute["navigatePath"] : "";
-                  bool navigateToTosFromRoute = argsFromRoute.containsKey("navigateToTos") ? argsFromRoute["navigateToTos"] : false;
-                  String finalNavigatePath = widget.navigatePath.isNotEmpty ? widget.navigatePath : pathFromRoute;
-                  bool finalNavigateToTos = widget.navigateToTos || navigateToTosFromRoute;
-
-                  if (finalNavigateToTos) {
-                    Navigator.pushNamed(context, "/terms_of_service", arguments: finalNavigatePath);
+                  if (widget.arguments["navigateToTos"]) {
+                    Navigator.pushNamed(context, "/terms_of_service", arguments: {"navigatePath" : widget.arguments["navigatePath"], "navigateToTos": false});
                   } else {
-                    if (finalNavigatePath.isNotEmpty) {
-                      Navigator.pushReplacementNamed(context, finalNavigatePath);
+                    if (widget.arguments["navigatePath"].isNotEmpty) {
+                      Navigator.pushReplacementNamed(context, widget.arguments["navigatePath"]);
                     } else {
                       Navigator.pop(context);
                     }

@@ -45,7 +45,10 @@ class _AuthMiddlewareState extends State<AuthMiddleware> {
                 if (profileSnapshot.hasData && profileSnapshot.data!) {
                   return widget.child;
                 } else {
-                  return AppDescriptionScreen(navigatePath: "/purdue_verification", navigateToTos: true);
+                  return AppDescriptionScreen(arguments: {
+                    "navigatePath": "/purdue_verification",
+                    "navigateToTos": true
+                  });
                 }
               },
             );

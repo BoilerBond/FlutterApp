@@ -10,22 +10,22 @@ class AppUser {
   String lastName;
   String bio;
   String major;
-  Gender gender;
-  int age;
+  String instagramLink;
+  String facebookLink;
   String profilePictureURL;
-  List<String> photosURL;
-  List<String> blockedUserUIDs;
+  int age;
   int priorityLevel;
+  Gender gender;
   List<String> hobbies;
   List<String> displayedInterests;
+  List<String> photosURL;
+  List<String> blockedUserUIDs;
   bool profileVisible;
   bool photoVisible;
   bool matchResultNotificationEnabled;
   bool messagingNotificationEnabled;
   bool eventNotificationEnabled;
   bool termsAccepted;
-  String instagramLink;
-  String facebookLink;
 
   AppUser({
     required this.uid,
@@ -80,6 +80,22 @@ class AppUser {
       termsAccepted: data['termsAccepted'] ?? false,
       instagramLink: data['instagramLink'] ?? '',
       facebookLink: data['facebookLink'] ?? '',
+    );
+  }
+
+  static Future<AppUser> getById(String id) async {
+    final snapshot = await FirebaseFirestore.instance.collection("users").doc(id).get();
+    return AppUser.fromSnapshot(snapshot);
+  }
+
+  static Future<void> delete(String id) async {
+    await FirebaseFirestore.instance.collection("users").doc(id).delete();
+  }
+
+  Future<void> save({String id = "", bool merge = false}) async {
+    await FirebaseFirestore.instance.collection("users").doc(id).set(
+      toMap(),
+      SetOptions(merge: merge)
     );
   }
 

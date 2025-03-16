@@ -27,10 +27,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = View.of(context).platformDispatcher.platformBrightness;
     MaterialTheme theme = MaterialTheme(context);
+
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      routes: Routes.getRoutes(), 
-      theme: brightness == Brightness.light ? theme.light() : theme.dark()
+      title: 'BoilerBond Demo',
+      theme: brightness == Brightness.light ? theme.light() : theme.dark(),
+      initialRoute: "/",
+      onGenerateRoute: (settings) {
+        return Routes.onGenerateRoute(settings);
+      },
     );
   }
 }

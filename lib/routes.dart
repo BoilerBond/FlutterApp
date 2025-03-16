@@ -1,3 +1,4 @@
+import 'package:datingapp/presentation/screens/dashboard/profile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:datingapp/utils/middlewares/auth_middleware.dart';
 import 'package:datingapp/presentation/screens/dashboard/dashboard.dart';
@@ -13,20 +14,39 @@ import 'package:datingapp/presentation/screens/register/register_screen.dart';
 import 'package:datingapp/presentation/screens/tos/terms_of_service.dart';
 
 class Routes {
-  static Map<String, WidgetBuilder> getRoutes() {
-    return {
-      '/': (context) => AuthMiddleware(child: Dashboard()),
-      '/register': (context) => RegisterScreen(),
-      '/login': (context) => LoginScreen(),
-      '/dashboard': (context) => AuthMiddleware(child: Dashboard()),
-      '/settings/app': (context) => AuthMiddleware(child: AppSettings()),
-      '/settings/danger_zone': (context) => AuthMiddleware(child: DangerZone()),
-      '/settings/privacy': (context) => AuthMiddleware(child: PrivacySettings()),
-      '/profile/edit_profile': (context) => AuthMiddleware(child: EditProfile()),
-      '/onboarding': (context) => AuthMiddleware(child: OnBoarding()),
-      '/app_description': (context) => AppDescriptionScreen(),
-      '/terms_of_service': (context) => TermsOfServicePage(),
-      '/purdue_verification': (context) => const PurdueVerificationScreen(),
-    };
+  static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+    final Map<dynamic, dynamic> arguments = (settings.arguments ?? {}) as Map<dynamic, dynamic>;
+
+    switch (settings.name) {
+      case '/':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: Dashboard()));
+      case '/register':
+        return MaterialPageRoute(builder: (context) => RegisterScreen());
+      case '/login':
+        return MaterialPageRoute(builder: (context) => LoginScreen());
+      case '/settings/app':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: AppSettings()));
+      case '/settings/danger_zone':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: DangerZone()));
+      case '/settings/privacy':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: PrivacySettings()));
+      case '/profile/edit_profile':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: EditProfile()));
+      case '/onboarding':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: OnBoarding()));
+      case '/app_description':
+        return MaterialPageRoute(builder: (context) => AppDescriptionScreen(arguments: arguments));
+      case '/terms_of_service':
+        return MaterialPageRoute(builder: (context) => TermsOfServicePage(arguments: arguments));
+      case '/purdue_verification':
+        return MaterialPageRoute(builder: (context) => const PurdueVerificationScreen());
+
+      default:
+        return MaterialPageRoute(
+          builder: (context) => const Scaffold(
+            body: Center(child: Text("404 - Page Not Found")),
+          ),
+        );
+    }
   }
 }

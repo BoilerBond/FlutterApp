@@ -1,4 +1,10 @@
 {
+<<<<<<< HEAD
+  "emulators": {
+    "singleProjectMode": true
+  }
+}
+=======
   "functions": {
     "source": "functions",
     "predeploy": [
@@ -10,3 +16,4 @@
     "indexes": "firestore.indexes.json"
   }
 } 
+>>>>>>> main

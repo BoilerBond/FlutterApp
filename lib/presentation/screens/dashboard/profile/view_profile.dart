@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:datingapp/data/constants/constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:datingapp/data/entity/app_user.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class ViewProfileScreen extends StatefulWidget {
@@ -28,8 +28,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final docSnapshot =
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final docSnapshot = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
 
     if (docSnapshot.exists) {
       setState(() {
@@ -41,29 +40,29 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
     }
   }
 
-Future<void> _launchURL(String url) async {
-  if (url.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("No link available")),
-    );
-    return;
-  }
-
-  //print("Attempting to launch: $url");
-
-  if (kIsWeb) {
-    await launchUrlString(url, webOnlyWindowName: '_blank');
-  } else {
-    final Uri uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
+  Future<void> _launchURL(String url) async {
+    if (url.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Could not open $url")),
+        const SnackBar(content: Text("No link available")),
       );
+      return;
+    }
+
+    //print("Attempting to launch: $url");
+
+    if (kIsWeb) {
+      await launchUrlString(url, webOnlyWindowName: '_blank');
+    } else {
+      final Uri uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Could not open $url")),
+        );
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -82,11 +81,11 @@ Future<void> _launchURL(String url) async {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 10),
-
                   CircleAvatar(
                     radius: MediaQuery.of(context).size.width * 0.2,
-                    backgroundImage: NetworkImage(appUser?.profilePictureURL ??
-                        "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"),
+                    backgroundImage: NetworkImage(appUser?.profilePictureURL != null
+                        ? (appUser!.profilePictureURL.isNotEmpty ? appUser!.profilePictureURL : Constants.defaultProfilePictureURL)
+                        : (Constants.defaultProfilePictureURL)),
                     backgroundColor: const Color(0xFFCDFCFF),
                   ),
                   const SizedBox(height: 20),
@@ -110,17 +109,13 @@ Future<void> _launchURL(String url) async {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 20),
-                  
                   _buildProfileField("First Name", appUser?.firstName ?? "N/A"),
                   _buildProfileField("Last Name", appUser?.lastName ?? "N/A"),
                   _buildProfileField("Age", appUser?.age.toString() ?? "N/A"),
                   _buildProfileField("Major", appUser?.major ?? "N/A"),
                   _buildProfileField("Biography", appUser?.bio ?? "No bio yet."),
-                  
                   const SizedBox(height: 10),
-
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
                     child: Column(
@@ -141,34 +136,34 @@ Future<void> _launchURL(String url) async {
                             "No interests selected.",
                             style: TextStyle(color: Colors.grey, fontSize: 16),
                           )
-                          else
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
-                              child: Wrap(
-                                spacing: 10.0,
-                                runSpacing: 10.0,
-                                alignment: WrapAlignment.center,
-                                children: appUser!.displayedInterests.map((interest) {
-                                  return Chip(
-                                    label: Text(
-                                      interest,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                        else
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Wrap(
+                              spacing: 10.0,
+                              runSpacing: 10.0,
+                              alignment: WrapAlignment.center,
+                              children: appUser!.displayedInterests.map((interest) {
+                                return Chip(
+                                  label: Text(
+                                    interest,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
                                     ),
-                                    backgroundColor: const Color(0xFF5E77DF),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
+                                  ),
+                                  backgroundColor: const Color(0xFF5E77DF),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                );
+                              }).toList(),
                             ),
-                          ],
-                        ),
+                          ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -176,7 +171,6 @@ Future<void> _launchURL(String url) async {
             ),
     );
   }
-
 
   Widget _buildProfileField(String label, String value) {
     return Padding(

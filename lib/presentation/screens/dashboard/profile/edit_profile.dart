@@ -1,10 +1,11 @@
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:datingapp/data/entity/app_user.dart';
+import 'package:datingapp/data/constants/constants.dart';
+import 'package:datingapp/presentation/screens/dashboard/profile/edit_bio.dart';
+import 'package:datingapp/presentation/screens/dashboard/profile/edit_interests.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:datingapp/presentation/screens/dashboard/profile/edit_interests.dart';
-import 'package:datingapp/presentation/screens/dashboard/profile/edit_bio.dart';
-import 'package:datingapp/data/entity/app_user.dart';
 import 'package:datingapp/utils/image_helper.dart';
 
 class EditProfile extends StatefulWidget {
@@ -15,24 +16,97 @@ class EditProfile extends StatefulWidget {
 }
 
 class _EditProfileState extends State<EditProfile> {
+  final db = FirebaseFirestore.instance;
+  final currentUser = FirebaseAuth.instance.currentUser;
   Uint8List? _image;
   String? _imageURL = "";
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController bioController = TextEditingController();
-  final TextEditingController majorController = TextEditingController();
-  final TextEditingController instagramController = TextEditingController();
-  final TextEditingController facebookController = TextEditingController();
-  int? selectedAge;
-  final db = FirebaseFirestore.instance;
-
   bool isLoading = true;
   AppUser? appUser;
+
+  Future<void> getProfile() async {
+    if (currentUser != null) {
+      final userSnapshot = await db.collection("users").doc(currentUser?.uid).get();
+      final user = AppUser.fromSnapshot(userSnapshot);
+      setState(() {
+        _imageURL = user.profilePictureURL;
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+
     _fetchUserData();
+    getProfile();
+  }
+
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController ageContainer = TextEditingController();
+  // final TextEditingController ageController = TextEditingController();
+  // might want to do age through drop down instead later
+  final TextEditingController bioController = TextEditingController();
+  final TextEditingController instagramController = TextEditingController();
+  final TextEditingController facebookController = TextEditingController();
+  int? selectedAge;
+  final TextEditingController majorController = TextEditingController();
+
+  void selectImage() async {
+    Uint8List? imageBytes = await ImageHelper().selectImage();
+    if (imageBytes != null) {
+      setState(() {
+        _image = imageBytes;
+      });
+    }
+  }
+
+  Future<void> _uploadImage(Uint8List image) async {
+    String downloadUrl = await ImageHelper().uploadImage(image);
+
+    setState(() {
+      _imageURL = downloadUrl;
+    });
+  }
+
+  Future<void> _handleProfileSubmit(BuildContext context) async {
+    if (_image != null) {
+      await _uploadImage(_image!);
+      _image = null;
+    }
+
+    final userSnapshot = await db.collection("users").doc(currentUser?.uid).get();
+    final user = AppUser.fromSnapshot(userSnapshot);
+
+    if (firstNameController.text.isNotEmpty) {
+      user.firstName = firstNameController.text;
+    }
+
+    if (lastNameController.text.isNotEmpty) {
+      user.lastName = lastNameController.text;
+    }
+
+    if (selectedAge != null && selectedAge! > 0 && selectedAge! <= 100) {
+      user.age = selectedAge!;
+    }
+
+    if (majorController.text.isNotEmpty) {
+      user.major = majorController.text;
+    }
+
+    if (bioController.text.isNotEmpty) {
+      user.bio = bioController.text;
+    }
+
+    if (facebookController.text.isNotEmpty) {
+      user.facebookLink = facebookController.text;
+    }
+
+    if (instagramController.text.isNotEmpty) {
+      user.instagramLink = instagramController.text;
+    }
+
+    await db.collection("users").doc(user.uid).update(user.toMap());
   }
 
   Future<void> _fetchUserData() async {
@@ -64,63 +138,6 @@ class _EditProfileState extends State<EditProfile> {
       setState(() => isLoading = false);
     }
   }
-
-  Future<void> _handleProfileSubmit(BuildContext context) async {
-    if (_image != null) {
-      await _uploadImage(_image!);
-      _image = null;
-    }
-
-    final userSnapshot = await db.collection("users").doc(appUser?.uid).get();
-    final user = AppUser.fromSnapshot(userSnapshot);
-
-    if (firstNameController.text.isNotEmpty) {
-      user.firstName = firstNameController.text;
-    }
-
-    if (lastNameController.text.isNotEmpty) {
-      user.lastName = lastNameController.text;
-    }
-
-    if (selectedAge != null && selectedAge! > 0 && selectedAge! <= 100) {
-      user.age = selectedAge!;
-    }
-
-    if (bioController.text.isNotEmpty) {
-      user.bio = bioController.text;
-    }
-
-    if (facebookController.text.isNotEmpty) {
-      user.facebookLink = facebookController.text;
-    }
-
-    if (instagramController.text.isNotEmpty) {
-      user.instagramLink = instagramController.text;
-    }
-
-
-    await db.collection("users").doc(appUser?.uid).update(user.toMap());
-    Navigator.pushReplacementNamed(context, "/profile");
-  }
-
-
-  void selectImage() async {
-    Uint8List? imageBytes = await ImageHelper().selectImage();
-    if (imageBytes != null) {
-      setState(() {
-        _image = imageBytes;
-      });
-    }
-  }
-
-  Future<void> _uploadImage(Uint8List image) async {
-    String downloadUrl = await ImageHelper().uploadImage(image);
-
-    setState(() {
-      _imageURL = downloadUrl;
-    });
-  }
-
 
   Future<void> _showSocialMediaDialog(
       {required String title,
@@ -160,7 +177,6 @@ class _EditProfileState extends State<EditProfile> {
                   controller.text = tempController.text.trim();
                 });
 
-                Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text("$title link updated successfully!")),
                 );
@@ -173,8 +189,7 @@ class _EditProfileState extends State<EditProfile> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+    Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Profile',
@@ -198,7 +213,7 @@ class _EditProfileState extends State<EditProfile> {
                             ? CircleAvatar(radius: MediaQuery.of(context).size.width * 0.2, backgroundImage: _image != null ? MemoryImage(_image!) : NetworkImage(_imageURL!))
                             : CircleAvatar(
                                 radius: MediaQuery.of(context).size.width * 0.2,
-                                backgroundImage: NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"),
+                                backgroundImage: NetworkImage(Constants.defaultProfilePictureURL),
                               )
                       ]),
                       Padding(padding: EdgeInsets.only(bottom: 16), child: TextButton(onPressed: selectImage, child: Text("Edit Profile Picture"))),

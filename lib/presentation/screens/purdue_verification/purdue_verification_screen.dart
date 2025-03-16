@@ -47,9 +47,8 @@ class _PurdueVerificationScreenState extends State<PurdueVerificationScreen> {
       }
 
       // Call Firebase Function to check verification status
-      final token = await user.getIdToken();
       final callable = FirebaseFunctions.instance.httpsCallable('user-verification-checkPurdueEmailVerification');
-      final result = await callable.call({"uid" : user.uid});
+      final result = await callable.call({});
       
       final data = result.data as Map<String, dynamic>;
             
