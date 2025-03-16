@@ -26,6 +26,9 @@ class AppUser {
   bool messagingNotificationEnabled;
   bool eventNotificationEnabled;
   bool termsAccepted;
+  bool showHeight;
+  String heightUnit;
+  double heightValue;
 
   AppUser({
     required this.uid,
@@ -51,6 +54,9 @@ class AppUser {
     this.termsAccepted = false,
     this.instagramLink = '',
     this.facebookLink = '',
+    this.showHeight = false,
+    this.heightUnit = '',
+    this.heightValue = 0.0, // height is stored in cm and displayed according to user preference
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -80,6 +86,9 @@ class AppUser {
       termsAccepted: data['termsAccepted'] ?? false,
       instagramLink: data['instagramLink'] ?? '',
       facebookLink: data['facebookLink'] ?? '',
+      showHeight: data['showHeight'] ?? true,
+      heightUnit: data['heightUnit'] ?? '',
+      heightValue: data['heightValue'] ?? 0.0,
     );
   }
 
@@ -137,6 +146,9 @@ class AppUser {
       'termsAccepted': termsAccepted,
       'instagramLink': instagramLink,
       'facebookLink': facebookLink,
+      'showHeight': showHeight,
+      'heightUnit': heightUnit,
+      'heightValue': heightValue,
     };
   }
 }
