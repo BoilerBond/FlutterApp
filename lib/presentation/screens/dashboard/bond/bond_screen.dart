@@ -31,6 +31,9 @@ class _BondScreenState extends State<BondScreen> {
           major: bondedUser['major'],
           bio: bondedUser['bio'],
           displayedInterests: List<String>.from(bondedUser['displayedInterests']),
+          showHeight: bondedUser['showHeight'],
+          heightUnit: bondedUser['heightUnit'],
+          heightValue: bondedUser['heightValue'],
         ),
       ),
     );

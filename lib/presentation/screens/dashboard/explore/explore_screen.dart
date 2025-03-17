@@ -66,6 +66,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           major: users[profileIndex].major,
           bio: users[profileIndex].bio,
           displayedInterests: users[profileIndex].displayedInterests,
+          showHeight: users[profileIndex].showHeight,
+          heightUnit: users[profileIndex].heightUnit,
+          heightValue: users[profileIndex].heightValue,
         ),
       ),
     );
