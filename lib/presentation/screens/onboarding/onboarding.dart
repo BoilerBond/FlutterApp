@@ -367,9 +367,20 @@ class _Step3State extends State<Step3> {
     }
 
     try {
-      double heightValue = _useCm
-          ? double.parse(_cmController.text.trim())
-          : ((double.parse(_ftController.text.trim()) * 30.48) + double.parse(_inController.text.trim()) * 2.54);
+      double heightValue;
+      if (_useCm) {
+        heightValue = double.tryParse(_cmController.text.trim()) ?? -1;
+        if (heightValue < 50 || heightValue > 300) {
+          throw Exception("Invalid height. Please enter a value between 50cm and 300cm.");
+        }
+      } else {
+        double feet = double.tryParse(_ftController.text.trim()) ?? -1;
+        double inches = double.tryParse(_inController.text.trim()) ?? -1;
+        if (feet < 1 || feet > 8 || inches < 0 || inches >= 12) {
+          throw Exception("Invalid height. Please review the entered value.");
+        }
+        heightValue = (feet * 30.48) + (inches * 2.54);
+      }
 
       await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
         "showHeight": _showHeight,
@@ -382,7 +393,7 @@ class _Step3State extends State<Step3> {
     } catch (e) {
       print("Firestore error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to save height. Try again.")),
+        SnackBar(content: Text(e.toString())),
       );
     } finally {
       setState(() {
@@ -390,8 +401,6 @@ class _Step3State extends State<Step3> {
       });
     }
   }
-
-  // TODO: input validation.
 
   @override
   Widget build(BuildContext context) {
@@ -527,6 +536,7 @@ class _Step3State extends State<Step3> {
     );
   }
 }
+
 
 
 class Step4 extends StatefulWidget {
