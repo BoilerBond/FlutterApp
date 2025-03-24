@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:datingapp/data/entity/app_user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -59,12 +60,9 @@ class ImageHelper {
 
     String downloadUrl = await snapshot.ref.getDownloadURL();
 
-    await FirebaseFirestore.instance
-        .collection("users")
-        .doc(user.uid)
-        .update({
-      'profilePicture': downloadUrl,
-    });
+    final userObj = await AppUser.getById(user.uid);
+    userObj.profilePictureURL = downloadUrl;
+    userObj.save(id: user.uid, merge: true);
     return downloadUrl;
   }
 }

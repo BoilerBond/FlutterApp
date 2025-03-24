@@ -73,7 +73,7 @@ class AppUser {
       major: data['major'] ?? '',
       gender: _parseGender(data['gender']),
       age: data['age'] ?? 0,
-      profilePictureURL: data['profilePicture'] ?? '',
+      profilePictureURL: data['profilePictureURL'] ?? '',
       photosURL: List<String>.from(data['photosURL'] ?? []),
       blockedUserUIDs: List<String>.from(data['blockedUserUIDs'] ?? []),
       priorityLevel: data['priorityLevel'] ?? 0,

@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:datingapp/data/constants/constants.dart';
+import 'package:datingapp/presentation/screens/dashboard/profile/view_profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../data/entity/app_user.dart';
@@ -19,9 +21,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> getProfile() async {
     if (currentUser != null) {
-      final userSnapshot = await db.collection("users")
-          .doc(currentUser?.uid)
-          .get();
+      final userSnapshot = await db.collection("users").doc(currentUser?.uid).get();
       final user = AppUser.fromSnapshot(userSnapshot);
       setState(() {
         userName = user.firstName + " " + user.lastName;
@@ -37,7 +37,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     getProfile();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -58,10 +57,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               "Welcome back, " + userName! + "!",
               style: TextStyle(height: 2, fontSize: 25),
             ),
-            CircleAvatar(
-              radius: MediaQuery.of(context).size.width * 0.2,
-              backgroundImage: NetworkImage(_imageURL!),
-            ),
+            Stack(children: [
+              (_imageURL!.isNotEmpty)
+                  ? CircleAvatar(radius: MediaQuery.of(context).size.width * 0.2, backgroundImage: NetworkImage(_imageURL!))
+                  : CircleAvatar(
+                      radius: MediaQuery.of(context).size.width * 0.2,
+                      backgroundImage: NetworkImage(Constants.defaultProfilePictureURL),
+                    )
+            ]),
             Padding(
                 padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.03),
                 child: Container(
@@ -81,7 +84,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 endIndent: 16,
               ),
               // view profile button
-              Padding(padding: EdgeInsets.all(16), child: TextButton(onPressed: () => {}, child: Text("View Profile")))
+              SizedBox(
+                width: MediaQuery.of(context).size.width / 3,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: TextButton(
+                    onPressed: () => {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ViewProfileScreen()),
+                      )
+                    },
+                    child: const Text("View Profile"),
+                  ),
+                ),
+              ),
             ]))),
             Divider(
               indent: 16,
