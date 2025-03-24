@@ -26,7 +26,9 @@ class AppUser {
   bool messagingNotificationEnabled;
   bool eventNotificationEnabled;
   bool termsAccepted;
-  Map<String, Map<String, int>> pairRatings;
+  List<DocumentReference> pairRatings;
+  int weeksWithoutMatch;
+  String match;
 
   AppUser({
     required this.uid,
@@ -52,11 +54,14 @@ class AppUser {
     this.termsAccepted = false,
     this.instagramLink = '',
     this.facebookLink = '',
-    this.pairRatings = const {}
+    this.pairRatings = const [],
+    this.weeksWithoutMatch = 0,
+    this.match = ""
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
     final data = snapshot.data() as Map<String, dynamic>? ?? {};
+    final firestore = FirebaseFirestore.instance;
 
     return AppUser(
       uid: snapshot.id,
@@ -82,7 +87,9 @@ class AppUser {
       termsAccepted: data['termsAccepted'] ?? false,
       instagramLink: data['instagramLink'] ?? '',
       facebookLink: data['facebookLink'] ?? '',
-      pairRatings: data['pairRatings'] ?? const {}
+      pairRatings: (data['pairRatings'] as List<dynamic>? ?? []).map((path) => firestore.doc(path)).toList(),
+      weeksWithoutMatch: data['weeksWithoutMatch'] ?? 0,
+      match: data['match'] ?? '',
     );
   }
 
@@ -140,7 +147,9 @@ class AppUser {
       'termsAccepted': termsAccepted,
       'instagramLink': instagramLink,
       'facebookLink': facebookLink,
-      'pairRatings': pairRatings
+      'pairRatings': pairRatings.map((ref) => ref.path).toList(),
+      'weeksWithoutMatch': weeksWithoutMatch,
+      'match': match
     };
   }
 }

@@ -5,17 +5,21 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:datingapp/theme/theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:datingapp/utils/firebase_emulator_utils.dart';
+import 'package:datingapp/utils/notifications_utils.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+
   // Use emulators in debug mode or when explicitly requested
   if (const bool.fromEnvironment("USE_FIREBASE_EMULATOR")) {
     configureFirebaseEmulators();
   }
+
+  await enableNotificationListeners();
 
   runApp(const MyApp());
 }
