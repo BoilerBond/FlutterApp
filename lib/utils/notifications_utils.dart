@@ -3,20 +3,36 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
+String previousUserId = "";
+
 // Handles background messages
 Future<void> _backgroundNotificationHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   print("Background message received: ${message.notification?.title}");
 }
 
 // Subscribe to the topic reserved for the user (the user uid)
-Future<void> subscribeToUserTopic() async {
-  if (FirebaseAuth.instance.currentUser != null) {
-    await FirebaseMessaging.instance.subscribeToTopic(FirebaseAuth.instance.currentUser!.uid);
-    print("subscribed to topic ${FirebaseAuth.instance.currentUser!.uid}");
+Future<void> subscribeToUserTopic(User? user) async {
+  if (user != null) {
+    if (previousUserId != user.uid) {
+      if (previousUserId.isNotEmpty) {
+        await FirebaseMessaging.instance.unsubscribeFromTopic(previousUserId);
+        print("unsubscribed to topic $previousUserId");
+      }
+      await FirebaseMessaging.instance.subscribeToTopic(user.uid);
+      print("subscribed to topic ${user.uid}");
+      previousUserId = user.uid;
+    }
+  } else if (previousUserId.isNotEmpty) {
+    await FirebaseMessaging.instance.unsubscribeFromTopic(previousUserId);
+    print("unsubscribed to topic $previousUserId");
+    previousUserId = "";
   }
+}
+
+Future<void> setupTopicSubscription() async {
+  await subscribeToUserTopic(FirebaseAuth.instance.currentUser);
+  FirebaseAuth.instance.authStateChanges().listen(subscribeToUserTopic);
 }
 
 // Request permission on the device
@@ -41,16 +57,14 @@ void enableBackgroundNotificationListener() {
 }
 
 void enableForegroundNotificationListener() {
-  FirebaseMessaging.onMessage.listen(
-    (RemoteMessage message) {
-      print("Foreground message received: ${message.notification?.title}");
-    }
-  );
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    print("Foreground message received: ${message.notification?.title}");
+  });
 }
 
 Future<void> enableNotificationListeners() async {
   await requestNotifyPermission();
-  await subscribeToUserTopic();
+  await setupTopicSubscription();
   enableForegroundNotificationListener();
   enableBackgroundNotificationListener();
 }

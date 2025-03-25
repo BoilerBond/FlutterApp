@@ -26,7 +26,6 @@ class AppUser {
   bool messagingNotificationEnabled;
   bool eventNotificationEnabled;
   bool termsAccepted;
-  List<DocumentReference> pairRatings;
   int weeksWithoutMatch;
   String match;
 
@@ -54,7 +53,6 @@ class AppUser {
     this.termsAccepted = false,
     this.instagramLink = '',
     this.facebookLink = '',
-    this.pairRatings = const [],
     this.weeksWithoutMatch = 0,
     this.match = ""
   });
@@ -87,7 +85,6 @@ class AppUser {
       termsAccepted: data['termsAccepted'] ?? false,
       instagramLink: data['instagramLink'] ?? '',
       facebookLink: data['facebookLink'] ?? '',
-      pairRatings: (data['pairRatings'] as List<dynamic>? ?? []).map((path) => firestore.doc(path)).toList(),
       weeksWithoutMatch: data['weeksWithoutMatch'] ?? 0,
       match: data['match'] ?? '',
     );
@@ -147,7 +144,6 @@ class AppUser {
       'termsAccepted': termsAccepted,
       'instagramLink': instagramLink,
       'facebookLink': facebookLink,
-      'pairRatings': pairRatings.map((ref) => ref.path).toList(),
       'weeksWithoutMatch': weeksWithoutMatch,
       'match': match
     };
