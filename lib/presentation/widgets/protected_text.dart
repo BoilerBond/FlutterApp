@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:safe_text/safe_text.dart';
+import 'package:synchronized/synchronized.dart';
 
 // Simple LRU cache for storing whether a string is sensitive
 class SafetyCacheListNode {
@@ -27,6 +28,7 @@ class _ProtectedTextState extends State<ProtectedText> {
   bool _loading = true;
   SafetyCacheListNode? _head;
   SafetyCacheListNode? _tail;
+  static final Lock _lock = Lock();
   static final Map<String, SafetyCacheListNode> _cache = {};
   static final int _cacheCapacity = 10;
 
@@ -53,33 +55,35 @@ class _ProtectedTextState extends State<ProtectedText> {
       sensitive = _cache[widget.content]!.sensitive;
 
       // Updates item recency
-      if (_cache[widget.content]! == _tail) {
-        _cache[widget.content]!.prev!.next = null;
-        _tail = _cache[widget.content]!.prev;
-      } else if (_cache[widget.content]! != _head) {
-        _cache[widget.content]!.prev?.next = _cache[widget.content]!.next;
-        _cache[widget.content]!.next?.prev = _cache[widget.content]!.prev;
-      }
+      await _lock.synchronized(() {
+        if (_cache[widget.content]! == _tail) {
+          _cache[widget.content]!.prev!.next = null;
+          _tail = _cache[widget.content]!.prev;
+        } else if (_cache[widget.content]! != _head) {
+          _cache[widget.content]!.prev?.next = _cache[widget.content]!.next;
+          _cache[widget.content]!.next?.prev = _cache[widget.content]!.prev;
+        }
+      });
     } else {
-      sensitive = await SafeText.containsBadWord(
-        text: widget.content,
-      );
+      sensitive = await SafeText.containsBadWord(text: widget.content);
       _cache[widget.content] = SafetyCacheListNode(widget.content, sensitive);
 
       // Adds item to cache
-      insertStringInCacheList(_cache[widget.content]!);
+      await _lock.synchronized(() {
+        insertStringInCacheList(_cache[widget.content]!);
 
-      // Removes least recently used item from cache if cache exceeds capacity
-      if (_cache.length > _cacheCapacity) {
-        if (_tail != null) {
-          if (_head == _tail) {
-            _head = null;
+        // Removes least recently used item from cache if cache exceeds capacity
+        if (_cache.length > _cacheCapacity) {
+          if (_tail != null) {
+            if (_head == _tail) {
+              _head = null;
+            }
+            _cache.remove(_tail!.str);
+            _tail = _tail!.prev;
+            _tail?.next = null;
           }
-          _cache.remove(_tail!.str);
-          _tail = _tail!.prev;
-          _tail?.next = null;
         }
-      }
+      });
     }
 
     try {
@@ -87,10 +91,8 @@ class _ProtectedTextState extends State<ProtectedText> {
         _isHidden = sensitive;
         _loading = false;
       });
-    // ignore: empty_catches
-    } catch (e) {
-      
-    }
+      // ignore: empty_catches
+    } catch (e) {}
   }
 
   void _toggleVisibility() {
