@@ -1,3 +1,4 @@
+import 'package:datingapp/presentation/widgets/protected_text.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -105,7 +106,7 @@ class MoreProfileScreen extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
-          Text(
+          ProtectedText(
             value,
             style: const TextStyle(
               fontSize: 20,

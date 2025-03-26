@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:datingapp/presentation/widgets/protected_text.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'more_profile.dart';
@@ -28,13 +29,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   /// Fetch visible users from Firestore
   Future<void> _fetchVisibleUsers() async {
     try {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection("users")
-          .where("profileVisible", isEqualTo: true)
-          .get();
+      final querySnapshot = await FirebaseFirestore.instance.collection("users").where("profileVisible", isEqualTo: true).get();
 
-      final fetchedUsers =
-          querySnapshot.docs.map((doc) => AppUser.fromSnapshot(doc)).toList();
+      final fetchedUsers = querySnapshot.docs.map((doc) => AppUser.fromSnapshot(doc)).toList();
 
       setState(() {
         users = fetchedUsers;
@@ -81,9 +78,22 @@ class _ExploreScreenState extends State<ExploreScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                "Report ${users[profileIndex].firstName}'s Profile",
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Report ",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  ProtectedText(
+                    users[profileIndex].firstName,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const Text(
+                    "'s Profile",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
               const SizedBox(height: 15),
               DropdownButtonFormField<int>(
@@ -198,7 +208,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text(
+                                  ProtectedText(
                                     users[profileIndex].firstName,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
@@ -219,16 +229,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                 children: [
                                   Text(
                                     users[profileIndex].age.toString(),
-                                    style: const TextStyle(
-                                        fontStyle: FontStyle.italic, color: Color(0xFF5E77DF)),
+                                    style: const TextStyle(fontStyle: FontStyle.italic, color: Color(0xFF5E77DF)),
                                   ),
                                   const SizedBox(width: 10),
                                   const Text("|", style: TextStyle(color: Color(0xFF2C519C))),
                                   const SizedBox(width: 10),
-                                  Text(
+                                  ProtectedText(
                                     users[profileIndex].major,
-                                    style: const TextStyle(
-                                        fontStyle: FontStyle.italic, color: Color(0xFF5E77DF)),
+                                    style: const TextStyle(fontStyle: FontStyle.italic, color: Color(0xFF5E77DF)),
                                   ),
                                 ],
                               ),
@@ -267,7 +275,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C519C)),
                             ),
                             const SizedBox(height: 5),
-                            Text(
+                            ProtectedText(
                               users[profileIndex].bio,
                               style: const TextStyle(fontStyle: FontStyle.italic, color: Color(0xFF454746)),
                             ),
