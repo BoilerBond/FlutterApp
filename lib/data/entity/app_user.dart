@@ -29,6 +29,8 @@ class AppUser {
   String match;
   double rating;
   Map<String, dynamic> nonNegotiables;
+  int longFormQuestion;
+  String longFormAnswer;
 
   AppUser({
     required this.uid,
@@ -57,6 +59,8 @@ class AppUser {
     this.match = "",
     this.rating = 0.0,
     this.nonNegotiables = const {},
+    this.longFormQuestion = 0,
+    this.longFormAnswer = '',
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -91,6 +95,8 @@ class AppUser {
       match: data['match'] ?? '',
       rating: (data['rating'] ?? 0.0).toDouble(),
       nonNegotiables: data['nonNegotiables'] ?? {},
+      longFormQuestion: data['longFormQuestion'] ?? 0,
+      longFormAnswer: data['longFormAnswer'] ?? '',
     );
   }
 
@@ -152,6 +158,8 @@ class AppUser {
       'match': match,
       'rating': rating,
       'nonNegotiables': nonNegotiables,
+      'longFormQuestion': longFormQuestion,
+      'longFormAnswer': longFormAnswer,
     };
   }
 }
