@@ -2,9 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:datingapp/presentation/widgets/protected_text.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'more_profile.dart';
-import '../../../../data/entity/app_user.dart';
-
 import '../../../../data/entity/app_user.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -29,9 +28,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
   /// Fetch visible users from Firestore
   Future<void> _fetchVisibleUsers() async {
     try {
-      final querySnapshot = await FirebaseFirestore.instance.collection("users").where("profileVisible", isEqualTo: true).get();
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection("users")
+          .where("profileVisible", isEqualTo: true)
+          .get();
 
-      final fetchedUsers = querySnapshot.docs.map((doc) => AppUser.fromSnapshot(doc)).toList();
+      final fetchedUsers =
+          querySnapshot.docs.map((doc) => AppUser.fromSnapshot(doc)).toList();
 
       setState(() {
         users = fetchedUsers;
@@ -87,7 +90,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   ProtectedText(
                     users[profileIndex].firstName,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const Text(
                     "'s Profile",
@@ -109,7 +113,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 items: const [
                   DropdownMenuItem(
                     value: 1,
-                    child: Text("Profile goes against one of my non-negotiables."),
+                    child:
+                        Text("Profile goes against one of my non-negotiables."),
                   ),
                   DropdownMenuItem(
                     value: 2,
@@ -117,7 +122,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   DropdownMenuItem(
                     value: 3,
-                    child: Text("Offensive content against community standards."),
+                    child:
+                        Text("Offensive content against community standards."),
                   ),
                 ],
                 onChanged: (value) {},
@@ -151,6 +157,28 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
+  // Save rating and switch to the next profile
+  Future<void> _submitRating() async {
+  if (users.isEmpty) return;
+
+  final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+  if (currentUserId == null) return;
+  
+  try {
+    await FirebaseFirestore.instance.collection("ratings").add({
+      "ratedProfileId": users[profileIndex].uid,
+      "raterId": currentUserId,
+      "rating": sliderValue,
+    });
+    setState(() {
+      sliderValue = 0;
+    });
+    _switchToNextProfile();
+  } catch (e) {
+    print("Failed to submit rating: $e");
+  }
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -176,7 +204,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
+                      const Divider(
+                          height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
                       const SizedBox(height: 10),
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 500),
@@ -186,7 +215,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             color: const Color(0xFFE7EFEE),
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: [
-                              BoxShadow(color: Colors.grey, blurRadius: 5, offset: const Offset(0, 2)),
+                              BoxShadow(
+                                  color: Colors.grey,
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 2)),
                             ],
                           ),
                           padding: const EdgeInsets.all(15),
@@ -195,9 +227,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               GestureDetector(
                                 onTap: _navigateToMoreProfile,
                                 child: CircleAvatar(
-                                  radius: MediaQuery.of(context).size.width * 0.2,
+                                  radius:
+                                      MediaQuery.of(context).size.width * 0.2,
                                   backgroundImage: NetworkImage(
-                                    users[profileIndex].profilePictureURL.isNotEmpty
+                                    users[profileIndex]
+                                            .profilePictureURL
+                                            .isNotEmpty
                                         ? users[profileIndex].profilePictureURL
                                         : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
                                   ),
@@ -219,7 +254,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   const SizedBox(width: 5),
                                   IconButton(
                                     onPressed: _reportProfile,
-                                    icon: const Icon(Icons.more_horiz, color: Colors.black54),
+                                    icon: const Icon(Icons.more_horiz,
+                                        color: Colors.black54),
                                   ),
                                 ],
                               ),
@@ -229,31 +265,22 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                 children: [
                                   Text(
                                     users[profileIndex].age.toString(),
-                                    style: const TextStyle(fontStyle: FontStyle.italic, color: Color(0xFF5E77DF)),
+                                    style: const TextStyle(
+                                        fontStyle: FontStyle.italic,
+                                        color: Color(0xFF5E77DF)),
                                   ),
                                   const SizedBox(width: 10),
-                                  const Text("|", style: TextStyle(color: Color(0xFF2C519C))),
+                                  const Text("|",
+                                      style:
+                                          TextStyle(color: Color(0xFF2C519C))),
                                   const SizedBox(width: 10),
                                   ProtectedText(
                                     users[profileIndex].major,
-                                    style: const TextStyle(fontStyle: FontStyle.italic, color: Color(0xFF5E77DF)),
+                                    style: const TextStyle(
+                                        fontStyle: FontStyle.italic,
+                                        color: Color(0xFF5E77DF)),
                                   ),
                                 ],
-                              ),
-                              const SizedBox(height: 15),
-                              Slider(
-                                value: sliderValue,
-                                min: -2,
-                                max: 2,
-                                divisions: 4,
-                                label: sliderValue.toString(),
-                                activeColor: const Color(0xFF5E77DF),
-                                onChanged: (value) {
-                                  setState(() {
-                                    sliderValue = value;
-                                  });
-                                  _switchToNextProfile();
-                                },
                               ),
                             ],
                           ),
@@ -272,12 +299,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           children: [
                             const Text(
                               "About:",
-                              style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C519C)),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2C519C)),
                             ),
                             const SizedBox(height: 5),
                             ProtectedText(
                               users[profileIndex].bio,
-                              style: const TextStyle(fontStyle: FontStyle.italic, color: Color(0xFF454746)),
+                              style: const TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Color(0xFF454746)),
                             ),
                           ],
                         ),
@@ -285,6 +316,43 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     ],
                   ),
                 ),
+      bottomNavigationBar: users.isEmpty
+          ? null
+          : Container(
+              color: Colors.white,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Rate this profile:",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  Slider(
+                    value: sliderValue,
+                    min: -2,
+                    max: 2,
+                    divisions: 4,
+                    label: sliderValue.toString(),
+                    activeColor: const Color(0xFF5E77DF),
+                    onChanged: (value) {
+                      setState(() {
+                        sliderValue = value;
+                      });
+                    },
+                  ),
+                  ElevatedButton(
+                    onPressed: _submitRating,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2C519C),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text("Submit Rating"),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }

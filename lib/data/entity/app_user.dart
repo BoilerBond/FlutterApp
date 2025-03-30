@@ -27,6 +27,7 @@ class AppUser {
   bool termsAccepted;
   int weeksWithoutMatch;
   String match;
+  double rating;
 
   AppUser({
     required this.uid,
@@ -52,13 +53,13 @@ class AppUser {
     this.instagramLink = '',
     this.facebookLink = '',
     this.weeksWithoutMatch = 0,
-    this.match = ""
+    this.match = "",
+    this.rating = 0.0,
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
     final data = snapshot.data() as Map<String, dynamic>? ?? {};
     final firestore = FirebaseFirestore.instance;
-
     return AppUser(
       uid: snapshot.id,
       username: data['username'] ?? '',
@@ -76,19 +77,23 @@ class AppUser {
       displayedInterests: List<String>.from(data['displayedInterests'] ?? []), // Fetch from Firestore
       profileVisible: data['profileVisible'] ?? true,
       photoVisible: data['photoVisible'] ?? true,
-      matchResultNotificationEnabled: data['matchResultNotificationEnabled'] ?? true,
-      messagingNotificationEnabled: data['messagingNotificationEnabled'] ?? true,
+      matchResultNotificationEnabled:
+          data['matchResultNotificationEnabled'] ?? true,
+      messagingNotificationEnabled:
+          data['messagingNotificationEnabled'] ?? true,
       eventNotificationEnabled: data['eventNotificationEnabled'] ?? true,
       termsAccepted: data['termsAccepted'] ?? false,
       instagramLink: data['instagramLink'] ?? '',
       facebookLink: data['facebookLink'] ?? '',
       weeksWithoutMatch: data['weeksWithoutMatch'] ?? 0,
       match: data['match'] ?? '',
+      rating: (data['rating'] ?? 0.0).toDouble(),
     );
   }
 
   static Future<AppUser> getById(String id) async {
-    final snapshot = await FirebaseFirestore.instance.collection("users").doc(id).get();
+    final snapshot =
+        await FirebaseFirestore.instance.collection("users").doc(id).get();
     return AppUser.fromSnapshot(snapshot);
   }
 
@@ -141,7 +146,8 @@ class AppUser {
       'instagramLink': instagramLink,
       'facebookLink': facebookLink,
       'weeksWithoutMatch': weeksWithoutMatch,
-      'match': match
+      'match': match,
+      'rating': rating,
     };
   }
 }
