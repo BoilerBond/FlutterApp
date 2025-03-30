@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'more_profile.dart';
 import '../../../../data/entity/app_user.dart';
+import 'package:datingapp/presentation/screens/dashboard/explore/non_negotiables_form_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -183,18 +184,38 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Explore",
+  title: const Text(
+    "Explore",
+    style: TextStyle(
+      fontStyle: FontStyle.italic,
+      fontWeight: FontWeight.w100,
+      fontSize: 22,
+      color: Color(0xFF454746),
+    ),
+  ),
+  automaticallyImplyLeading: false,
+  toolbarHeight: 40,
+  actions: [
+    Row(
+      children: [
+        const Text(
+          "Edit non negotiables",
           style: TextStyle(
-            fontStyle: FontStyle.italic,
-            fontWeight: FontWeight.w100,
-            fontSize: 22,
-            color: Color(0xFF454746),
+            fontSize: 16,
+            color: Colors.black,
           ),
         ),
-        automaticallyImplyLeading: false,
-        toolbarHeight: 40,
-      ),
+        IconButton(
+          icon: const Icon(Icons.settings),
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const NonNegotiablesFormScreen()));
+          },
+        ),
+      ],
+    ),
+  ],
+),
+
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : users.isEmpty

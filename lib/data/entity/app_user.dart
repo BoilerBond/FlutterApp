@@ -28,6 +28,7 @@ class AppUser {
   int weeksWithoutMatch;
   String match;
   double rating;
+  Map<String, dynamic> nonNegotiables;
 
   AppUser({
     required this.uid,
@@ -55,6 +56,7 @@ class AppUser {
     this.weeksWithoutMatch = 0,
     this.match = "",
     this.rating = 0.0,
+    this.nonNegotiables = const {},
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -88,6 +90,7 @@ class AppUser {
       weeksWithoutMatch: data['weeksWithoutMatch'] ?? 0,
       match: data['match'] ?? '',
       rating: (data['rating'] ?? 0.0).toDouble(),
+      nonNegotiables: data['nonNegotiables'] ?? {},
     );
   }
 
@@ -148,6 +151,7 @@ class AppUser {
       'weeksWithoutMatch': weeksWithoutMatch,
       'match': match,
       'rating': rating,
+      'nonNegotiables': nonNegotiables,
     };
   }
 }
