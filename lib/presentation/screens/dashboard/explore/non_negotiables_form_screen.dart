@@ -7,7 +7,8 @@ class NonNegotiablesFormScreen extends StatefulWidget {
   const NonNegotiablesFormScreen({Key? key}) : super(key: key);
 
   @override
-  _NonNegotiablesFormScreenState createState() => _NonNegotiablesFormScreenState();
+  _NonNegotiablesFormScreenState createState() =>
+      _NonNegotiablesFormScreenState();
 }
 
 class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
@@ -29,10 +30,73 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
   final Set<String> mustNotHaveHobbies = {};
 
   @override
+  void initState() {
+    super.initState();
+    _loadNonNegotiables();
+  }
+
+  @override
   void dispose() {
     minAgeController.dispose();
     maxAgeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadNonNegotiables() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    try {
+      AppUser userProfile = await AppUser.getById(currentUser.uid);
+      final nonNegotiables = userProfile.nonNegotiables;
+      if (nonNegotiables.isNotEmpty) {
+        if (nonNegotiables.containsKey('genderPreferences')) {
+          final genders = nonNegotiables['genderPreferences'] as List<dynamic>;
+          setState(() {
+            selectedGenders.clear();
+            for (var gender in genders) {
+              selectedGenders.add(gender.toString());
+            }
+          });
+        }
+        if (nonNegotiables.containsKey('ageRange')) {
+          final ageRange =
+              nonNegotiables['ageRange'] as Map<String, dynamic>;
+          if (ageRange.containsKey('min') &&
+              ageRange['min'] != null) {
+            minAgeController.text = ageRange['min'].toString();
+          }
+          if (ageRange.containsKey('max') &&
+              ageRange['max'] != null) {
+            maxAgeController.text = ageRange['max'].toString();
+          }
+        }
+        if (nonNegotiables.containsKey('mustHaveHobbies')) {
+          final mustHave = nonNegotiables['mustHaveHobbies'] as List<dynamic>;
+          setState(() {
+            mustHaveHobbies.clear();
+            for (var hobby in mustHave) {
+              mustHaveHobbies.add(hobby.toString());
+            }
+          });
+        }
+        if (nonNegotiables.containsKey('mustNotHaveHobbies')) {
+          final mustNotHave =
+              nonNegotiables['mustNotHaveHobbies'] as List<dynamic>;
+          setState(() {
+            mustNotHaveHobbies.clear();
+            for (var hobby in mustNotHave) {
+              mustNotHaveHobbies.add(hobby.toString());
+            }
+          });
+        }
+      }
+    } catch (e) {
+      print("Error loading non-negotiables: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading non-negotiables: $e')),
+      );
+    }
   }
 
   Future<void> _submitForm() async {
@@ -42,10 +106,10 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
     final int? maxAge = int.tryParse(maxAgeController.text);
     if (minAge != null && maxAge != null) {
       if (minAge > maxAge) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid age range.')),
-      );
-      return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a valid age range.')),
+        );
+        return;
       }
     }
 
@@ -136,6 +200,7 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
           validator: (value) {
             if (value != null && value.isNotEmpty) {
               if (int.tryParse(value) == null) return 'Enter a valid number';
+              return null;
             }
             return null;
           },
@@ -147,6 +212,7 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
           validator: (value) {
             if (value != null && value.isNotEmpty) {
               if (int.tryParse(value) == null) return 'Enter a valid number';
+              return null;
             }
             return null;
           },
