@@ -370,7 +370,7 @@ class _Step3State extends State<Step3> {
 
     try {
       await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
-        'hobbies': _selectedInterests.toList(),
+        'displayedInterests': _selectedInterests.toList(),
       });
       Navigator.of(context).push(_createRoute(Step4()));
 

@@ -16,7 +16,6 @@ class AppUser {
   int age;
   int priorityLevel;
   Gender gender;
-  List<String> hobbies;
   List<String> displayedInterests;
   List<String> photosURL;
   List<String> blockedUserUIDs;
@@ -43,7 +42,6 @@ class AppUser {
     this.photosURL = const [],
     this.blockedUserUIDs = const [],
     this.priorityLevel = 0,
-    this.hobbies = const [],
     this.displayedInterests = const [],
     this.profileVisible = true,
     this.photoVisible = true,
@@ -75,7 +73,6 @@ class AppUser {
       photosURL: List<String>.from(data['photosURL'] ?? []),
       blockedUserUIDs: List<String>.from(data['blockedUserUIDs'] ?? []),
       priorityLevel: data['priorityLevel'] ?? 0,
-      hobbies: List<String>.from(data['hobbies'] ?? []),
       displayedInterests: List<String>.from(data['displayedInterests'] ?? []), // Fetch from Firestore
       profileVisible: data['profileVisible'] ?? true,
       photoVisible: data['photoVisible'] ?? true,
@@ -134,7 +131,6 @@ class AppUser {
       'photosURL': photosURL,
       'blockedUserUIDs': blockedUserUIDs,
       'priorityLevel': priorityLevel,
-      'hobbies': hobbies,
       'displayedInterests': displayedInterests,
       'profileVisible': profileVisible,
       'photoVisible': photoVisible,
