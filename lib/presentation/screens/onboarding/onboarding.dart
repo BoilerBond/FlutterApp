@@ -1,7 +1,5 @@
 import "package:flutter/material.dart";
 import 'dart:typed_data';
-import 'package:image_cropper/image_cropper.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:datingapp/utils/image_helper.dart';
@@ -823,8 +821,8 @@ class _Step7State extends State<Step7> {
 
     try {
       await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
-        'personalTraits': _personalTraits,
-        'partnerPreferences': _partnerPreferences,
+        'personalTraits': _personalTraits.values,
+        'partnerPreferences': _partnerPreferences.values,
       });
       
       // Navigate to the dashboard or finish onboarding

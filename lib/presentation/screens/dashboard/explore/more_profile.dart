@@ -1,7 +1,5 @@
 import 'package:datingapp/presentation/widgets/protected_text.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class MoreProfileScreen extends StatelessWidget {
   final String name;
@@ -9,6 +7,8 @@ class MoreProfileScreen extends StatelessWidget {
   final String major;
   final String bio;
   final List<String> displayedInterests;
+  final List<String> photosURL;
+  final String pfpLink;
 
   const MoreProfileScreen({
     super.key,
@@ -17,14 +17,13 @@ class MoreProfileScreen extends StatelessWidget {
     required this.major,
     required this.bio,
     required this.displayedInterests,
+    required this.photosURL,
+    required this.pfpLink,
   });
 
 
   @override
   Widget build(BuildContext context) {
-
-    
-    
     return Scaffold(
       appBar: AppBar(
         title: Text('$name\'s Profile', style: const TextStyle(color: Color(0xFF5E77DF))),
@@ -33,61 +32,60 @@ class MoreProfileScreen extends StatelessWidget {
         iconTheme: const IconThemeData(color: Color(0xFF5E77DF)),
       ),
       body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
             children: [
-              const SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-              CircleAvatar(
-                radius: MediaQuery.of(context).size.width * 0.2,
-                backgroundImage: const NetworkImage(
-                  "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+                CircleAvatar(
+                  radius: MediaQuery.of(context).size.width * 0.2,
+                  backgroundImage: (pfpLink.isEmpty) ?
+                      NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png")
+                      : NetworkImage(pfpLink),
+                  backgroundColor: const Color(0xFFCDFCFF),
                 ),
-                backgroundColor: const Color(0xFFCDFCFF),
-              ),
-              const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: _buildSocialMediaButton(
-                          context,
-                          icon: Icons.camera_alt,
-                          label: "Instagram",
-                          url: "",
+                const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: _buildSocialMediaButton(
+                            context,
+                            icon: Icons.camera_alt,
+                            label: "Instagram",
+                            url: "",
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _buildSocialMediaButton(
-                          context,
-                          icon: Icons.facebook,
-                          label: "Facebook",
-                          url: "",
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildSocialMediaButton(
+                            context,
+                            icon: Icons.facebook,
+                            label: "Facebook",
+                            url: "",
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
 
-                  const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              _buildProfileField("Name", name),
-              _buildProfileField("Age", age),
-              _buildProfileField("Major", major),
-              _buildProfileField("Bio", bio),
+                _buildProfileField("Name", name),
+                _buildProfileField("Age", age),
+                _buildProfileField("Major", major),
+                _buildProfileField("Bio", bio),
 
-              const SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-              _buildInterestsSection(),
+                _buildInterestsSection(),
 
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-      ),
-    );
+                const SizedBox(height: 20),
+
+                _buildPhotos(context, photosURL)
+              ],
+            ),
+          )
+      );
   }
 
   Widget _buildProfileField(String label, String value) {
@@ -192,4 +190,41 @@ class MoreProfileScreen extends StatelessWidget {
       ],
     );
   }
+}
+
+
+Widget _buildPhotos(BuildContext context, List<String> photosURL) {
+  return Column(
+    children: [
+      Text(
+        "Photos",
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w300,
+          color: Colors.grey[600],
+        ),
+        textAlign: TextAlign.center,
+      ),
+      const SizedBox(height: 4),
+      photosURL.isEmpty ? const Text("No photos uploaded.",
+        style: TextStyle(color: Colors.grey, fontSize: 16),
+      )
+      : SizedBox(
+          width: double.infinity,
+          height: MediaQuery.of(context).size.height * 0.5,
+          child: GridView.count(
+            crossAxisCount: (photosURL.length == 1) ? 1 : 2,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            children: photosURL.map((photoURL) {
+              return Container(
+                  padding: EdgeInsets.all(5),
+                  width: 50,
+                  height: 50,
+                  child: Image.network(photoURL)
+              );
+            }).toList()
+      ))
+    ]
+  );
 }

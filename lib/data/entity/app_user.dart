@@ -31,6 +31,8 @@ class AppUser {
   Map<String, dynamic> nonNegotiables;
   int longFormQuestion;
   String longFormAnswer;
+  Map<String, int> personalTraits;
+  Map<String, int> partnerPreferences;
 
   AppUser({
     required this.uid,
@@ -61,11 +63,12 @@ class AppUser {
     this.nonNegotiables = const {},
     this.longFormQuestion = 0,
     this.longFormAnswer = '',
+    this.personalTraits = const {},
+    this.partnerPreferences = const {}
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
     final data = snapshot.data() as Map<String, dynamic>? ?? {};
-    final firestore = FirebaseFirestore.instance;
     return AppUser(
       uid: snapshot.id,
       username: data['username'] ?? '',
@@ -97,6 +100,8 @@ class AppUser {
       nonNegotiables: data['nonNegotiables'] ?? {},
       longFormQuestion: data['longFormQuestion'] ?? 0,
       longFormAnswer: data['longFormAnswer'] ?? '',
+      personalTraits: Map<String, int>.from(data['personalTraits'] ?? {}),
+      partnerPreferences: Map<String, int>.from(data['partnerPreferences'] ?? {})
     );
   }
 

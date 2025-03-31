@@ -36,12 +36,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _imageURL = user.profilePictureURL;
       });
     }
+    else {
+      print("error getting current user using auth");
+    }
   }
 
   @override
   void initState() {
     super.initState();
-
     getProfile();
   }
 
