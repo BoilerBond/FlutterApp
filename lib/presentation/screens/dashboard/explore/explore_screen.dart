@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'more_profile.dart';
 import '../../../../data/entity/app_user.dart';
 import 'package:datingapp/presentation/screens/dashboard/explore/non_negotiables_form_screen.dart';
+import 'package:datingapp/presentation/screens/dashboard/explore/non_negotiables_filter_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -285,7 +286,7 @@ String getSimilarity(AppUser user2) {
                     IconButton(
                       icon: const Icon(Icons.filter_list_alt),
                       onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const NonNegotiablesFormScreen()));
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const NonNegotiablesFilterScreen()));
                       },
                     ),
                   ],

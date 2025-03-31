@@ -21,6 +21,7 @@ class AppUser {
   List<String> blockedUserUIDs;
   bool profileVisible;
   bool photoVisible;
+  bool interestsVisible;
   bool matchResultNotificationEnabled;
   bool messagingNotificationEnabled;
   bool eventNotificationEnabled;
@@ -50,6 +51,7 @@ class AppUser {
     this.priorityLevel = 0,
     this.displayedInterests = const [],
     this.profileVisible = true,
+    this.interestsVisible = true,
     this.photoVisible = true,
     this.matchResultNotificationEnabled = true,
     this.messagingNotificationEnabled = true,
@@ -86,6 +88,7 @@ class AppUser {
       displayedInterests: List<String>.from(data['displayedInterests'] ?? []), // Fetch from Firestore
       profileVisible: data['profileVisible'] ?? true,
       photoVisible: data['photoVisible'] ?? true,
+      interestsVisible: data['interestsVisible'] ?? true,
       matchResultNotificationEnabled:
           data['matchResultNotificationEnabled'] ?? true,
       messagingNotificationEnabled:
