@@ -31,13 +31,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Navigator.pushNamed(context, "/settings/danger_zone");
   }
 
+  void _onBoilerBondGuidePress(BuildContext context) {
+    Navigator.pushNamed(context, "/settings/user_guide");
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> buttons = [
       {'title': 'App Settings', 'type': ButtonType.normal, 'icon': Icons.desktop_windows, 'onPressed': _onAppSettingsPress},
       {'title': 'Privacy Settings', 'type': ButtonType.normal, 'icon': Icons.no_photography, 'onPressed': _onPrivacySettingsPress},
       {'title': 'Legal Information', 'type': ButtonType.normal, 'icon': Icons.list, 'onPressed': (BuildContext context) {}},
-      {'title': 'BoilerBond Guide', 'type': ButtonType.normal, 'icon': Icons.help_outline, 'onPressed': (BuildContext context) {}},
+      {'title': 'BoilerBond Guide', 'type': ButtonType.normal, 'icon': Icons.help_outline, 'onPressed': _onBoilerBondGuidePress},
       {'title': 'Danger Zone', 'type': ButtonType.danger, 'icon': Icons.warning_amber_rounded, 'onPressed': _onDangerZonePress},
       {'title': 'Log Out', 'type': ButtonType.warning, 'icon': Icons.exit_to_app, 'onPressed': _onLogoutPress},
     ];

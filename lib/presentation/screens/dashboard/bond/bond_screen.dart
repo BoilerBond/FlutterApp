@@ -32,7 +32,7 @@ class _BondScreenState extends State<BondScreen> {
           bio: bondedUser['bio'],
           displayedInterests: List<String>.from(bondedUser['displayedInterests']),
           showHeight: bondedUser['showHeight'],
-          heightUnit: bondedUser['heightUnit'],
+          heightUnit: bondedUser['heightUnit'], 
           heightValue: bondedUser['heightValue'],
         ),
       ),
