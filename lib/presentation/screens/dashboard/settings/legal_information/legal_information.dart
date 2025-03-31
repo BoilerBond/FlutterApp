@@ -1,25 +1,19 @@
 import 'package:flutter/material.dart';
 
-class TermsOfServicePage extends StatefulWidget {
-  final Map<dynamic, dynamic> arguments;
-  TermsOfServicePage({super.key, required this.arguments});
+class LegalInformation extends StatefulWidget {
+  const LegalInformation({super.key});
 
   @override
-  TermsOfServicePageState createState() => TermsOfServicePageState();
+  State<LegalInformation> createState() => _LegalInformationState();
 }
 
-class TermsOfServicePageState extends State<TermsOfServicePage> {
-  bool _isConfirmed = false;
+class _LegalInformationState extends State<LegalInformation> {
+  double _demoSliderValue = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Terms of Service',
-            style: TextStyle(
-                color: Theme.of(context).colorScheme.onPrimaryContainer)),
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-      ),
+      appBar: AppBar(title: const Text("Legal Information")),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -197,45 +191,13 @@ class TermsOfServicePageState extends State<TermsOfServicePage> {
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Checkbox(
-                  value: _isConfirmed,
-                  onChanged: (bool? newValue) {
-                    setState(() {
-                      _isConfirmed = newValue ?? false;
-                    });
-                  },
-                ),
-                const Expanded(
-                  child: Text(
-                    'I have read and agree to the Terms of Service.',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _isConfirmed
-                  ? () {
-                      if (widget.arguments["navigatePath"].isNotEmpty) {
-                        Navigator.pushReplacementNamed(
-                            context, widget.arguments["navigatePath"]);
-                      } else {
-                        Navigator.pop(context);
-                      }
-                    }
-                  : null,
-              child: const Text('Continue'),
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+    Widget _buildSectionTitle(String title) {
     return Text(
       title,
       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
