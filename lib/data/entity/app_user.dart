@@ -14,7 +14,7 @@ class AppUser {
   String facebookLink;
   String profilePictureURL;
   int age;
-  int priorityLevel;
+  double priorityLevel;
   Gender gender;
   List<String> displayedInterests;
   List<String> photosURL;
@@ -25,6 +25,7 @@ class AppUser {
   bool matchResultNotificationEnabled;
   bool messagingNotificationEnabled;
   bool eventNotificationEnabled;
+  bool keepMatch;
   String match;
   Map<String, dynamic> nonNegotiables;
   int longFormQuestion;
@@ -54,6 +55,7 @@ class AppUser {
     this.matchResultNotificationEnabled = true,
     this.messagingNotificationEnabled = true,
     this.eventNotificationEnabled = true,
+    this.keepMatch = true,
     this.instagramLink = '',
     this.facebookLink = '',
     this.match = "",
@@ -77,7 +79,7 @@ class AppUser {
       major: data['major'] ?? '',
       gender: _parseGender(data['gender']),
       age: data['age'] ?? 0,
-      priorityLevel: data['priorityLevel'] ?? 0,
+      priorityLevel: (data['priorityLevel'] ?? 0).toDouble(),
       profilePictureURL: data['profilePictureURL'] ?? '',
       photosURL: List<String>.from(data['photosURL'] ?? []),
       blockedUserUIDs: List<String>.from(data['blockedUserUIDs'] ?? []),
@@ -90,6 +92,7 @@ class AppUser {
       messagingNotificationEnabled:
           data['messagingNotificationEnabled'] ?? true,
       eventNotificationEnabled: data['eventNotificationEnabled'] ?? true,
+      keepMatch: data['keepMatch'] ?? true,
       instagramLink: data['instagramLink'] ?? '',
       facebookLink: data['facebookLink'] ?? '',
       match: data['match'] ?? '',
@@ -152,6 +155,7 @@ class AppUser {
       'matchResultNotificationEnabled': matchResultNotificationEnabled,
       'messagingNotificationEnabled': messagingNotificationEnabled,
       'eventNotificationEnabled': eventNotificationEnabled,
+      'keepMatch': keepMatch,
       'instagramLink': instagramLink,
       'facebookLink': facebookLink,
       'match': match,

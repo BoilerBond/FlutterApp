@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'firebase_options.dart';
 import 'package:datingapp/routes.dart';
 import 'package:flutter/material.dart';
