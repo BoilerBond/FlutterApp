@@ -50,6 +50,7 @@ class _BondScreenState extends State<BondScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => MoreProfileScreen(
+          uid: match!.uid,
           name: match!.firstName,
           age: match!.age.toString(),
           major: match!.major,

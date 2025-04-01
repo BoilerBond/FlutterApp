@@ -25,15 +25,13 @@ class AppUser {
   bool matchResultNotificationEnabled;
   bool messagingNotificationEnabled;
   bool eventNotificationEnabled;
-  bool termsAccepted;
-  int weeksWithoutMatch;
   String match;
-  double rating;
   Map<String, dynamic> nonNegotiables;
   int longFormQuestion;
   String longFormAnswer;
   Map<String, int> personalTraits;
   Map<String, int> partnerPreferences;
+  int weeksWithoutMatch;
 
   AppUser({
     required this.uid,
@@ -45,10 +43,10 @@ class AppUser {
     this.major = '',
     this.gender = Gender.none,
     this.age = 0,
+    this.priorityLevel = 0,
     this.profilePictureURL = '',
     this.photosURL = const [],
     this.blockedUserUIDs = const [],
-    this.priorityLevel = 0,
     this.displayedInterests = const [],
     this.profileVisible = true,
     this.interestsVisible = true,
@@ -56,17 +54,15 @@ class AppUser {
     this.matchResultNotificationEnabled = true,
     this.messagingNotificationEnabled = true,
     this.eventNotificationEnabled = true,
-    this.termsAccepted = false,
     this.instagramLink = '',
     this.facebookLink = '',
-    this.weeksWithoutMatch = 0,
     this.match = "",
-    this.rating = 0.0,
     this.nonNegotiables = const {},
     this.longFormQuestion = 0,
     this.longFormAnswer = '',
     this.personalTraits = const {},
-    this.partnerPreferences = const {}
+    this.partnerPreferences = const {},
+    this.weeksWithoutMatch = 0,
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -81,10 +77,10 @@ class AppUser {
       major: data['major'] ?? '',
       gender: _parseGender(data['gender']),
       age: data['age'] ?? 0,
+      priorityLevel: data['priorityLevel'] ?? 0,
       profilePictureURL: data['profilePictureURL'] ?? '',
       photosURL: List<String>.from(data['photosURL'] ?? []),
       blockedUserUIDs: List<String>.from(data['blockedUserUIDs'] ?? []),
-      priorityLevel: data['priorityLevel'] ?? 0,
       displayedInterests: List<String>.from(data['displayedInterests'] ?? []), // Fetch from Firestore
       profileVisible: data['profileVisible'] ?? true,
       photoVisible: data['photoVisible'] ?? true,
@@ -94,17 +90,15 @@ class AppUser {
       messagingNotificationEnabled:
           data['messagingNotificationEnabled'] ?? true,
       eventNotificationEnabled: data['eventNotificationEnabled'] ?? true,
-      termsAccepted: data['termsAccepted'] ?? false,
       instagramLink: data['instagramLink'] ?? '',
       facebookLink: data['facebookLink'] ?? '',
-      weeksWithoutMatch: data['weeksWithoutMatch'] ?? 0,
       match: data['match'] ?? '',
-      rating: (data['rating'] ?? 0.0).toDouble(),
       nonNegotiables: data['nonNegotiables'] ?? {},
       longFormQuestion: data['longFormQuestion'] ?? 0,
       longFormAnswer: data['longFormAnswer'] ?? '',
       personalTraits: Map<String, int>.from(data['personalTraits'] ?? {}),
-      partnerPreferences: Map<String, int>.from(data['partnerPreferences'] ?? {})
+      partnerPreferences: Map<String, int>.from(data['partnerPreferences'] ?? {}),
+      weeksWithoutMatch: data['weeksWithoutMatch'] ?? 0,
     );
   }
 
@@ -140,7 +134,6 @@ class AppUser {
 
   Map<String, dynamic> toMap() {
     return {
-      'uid': uid,
       'username': username,
       'purdueEmail': purdueEmail,
       'firstName': firstName,
@@ -149,25 +142,23 @@ class AppUser {
       'major': major,
       'gender': gender.toString().split('.').last,
       'age': age,
+      'priorityLevel': priorityLevel,
       'profilePictureURL': profilePictureURL,
       'photosURL': photosURL,
       'blockedUserUIDs': blockedUserUIDs,
-      'priorityLevel': priorityLevel,
       'displayedInterests': displayedInterests,
       'profileVisible': profileVisible,
       'photoVisible': photoVisible,
       'matchResultNotificationEnabled': matchResultNotificationEnabled,
       'messagingNotificationEnabled': messagingNotificationEnabled,
       'eventNotificationEnabled': eventNotificationEnabled,
-      'termsAccepted': termsAccepted,
       'instagramLink': instagramLink,
       'facebookLink': facebookLink,
-      'weeksWithoutMatch': weeksWithoutMatch,
       'match': match,
-      'rating': rating,
       'nonNegotiables': nonNegotiables,
       'longFormQuestion': longFormQuestion,
       'longFormAnswer': longFormAnswer,
+      'weeksWithoutMatch': weeksWithoutMatch
     };
   }
 }

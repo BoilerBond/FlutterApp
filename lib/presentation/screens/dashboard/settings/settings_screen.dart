@@ -21,6 +21,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Navigator.pushNamed(context, "/settings/privacy");
   }
 
+  void _onBlockedProfilesPress(BuildContext context) {
+    Navigator.pushNamed(context, "/settings/blocked_profiles");
+  }
+
   void _onLogoutPress(BuildContext context) {
     confirmDialog(context, () async {
       await FirebaseAuth.instance.signOut();
@@ -36,6 +40,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final List<Map<String, dynamic>> buttons = [
       {'title': 'App Settings', 'type': ButtonType.normal, 'icon': Icons.desktop_windows, 'onPressed': _onAppSettingsPress},
       {'title': 'Privacy Settings', 'type': ButtonType.normal, 'icon': Icons.no_photography, 'onPressed': _onPrivacySettingsPress},
+      {'title': 'Blocked Profiles', 'type': ButtonType.normal, 'icon': Icons.block, 'onPressed': _onBlockedProfilesPress},
       {'title': 'Legal Information', 'type': ButtonType.normal, 'icon': Icons.list, 'onPressed': (BuildContext context) {}},
       {'title': 'BoilerBond Guide', 'type': ButtonType.normal, 'icon': Icons.help_outline, 'onPressed': (BuildContext context) {}},
       {'title': 'Danger Zone', 'type': ButtonType.danger, 'icon': Icons.warning_amber_rounded, 'onPressed': _onDangerZonePress},

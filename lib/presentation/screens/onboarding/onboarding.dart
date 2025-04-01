@@ -821,8 +821,8 @@ class _Step7State extends State<Step7> {
 
     try {
       await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
-        'personalTraits': _personalTraits.values,
-        'partnerPreferences': _partnerPreferences.values,
+        'personalTraits': _personalTraits,
+        'partnerPreferences': _partnerPreferences,
       });
       
       // Navigate to the dashboard or finish onboarding

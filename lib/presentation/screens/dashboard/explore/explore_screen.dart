@@ -79,6 +79,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => MoreProfileScreen(
+          uid: users[profileIndex].uid,
           name: users[profileIndex].firstName,
           age: users[profileIndex].age.toString(),
           major: users[profileIndex].major,
