@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum Gender { none, man, woman, other }
@@ -164,5 +166,17 @@ class AppUser {
       'longFormAnswer': longFormAnswer,
       'weeksWithoutMatch': weeksWithoutMatch
     };
+  }
+
+  double calculateDistance(AppUser user2) {
+    double dist = 0.0;
+    double sum = 0.0;
+    List<int> p1 = this.personalTraits.values.toList();
+    List<int> p2 = user2.personalTraits.values.toList();
+    for (int i = 0; i < 5; i++) {
+      sum += pow(p1[i] - p2[i], 2);
+    }
+    dist = sqrt(sum);
+    return dist;
   }
 }
