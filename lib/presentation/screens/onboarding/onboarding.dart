@@ -1,7 +1,5 @@
 import "package:flutter/material.dart";
 import 'dart:typed_data';
-import 'package:image_cropper/image_cropper.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:datingapp/utils/image_helper.dart';
@@ -574,7 +572,7 @@ class _Step4State extends State<Step4> {
 
     try {
       await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
-        'hobbies': _selectedInterests.toList(),
+        'displayedInterests': _selectedInterests.toList(),
       });
       Navigator.of(context).push(_createRoute(Step5()));
 

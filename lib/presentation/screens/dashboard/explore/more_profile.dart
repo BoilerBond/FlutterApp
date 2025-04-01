@@ -1,8 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:datingapp/presentation/widgets/confirm_dialog.dart';
+import 'package:datingapp/presentation/widgets/protected_text.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class MoreProfileScreen extends StatelessWidget {
+  final String uid;
   final String name;
   final String age;
   final String major;
@@ -11,9 +14,13 @@ class MoreProfileScreen extends StatelessWidget {
   final bool showHeight;
   final String heightUnit;
   final double heightValue;
+  final List<String> photosURL;
+  final String pfpLink;
+  final currentUser = FirebaseAuth.instance.currentUser;
 
-  const MoreProfileScreen({
+  MoreProfileScreen({
     super.key,
+    required this.uid,
     required this.name,
     required this.age,
     required this.major,
@@ -37,6 +44,14 @@ class MoreProfileScreen extends StatelessWidget {
       int inches = totalInches % 12;
       return "$feet' $inches\"";
     }
+    required this.photosURL,
+    required this.pfpLink,
+  });
+
+  Future<void> blockUser() async {
+    await FirebaseFirestore.instance.collection("users").doc(currentUser!.uid).update({
+      "blockedUserUIDs": FieldValue.arrayUnion([uid])
+    });
   }
 
   @override
@@ -58,9 +73,7 @@ class MoreProfileScreen extends StatelessWidget {
               const SizedBox(height: 10),
               CircleAvatar(
                 radius: MediaQuery.of(context).size.width * 0.2,
-                backgroundImage: const NetworkImage(
-                  "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-                ),
+                backgroundImage: (pfpLink.isEmpty) ? NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png") : NetworkImage(pfpLink),
                 backgroundColor: const Color(0xFFCDFCFF),
               ),
               const SizedBox(height: 20),
@@ -95,11 +108,33 @@ class MoreProfileScreen extends StatelessWidget {
               const SizedBox(height: 10),
               _buildInterestsSection(),
               const SizedBox(height: 20),
+              _buildPhotos(context, photosURL),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                    foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () {
+                    confirmDialog(context, () {
+                      blockUser();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("User successfully blocked. Go to settings to unblock profiles.")),
+                      );
+                    });
+                  },
+                  child: Text(
+                    'Block user',
+                  ),
+                ),
+              ),
             ],
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   Widget _buildProfileField(String label, String value) {
@@ -118,7 +153,7 @@ class MoreProfileScreen extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
-          Text(
+          ProtectedText(
             value,
             style: const TextStyle(
               fontSize: 20,
@@ -209,4 +244,38 @@ class MoreProfileScreen extends StatelessWidget {
       ],
     );
   }
+}
+
+Widget _buildPhotos(BuildContext context, List<String> photosURL) {
+  return Column(children: [
+    Text(
+      "Photos",
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w300,
+        color: Colors.grey[600],
+      ),
+      textAlign: TextAlign.center,
+    ),
+    const SizedBox(height: 4),
+    photosURL.isEmpty
+        ? const Text(
+            "No photos uploaded.",
+            style: TextStyle(color: Colors.grey, fontSize: 16),
+          )
+        : SizedBox(
+            width: double.infinity,
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: GridView.count(
+              crossAxisCount: (photosURL.length == 1) ? 1 : 2,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              children: photosURL.map(
+                (photoURL) {
+                  return Container(padding: EdgeInsets.all(5), width: 50, height: 50, child: Image.network(photoURL));
+                },
+              ).toList(),
+            ),
+          ),
+  ]);
 }

@@ -4,7 +4,7 @@ import 'package:datingapp/presentation/screens/dashboard/profile/view_profile.da
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../data/entity/app_user.dart';
-
+import 'long_form_questions_screen.dart';
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -18,6 +18,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? bio = "";
   final db = FirebaseFirestore.instance;
   final currentUser = FirebaseAuth.instance.currentUser;
+  final List<String> questions = [
+    'What are your long-term goals?',
+    'What are your short-term goals?',
+    'What kind of communication style do you have?',
+    'How do you handle conflict in a relationship?',
+    'What is your love language like?'
+  ];
 
   Future<void> getProfile() async {
     if (currentUser != null) {
@@ -30,12 +37,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _imageURL = user.profilePictureURL;
       });
     }
+    else {
+      print("error getting current user using auth");
+    }
   }
 
   @override
   void initState() {
     super.initState();
-
     getProfile();
   }
 
@@ -111,6 +120,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
               indent: 16,
               endIndent: 16,
               thickness: 1,
+            ),
+            // long form question
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: FutureBuilder<DocumentSnapshot>(
+                future: db
+                    .collection('users')
+                    .doc(currentUser!.uid)
+                    .get(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(
+                        child: CircularProgressIndicator());
+                  }
+                  final data = snapshot.data!.data()
+                      as Map<String, dynamic>;
+                  final question = questions[
+                      data['longFormQuestion'] ?? -1] ??
+                      'No question set';
+                  final answer =
+                      data['longFormAnswer'] ?? 'No answer provided';
+                  return Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Long Form Q&A:',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Question: $question'),
+                      const SizedBox(height: 8),
+                      Text('Answer: $answer'),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const LongFormQuestionScreen()));
+                        },
+                        child:
+                            const Text('Edit Long Form Questions'),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
             // prompt of the day
             Expanded(
