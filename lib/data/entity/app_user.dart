@@ -27,6 +27,20 @@ class AppUser {
   bool matchResultNotificationEnabled;
   bool messagingNotificationEnabled;
   bool eventNotificationEnabled;
+  bool termsAccepted;
+  bool showHeight;
+  String heightUnit;
+  double heightValue;
+  bool showMajorToMatch;
+  bool showMajorToOthers;
+  bool showBioToMatch;
+  bool showBioToOthers;
+  bool showAgeToMatch;
+  bool showAgeToOthers;
+  bool showInterestsToMatch;
+  bool showInterestsToOthers;
+  bool showSocialMediaToMatch;
+  bool showSocialMediaToOthers;
   bool keepMatch;
   String match;
   Map<String, dynamic> nonNegotiables;
@@ -34,7 +48,7 @@ class AppUser {
   String longFormAnswer;
   Map<String, int> personalTraits;
   Map<String, int> partnerPreferences;
-  int weeksWithoutMatch;
+  int weeksWithoutMatch
 
   AppUser({
     required this.uid,
@@ -60,6 +74,19 @@ class AppUser {
     this.keepMatch = true,
     this.instagramLink = '',
     this.facebookLink = '',
+    this.showHeight = false,
+    this.heightUnit = '',
+    this.heightValue = 0.0, // height is stored in cm and displayed according to user preference
+    this.showMajorToMatch = true,
+    this.showMajorToOthers = true,
+    this.showBioToMatch = true,
+    this.showBioToOthers = true,
+    this.showAgeToMatch = true,
+    this.showAgeToOthers = true,
+    this.showInterestsToMatch = true,
+    this.showInterestsToOthers = true,
+    this.showSocialMediaToMatch = true,
+    this.showSocialMediaToOthers = true,
     this.match = "",
     this.nonNegotiables = const {},
     this.longFormQuestion = 0,
@@ -97,6 +124,19 @@ class AppUser {
       keepMatch: data['keepMatch'] ?? true,
       instagramLink: data['instagramLink'] ?? '',
       facebookLink: data['facebookLink'] ?? '',
+      showHeight: data['showHeight'] ?? true,
+      heightUnit: data['heightUnit'] ?? '',
+      heightValue: data['heightValue'] ?? 0.0,
+      showMajorToMatch: data['showMajorToMatch'] ?? true,
+      showMajorToOthers: data['showMajorToOthers'] ?? true,
+      showBioToMatch: data['showBioToMatch'] ?? true,
+      showBioToOthers: data['showBioToOthers'] ?? true,
+      showAgeToMatch: data['showAgeToMatch'] ?? true,
+      showAgeToOthers: data['showAgeToOthers'] ?? true,
+      showInterestsToMatch: data['showInterestsToMatch'] ?? true,
+      showInterestsToOthers: data['showInterestsToOthers'] ?? true,
+      showSocialMediaToMatch: data['showSocialMediaToMatch'] ?? true,
+      showSocialMediaToOthers: data['showSocialMediaToOthers'] ?? true,
       match: data['match'] ?? '',
       nonNegotiables: data['nonNegotiables'] ?? {},
       longFormQuestion: data['longFormQuestion'] ?? 0,
@@ -160,6 +200,19 @@ class AppUser {
       'keepMatch': keepMatch,
       'instagramLink': instagramLink,
       'facebookLink': facebookLink,
+      'showHeight': showHeight,
+      'heightUnit': heightUnit,
+      'heightValue': heightValue,
+      'showMajorToMatch': showMajorToMatch,
+      'showMajorToOthers': showMajorToOthers,
+      'showBioToMatch': showBioToMatch,
+      'showBioToOthers': showBioToOthers,
+      'showAgeToMatch': showAgeToMatch,
+      'showAgeToOthers': showAgeToOthers,
+      'showInterestsToMatch': showInterestsToMatch,
+      'showInterestsToOthers': showInterestsToOthers,
+      'showSocialMediaToMatch': showSocialMediaToMatch,
+      'showSocialMediaToOthers': showSocialMediaToOthers,
       'match': match,
       'nonNegotiables': nonNegotiables,
       'longFormQuestion': longFormQuestion,

@@ -25,7 +25,8 @@ class _EditProfileState extends State<EditProfile> {
 
   Future<void> getProfile() async {
     if (currentUser != null) {
-      final userSnapshot = await db.collection("users").doc(currentUser?.uid).get();
+      final userSnapshot =
+          await db.collection("users").doc(currentUser?.uid).get();
       final user = AppUser.fromSnapshot(userSnapshot);
       setState(() {
         _imageURL = user.profilePictureURL;
@@ -51,6 +52,11 @@ class _EditProfileState extends State<EditProfile> {
   final TextEditingController facebookController = TextEditingController();
   int? selectedAge;
   final TextEditingController majorController = TextEditingController();
+  bool _showHeight = false;
+  bool _useCm = true;
+  final TextEditingController _cmController = TextEditingController();
+  final TextEditingController _ftController = TextEditingController();
+  final TextEditingController _inController = TextEditingController();
 
   void selectImage() async {
     Uint8List? imageBytes = await ImageHelper().selectImage();
@@ -75,7 +81,8 @@ class _EditProfileState extends State<EditProfile> {
       _image = null;
     }
 
-    final userSnapshot = await db.collection("users").doc(currentUser?.uid).get();
+    final userSnapshot =
+        await db.collection("users").doc(currentUser?.uid).get();
     final user = AppUser.fromSnapshot(userSnapshot);
 
     if (firstNameController.text.isNotEmpty) {
@@ -106,6 +113,36 @@ class _EditProfileState extends State<EditProfile> {
       user.instagramLink = instagramController.text;
     }
 
+    user.showHeight = _showHeight;
+
+    if (_showHeight == true) {
+      user.heightUnit = _useCm ? "cm" : "ft";
+      double heightValue;
+      if (_useCm) {
+        heightValue = double.tryParse(_cmController.text.trim()) ?? -1;
+        if (heightValue < 50 || heightValue > 300) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content:
+                  Text("Invalid height. Must be between 50cm and 300cm.")));
+          return;
+        }
+      } else {
+        double feet = double.tryParse(_ftController.text.trim()) ?? -1;
+        double inches = double.tryParse(_inController.text.trim()) ?? -1;
+        if (feet < 1 || feet > 8 || inches < 0 || inches >= 12) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(
+                  "Invalid height. Must be between 1 and 8 feet, and 0 and 12 inches.")));
+          return;
+        }
+        heightValue = (feet * 30.48) + (inches * 2.54);
+      }
+      user.heightValue = heightValue;
+    } else {
+      user.heightValue = 0.0;
+      user.heightUnit = "cm";
+    }
+
     await db.collection("users").doc(user.uid).update(user.toMap());
   }
 
@@ -133,6 +170,17 @@ class _EditProfileState extends State<EditProfile> {
                 : 18;
         isLoading = false;
         _imageURL = appUser?.profilePictureURL;
+        _showHeight = appUser?.showHeight ?? false;
+        _useCm = (appUser?.heightUnit ?? "cm") == "cm";
+        if (_useCm) {
+          _cmController.text = appUser?.heightValue.toString() ?? "";
+        } else {
+          int totalInches = (appUser?.heightValue ?? 0) ~/ 2.54;
+          int feet = totalInches ~/ 12;
+          int inches = totalInches % 12;
+          _ftController.text = feet.toString();
+          _inController.text = inches.toString();
+        }
       });
     } else {
       setState(() => isLoading = false);
@@ -189,7 +237,7 @@ class _EditProfileState extends State<EditProfile> {
     );
   }
 
-    Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Profile',
@@ -208,15 +256,24 @@ class _EditProfileState extends State<EditProfile> {
                 children: [
                   const SizedBox(height: 10),
 
-                      Stack(children: [
-                        (_image != null || _imageURL!.isNotEmpty)
-                            ? CircleAvatar(radius: MediaQuery.of(context).size.width * 0.2, backgroundImage: _image != null ? MemoryImage(_image!) : NetworkImage(_imageURL!))
-                            : CircleAvatar(
-                                radius: MediaQuery.of(context).size.width * 0.2,
-                                backgroundImage: NetworkImage(Constants.defaultProfilePictureURL),
-                              )
-                      ]),
-                      Padding(padding: EdgeInsets.only(bottom: 16), child: TextButton(onPressed: selectImage, child: Text("Edit Profile Picture"))),
+                  Stack(children: [
+                    (_image != null || _imageURL!.isNotEmpty)
+                        ? CircleAvatar(
+                            radius: MediaQuery.of(context).size.width * 0.2,
+                            backgroundImage: _image != null
+                                ? MemoryImage(_image!)
+                                : NetworkImage(_imageURL!))
+                        : CircleAvatar(
+                            radius: MediaQuery.of(context).size.width * 0.2,
+                            backgroundImage: NetworkImage(
+                                Constants.defaultProfilePictureURL),
+                          )
+                  ]),
+                  Padding(
+                      padding: EdgeInsets.only(bottom: 16),
+                      child: TextButton(
+                          onPressed: selectImage,
+                          child: Text("Edit Profile Picture"))),
                   const SizedBox(height: 20),
 
                   _buildTextField("First Name", firstNameController),
@@ -279,7 +336,74 @@ class _EditProfileState extends State<EditProfile> {
                         },
                       ),
                     ),
-
+                  SwitchListTile(
+                    title: Text("Display height on profile"),
+                    value: _showHeight,
+                    onChanged: (bool value) {
+                      setState(() {
+                        _showHeight = value;
+                      });
+                    },
+                  ),
+                  if (_showHeight) ...[
+                    if (_useCm)
+                      Padding(
+                        padding: EdgeInsets.all(16),
+                        child: TextField(
+                          controller: _cmController,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: "Height (cm)",
+                            suffixText: "cm",
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                      )
+                    else
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 80,
+                            child: TextField(
+                              controller: _ftController,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: "ft",
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          SizedBox(
+                            width: 80,
+                            child: TextField(
+                              controller: _inController,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: "in",
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                        ],
+                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text("cm"),
+                        Switch(
+                          value: _useCm,
+                          onChanged: (bool value) {
+                            setState(() {
+                              _useCm = value;
+                            });
+                          },
+                        ),
+                        Text("ft/in"),
+                      ],
+                    ),
+                  ],
                   _buildActionButton("Edit my interests", () {
                     Navigator.push(
                       context,
