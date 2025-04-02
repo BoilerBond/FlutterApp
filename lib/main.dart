@@ -1,5 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
-
 import 'firebase_options.dart';
 import 'package:datingapp/routes.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +5,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:datingapp/theme/theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:datingapp/utils/firebase_emulator_utils.dart';
-import 'package:datingapp/utils/notifications_utils.dart';
 
 
 Future<void> main() async {
@@ -20,8 +17,6 @@ Future<void> main() async {
   if (const bool.fromEnvironment("USE_FIREBASE_EMULATOR")) {
     configureFirebaseEmulators();
   }
-
-  await enableNotificationListeners();
 
   runApp(const MyApp());
 }
