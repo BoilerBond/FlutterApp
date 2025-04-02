@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../data/entity/app_user.dart';
 import 'long_form_questions_screen.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -36,8 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         bio = user.bio;
         _imageURL = user.profilePictureURL;
       });
-    }
-    else {
+    } else {
       print("error getting current user using auth");
     }
   }
@@ -49,6 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> buttons = [
       {
@@ -57,9 +58,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Navigator.pushNamed(context, "/profile/edit_profile");
         }
       },
-      {'title': 'View Profile', 'onPressed': (BuildContext context) {
-        Navigator.pushNamed(context, "/profile/view_profile");
-      }},
+      {
+        'title': 'View Profile',
+        'onPressed': (BuildContext context) {
+          Navigator.pushNamed(context, "/profile/view_profile");
+        }
+      },
       {
         'title': 'Profile Privacy',
         'onPressed': (BuildContext context) {
@@ -67,144 +71,132 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       },
     ];
-    return Scaffold(
-      body: Center(
-        child: Column(
-          children: [
-            Text(
-              "Welcome back, " + userName! + "!",
-              style: TextStyle(height: 2, fontSize: 25),
-            ),
-            Stack(children: [
-              (_imageURL!.isNotEmpty)
-                  ? CircleAvatar(
-                      radius: MediaQuery.of(context).size.width * 0.2,
-                      backgroundImage: NetworkImage(_imageURL!))
-                  : CircleAvatar(
-                      radius: MediaQuery.of(context).size.width * 0.2,
-                      backgroundImage:
-                          NetworkImage(Constants.defaultProfilePictureURL),
-                    )
-            ]),
-            Padding(
-                padding:
-                    EdgeInsets.all(MediaQuery.of(context).size.width * 0.03),
-                child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: Theme.of(context).colorScheme.tertiaryContainer,
-                    ),
-                    child: Padding(
-                        padding: EdgeInsets.all(16), child: Text(bio!)))),
-            IntrinsicHeight(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (int i = 0; i < buttons.length; i++) ...[
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: TextButton(
-                        onPressed: () => buttons[i]['onPressed'](context),
-                        child: Text(buttons[i]['title']),
-                      ),
-                    ),
-                    if (i != buttons.length - 1)
-                      const VerticalDivider(indent: 16, endIndent: 16),
-                  ]
-                ],
-              ),
-            ),
 
-            Divider(
-              indent: 16,
-              endIndent: 16,
-              thickness: 1,
-            ),
-            // long form question
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: FutureBuilder<DocumentSnapshot>(
-                future: db
-                    .collection('users')
-                    .doc(currentUser!.uid)
-                    .get(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(
-                        child: CircularProgressIndicator());
-                  }
-                  final data = snapshot.data!.data()
-                      as Map<String, dynamic>;
-                  final question = questions[
-                      data['longFormQuestion'] ?? -1] ??
-                      'No question set';
-                  final answer =
-                      data['longFormAnswer'] ?? 'No answer provided';
-                  return Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Long Form Q&A:',
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      Text('Question: $question'),
-                      const SizedBox(height: 8),
-                      Text('Answer: $answer'),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const LongFormQuestionScreen()));
-                        },
-                        child:
-                            const Text('Edit Long Form Questions'),
-                      ),
-                    ],
-                  );
-                },
+    return SafeArea(
+      child: Scaffold(
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 20),
+              Text(
+                "Welcome back, ${userName ?? ""}!",
+                style: const TextStyle(height: 2, fontSize: 25),
+                textAlign: TextAlign.center,
               ),
-            ),
-            // prompt of the day
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(16),
+              const SizedBox(height: 10),
+              CircleAvatar(
+                radius: MediaQuery.of(context).size.width * 0.2,
+                backgroundImage: NetworkImage(
+                  (_imageURL != null && _imageURL!.isNotEmpty)
+                      ? _imageURL!
+                      : Constants.defaultProfilePictureURL,
+                ),
+                backgroundColor: Colors.grey[200],
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     color: Theme.of(context).colorScheme.tertiaryContainer,
                   ),
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Prompt of the day goes in here"),
-                          TextField(
-                            maxLines: 5,
-                            minLines: 1,
-                            style: TextStyle(height: 1),
-                            decoration: InputDecoration(
-                                hintText: "My answer...",
-                                border: InputBorder.none),
+                  padding: const EdgeInsets.all(16),
+                  child: Text(bio ?? ""),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                children: buttons.map((btn) {
+                  return TextButton(
+                    onPressed: () => btn['onPressed'](context),
+                    child: Text(btn['title']),
+                  );
+                }).toList(),
+              ),
+              const Divider(thickness: 1, indent: 16, endIndent: 16),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: FutureBuilder<DocumentSnapshot>(
+                  future: db.collection('users').doc(currentUser!.uid).get(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final data = snapshot.data!.data() as Map<String, dynamic>;
+                    int index = data['longFormQuestion'] ?? -1;
+                    final question = (index >= 0 && index < questions.length)
+                        ? questions[index]
+                        : 'No question set';
+                    final answer =
+                        data['longFormAnswer'] ?? 'No answer provided';
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Long Form Q&A:',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text('Question: $question'),
+                        const SizedBox(height: 8),
+                        Text('Answer: $answer'),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const LongFormQuestionScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text('Edit Long Form Questions'),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Theme.of(context).colorScheme.tertiaryContainer,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text("Prompt of the day goes in here"),
+                        SizedBox(height: 8),
+                        TextField(
+                          maxLines: 5,
+                          minLines: 1,
+                          style: TextStyle(height: 1),
+                          decoration: InputDecoration(
+                            hintText: "My answer...",
+                            border: InputBorder.none,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            )
-          ],
+            ],
+          ),
         ),
       ),
     );
