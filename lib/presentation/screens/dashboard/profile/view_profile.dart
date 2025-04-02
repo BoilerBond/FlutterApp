@@ -28,7 +28,10 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final docSnapshot = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final docSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
 
     if (docSnapshot.exists) {
       setState(() {
@@ -37,6 +40,21 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
       });
     } else {
       setState(() => isLoading = false);
+    }
+  }
+
+  String _getFormattedHeight() {
+    if (appUser == null || !(appUser!.showHeight)) {
+      return "";
+    }
+
+    if (appUser!.heightUnit == "cm") {
+      return "${appUser!.heightValue} cm";
+    } else {
+      int totalInches = (appUser!.heightValue / 2.54).round();
+      int feet = totalInches ~/ 12;
+      int inches = totalInches % 12;
+      return "$feet' $inches\"";
     }
   }
 
@@ -68,7 +86,8 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('View Profile', style: TextStyle(color: Color(0xFF5E77DF))),
+        title: const Text('View Profile',
+            style: TextStyle(color: Color(0xFF5E77DF))),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFF5E77DF)),
@@ -76,16 +95,20 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 10),
                   CircleAvatar(
                     radius: MediaQuery.of(context).size.width * 0.2,
-                    backgroundImage: NetworkImage(appUser?.profilePictureURL != null
-                        ? (appUser!.profilePictureURL.isNotEmpty ? appUser!.profilePictureURL : Constants.defaultProfilePictureURL)
-                        : (Constants.defaultProfilePictureURL)),
+                    backgroundImage: NetworkImage(
+                        appUser?.profilePictureURL != null
+                            ? (appUser!.profilePictureURL.isNotEmpty
+                                ? appUser!.profilePictureURL
+                                : Constants.defaultProfilePictureURL)
+                            : (Constants.defaultProfilePictureURL)),
                     backgroundColor: const Color(0xFFCDFCFF),
                   ),
                   const SizedBox(height: 20),
@@ -114,7 +137,10 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                   _buildProfileField("Last Name", appUser?.lastName ?? "N/A"),
                   _buildProfileField("Age", appUser?.age.toString() ?? "N/A"),
                   _buildProfileField("Major", appUser?.major ?? "N/A"),
-                  _buildProfileField("Biography", appUser?.bio ?? "No bio yet."),
+                  if (appUser != null && appUser!.showHeight)
+                    _buildProfileField("Height", _getFormattedHeight()),
+                  _buildProfileField(
+                      "Biography", appUser?.bio ?? "No bio yet."),
                   const SizedBox(height: 10),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -143,7 +169,8 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                               spacing: 10.0,
                               runSpacing: 10.0,
                               alignment: WrapAlignment.center,
-                              children: appUser!.displayedInterests.map((interest) {
+                              children:
+                                  appUser!.displayedInterests.map((interest) {
                                 return Chip(
                                   label: Text(
                                     interest,
@@ -154,7 +181,8 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                                     ),
                                   ),
                                   backgroundColor: const Color(0xFF5E77DF),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
@@ -202,11 +230,15 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
     );
   }
 
-  Widget _buildSocialMediaButton({required IconData icon, required String label, required String url}) {
+  Widget _buildSocialMediaButton(
+      {required IconData icon, required String label, required String url}) {
     return OutlinedButton.icon(
       onPressed: url.isNotEmpty ? () => _launchURL(url) : null,
       icon: Icon(icon, color: url.isNotEmpty ? Colors.blueAccent : Colors.grey),
-      label: Text(label, style: TextStyle(fontSize: 16, color: url.isNotEmpty ? Colors.blueAccent : Colors.grey)),
+      label: Text(label,
+          style: TextStyle(
+              fontSize: 16,
+              color: url.isNotEmpty ? Colors.blueAccent : Colors.grey)),
       style: OutlinedButton.styleFrom(
         side: BorderSide(
           width: 1,

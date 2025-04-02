@@ -4,7 +4,7 @@ import 'package:datingapp/presentation/screens/dashboard/profile/view_profile.da
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../data/entity/app_user.dart';
-
+import 'long_form_questions_screen.dart';
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -18,10 +18,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? bio = "";
   final db = FirebaseFirestore.instance;
   final currentUser = FirebaseAuth.instance.currentUser;
+  final List<String> questions = [
+    'What are your long-term goals?',
+    'What are your short-term goals?',
+    'What kind of communication style do you have?',
+    'How do you handle conflict in a relationship?',
+    'What is your love language like?'
+  ];
 
   Future<void> getProfile() async {
     if (currentUser != null) {
-      final userSnapshot = await db.collection("users").doc(currentUser?.uid).get();
+      final userSnapshot =
+          await db.collection("users").doc(currentUser?.uid).get();
       final user = AppUser.fromSnapshot(userSnapshot);
       setState(() {
         userName = user.firstName + " " + user.lastName;
@@ -29,12 +37,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _imageURL = user.profilePictureURL;
       });
     }
+    else {
+      print("error getting current user using auth");
+    }
   }
 
   @override
   void initState() {
     super.initState();
-
     getProfile();
   }
 
@@ -47,7 +57,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Navigator.pushNamed(context, "/profile/edit_profile");
         }
       },
-      {'title': 'View Profile', 'onPressed': (BuildContext context) {}}
+      {'title': 'View Profile', 'onPressed': (BuildContext context) {
+        Navigator.pushNamed(context, "/profile/view_profile");
+      }},
+      {
+        'title': 'Profile Privacy',
+        'onPressed': (BuildContext context) {
+          Navigator.pushNamed(context, "/profile/profile_privacy");
+        }
+      },
     ];
     return Scaffold(
       body: Center(
@@ -59,51 +77,100 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             Stack(children: [
               (_imageURL!.isNotEmpty)
-                  ? CircleAvatar(radius: MediaQuery.of(context).size.width * 0.2, backgroundImage: NetworkImage(_imageURL!))
+                  ? CircleAvatar(
+                      radius: MediaQuery.of(context).size.width * 0.2,
+                      backgroundImage: NetworkImage(_imageURL!))
                   : CircleAvatar(
                       radius: MediaQuery.of(context).size.width * 0.2,
-                      backgroundImage: NetworkImage(Constants.defaultProfilePictureURL),
+                      backgroundImage:
+                          NetworkImage(Constants.defaultProfilePictureURL),
                     )
             ]),
             Padding(
-                padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.03),
+                padding:
+                    EdgeInsets.all(MediaQuery.of(context).size.width * 0.03),
                 child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       color: Theme.of(context).colorScheme.tertiaryContainer,
                     ),
-                    child: Padding(padding: EdgeInsets.all(16), child: Text(bio!)))),
+                    child: Padding(
+                        padding: EdgeInsets.all(16), child: Text(bio!)))),
             IntrinsicHeight(
-                child: (Row(mainAxisSize: MainAxisSize.min, children: [
-              // edit profile button
-              Padding(padding: EdgeInsets.all(16), child: TextButton(onPressed: () => buttons[0]['onPressed'](context), child: Text("Edit Profile"))),
-              // vertical separator
-              VerticalDivider(
-                indent: 16,
-                endIndent: 16,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (int i = 0; i < buttons.length; i++) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: TextButton(
+                        onPressed: () => buttons[i]['onPressed'](context),
+                        child: Text(buttons[i]['title']),
+                      ),
+                    ),
+                    if (i != buttons.length - 1)
+                      const VerticalDivider(indent: 16, endIndent: 16),
+                  ]
+                ],
               ),
-              // view profile button
-              SizedBox(
-                width: MediaQuery.of(context).size.width / 3,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: TextButton(
-                    onPressed: () => {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const ViewProfileScreen()),
-                      )
-                    },
-                    child: const Text("View Profile"),
-                  ),
-                ),
-              ),
-            ]))),
+            ),
+
             Divider(
               indent: 16,
               endIndent: 16,
               thickness: 1,
+            ),
+            // long form question
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: FutureBuilder<DocumentSnapshot>(
+                future: db
+                    .collection('users')
+                    .doc(currentUser!.uid)
+                    .get(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(
+                        child: CircularProgressIndicator());
+                  }
+                  final data = snapshot.data!.data()
+                      as Map<String, dynamic>;
+                  final question = questions[
+                      data['longFormQuestion'] ?? -1] ??
+                      'No question set';
+                  final answer =
+                      data['longFormAnswer'] ?? 'No answer provided';
+                  return Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Long Form Q&A:',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Question: $question'),
+                      const SizedBox(height: 8),
+                      Text('Answer: $answer'),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const LongFormQuestionScreen()));
+                        },
+                        child:
+                            const Text('Edit Long Form Questions'),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
             // prompt of the day
             Expanded(
@@ -126,7 +193,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             maxLines: 5,
                             minLines: 1,
                             style: TextStyle(height: 1),
-                            decoration: InputDecoration(hintText: "My answer...", border: InputBorder.none),
+                            decoration: InputDecoration(
+                                hintText: "My answer...",
+                                border: InputBorder.none),
                           ),
                         ],
                       ),

@@ -1,7 +1,5 @@
 import "package:flutter/material.dart";
 import 'dart:typed_data';
-import 'package:image_cropper/image_cropper.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:datingapp/utils/image_helper.dart';
@@ -337,10 +335,214 @@ class Step3 extends StatefulWidget {
   const Step3({super.key});
 
   @override
-  _Step3State createState() => _Step3State();
+  State<Step3> createState() => _Step3State();
 }
 
 class _Step3State extends State<Step3> {
+  final TextEditingController _cmController = TextEditingController();
+  final TextEditingController _ftController = TextEditingController();
+  final TextEditingController _inController = TextEditingController();
+  bool _saving = false;
+  bool _showHeight = false;
+  bool _useCm = true;
+
+  Future<void> _saveHeightAndContinue() async {
+    setState(() {
+      _saving = true;
+    });
+
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("You must be logged in to continue.")),
+      );
+      setState(() {
+        _saving = false;
+      });
+      return;
+    }
+
+    try {
+      double heightValue;
+      if (_useCm) {
+        heightValue = double.tryParse(_cmController.text.trim()) ?? -1;
+        if (heightValue < 50 || heightValue > 300) {
+          throw Exception("Invalid height. Please enter a value between 50cm and 300cm.");
+        }
+      } else {
+        double feet = double.tryParse(_ftController.text.trim()) ?? -1;
+        double inches = double.tryParse(_inController.text.trim()) ?? -1;
+        if (feet < 1 || feet > 8 || inches < 0 || inches >= 12) {
+          throw Exception("Invalid height. Please review the entered value.");
+        }
+        heightValue = (feet * 30.48) + (inches * 2.54);
+      }
+
+      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
+        "showHeight": _showHeight,
+        "heightUnit": _useCm ? "cm" : "ft",
+        "heightValue": heightValue,
+      });
+
+      print("Height updated for ${user.uid}");
+      Navigator.of(context).push(_createRoute(Step4()));
+    } catch (e) {
+      print("Firestore error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      setState(() {
+        _saving = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('BBond')),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: MediaQuery.of(context).size.width * 0.05),
+              child: Text("Onboarding", style: TextStyle(fontSize: 30)),
+            ),
+            Divider(
+              indent: MediaQuery.of(context).size.width * 0.04,
+              endIndent: MediaQuery.of(context).size.width * 0.04,
+            ),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Text("3. Would you like to attach your height to your profile?", style: TextStyle(fontSize: 20)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    child: Text(
+                      "Adding a height to your profile is optional. You can opt in or out from displaying your height in your profile at any moment after completing onboarding.",
+                      textAlign: TextAlign.left,
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                  ),
+                  SwitchListTile(
+                    title: Text("Display height on profile"),
+                    value: _showHeight,
+                    onChanged: (bool value) {
+                      setState(() {
+                        _showHeight = value;
+                      });
+                    },
+                  ),
+                  if (_showHeight) ...[
+                    if (_useCm)
+                      Padding(
+                        padding: EdgeInsets.all(16),
+                        child: TextField(
+                          controller: _cmController,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: "Height (cm)",
+                            suffixText: "cm",
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                      )
+                    else
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 80,
+                            child: TextField(
+                              controller: _ftController,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: "ft",
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          SizedBox(
+                            width: 80,
+                            child: TextField(
+                              controller: _inController,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: "in",
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                        ],
+                      ),
+                    Text("Select measurement unit:"),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text("cm"),
+                        Switch(
+                          value: _useCm,
+                          onChanged: (bool value) {
+                            setState(() {
+                              _useCm = value;
+                            });
+                          },
+                        ),
+                        Text("ft/in"),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.3,
+                  height: MediaQuery.of(context).size.width * 0.1,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Color(0xffCDFCFF),
+                      side: BorderSide(
+                        width: 1,
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: _saving ? null : _saveHeightAndContinue,
+                    child: _saving
+                        ? CircularProgressIndicator()
+                        : Icon(Icons.arrow_forward),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+
+class Step4 extends StatefulWidget {
+  const Step4({super.key});
+
+  @override
+  State<Step4> createState() => _Step4State();
+}
+
+class _Step4State extends State<Step4> {
   final List<String> _allInterests = [
     'Animals', 'Music', 'Sports', 'Outdoor activities', 'Dancing', 'Yoga',
     'Health', 'Gym & Fitness', 'Art', 'Gaming', 'Writing', 'Books',
@@ -370,9 +572,9 @@ class _Step3State extends State<Step3> {
 
     try {
       await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
-        'hobbies': _selectedInterests.toList(),
+        'displayedInterests': _selectedInterests.toList(),
       });
-      Navigator.of(context).push(_createRoute(Step4()));
+      Navigator.of(context).push(_createRoute(Step5()));
 
     } catch (e) {
       print("Failed to save interests: $e");
@@ -411,7 +613,7 @@ class _Step3State extends State<Step3> {
                 children: [
                   const SizedBox(height: 8),
                   const Text(
-                    "3. Your interests",
+                    "4. Your interests",
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -484,14 +686,14 @@ class _Step3State extends State<Step3> {
   }
 }
 
-class Step4 extends StatefulWidget {
-  const Step4({Key? key}) : super(key: key);
+class Step5 extends StatefulWidget {
+  const Step5({Key? key}) : super(key: key);
 
   @override
-  State<Step4> createState() => _Step4State();
+  State<Step5> createState() => _Step5State();
 }
 
-class _Step4State extends State<Step4> {
+class _Step5State extends State<Step5> {
   final TextEditingController studySpotController = TextEditingController();
   String? _selectedDiningCourt;
   final TextEditingController petPeeveController = TextEditingController();
@@ -559,7 +761,7 @@ class _Step4State extends State<Step4> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     return Scaffold(
-      appBar: AppBar(title: const Text("Step 4: Purdue Info")),
+      appBar: AppBar(title: const Text("Step 5: Purdue Info")),
       body: _isSaving
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(

@@ -1,6 +1,9 @@
-import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:datingapp/presentation/screens/dashboard/explore/more_profile.dart';
+
+import '../../../../data/entity/app_user.dart';
 
 class BondScreen extends StatefulWidget {
   const BondScreen({super.key});
@@ -10,7 +13,28 @@ class BondScreen extends StatefulWidget {
 }
 
 class _BondScreenState extends State<BondScreen> {
-  Uint8List? _image;
+  final placeholder_match = "BP25avUQfZUVYNVLZ2Eoiw5jYlf1";
+  AppUser? curUser;
+  AppUser? match;
+
+  Future<void> getUserProfiles() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final db = FirebaseFirestore.instance;
+    final curUserSnapshot = await db.collection("users").doc(currentUser?.uid).get();
+    AppUser user = AppUser.fromSnapshot(curUserSnapshot);
+    //final matchSnapshot = await db.collection("users").doc(user.match).get();
+    final matchSnapshot = await db.collection("users").doc(placeholder_match).get();
+    setState(() {
+      curUser = user;
+      match = AppUser.fromSnapshot(matchSnapshot);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getUserProfiles();
+  }
 
   // We use this sample user to test View Profile functionalities
   final Map<String, dynamic> bondedUser = {
@@ -26,14 +50,57 @@ class _BondScreenState extends State<BondScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => MoreProfileScreen(
-          name: bondedUser['name'],
-          age: bondedUser['age'],
-          major: bondedUser['major'],
-          bio: bondedUser['bio'],
-          displayedInterests: List<String>.from(bondedUser['displayedInterests']),
+          uid: match!.uid,
+          name: match!.firstName,
+          age: match!.age.toString(),
+          major: match!.major,
+          bio: match!.bio,
+          showHeight: match!.showHeight,
+          heightUnit: match!.heightUnit, 
+          heightValue: match!.heightValue,
+          displayedInterests: match!.displayedInterests,
+          photosURL: ["https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"],
+          pfpLink: "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
         ),
       ),
     );
+  }
+
+  String getMatchReason() {
+    final List<int> user1Traits = curUser!.personalTraits.values.toList();
+    final List<int> user2Traits = match!.personalTraits.values.toList();
+    int minIndex = 0;
+    int minDiff = 10;
+    for (int i = 0; i < 5; i++) {
+      int diff = (user1Traits[i] - user2Traits[i]).abs();
+      if (diff < minDiff) {
+        minDiff = diff;
+        minIndex = i;
+      }
+    }
+    String message = "You and " + match!.firstName;
+    switch(minIndex) {
+      case 1:
+        message += " have similar levels of extroversion.";
+        break;
+      case 0:
+        message += " have similar views on the importance of family.";
+        break;
+      case 2:
+        message += " have lifestyles with similar levels of physical activity.";
+        break;
+      case 4:
+        message += " perform similarly under pressure.";
+        break;
+      case 3:
+        message += " have similar views on trying new things and taking risks.";
+        break;
+    }
+    return message;
   }
 
   @override
@@ -54,7 +121,7 @@ class _BondScreenState extends State<BondScreen> {
           IconButton(
             icon: const Icon(Icons.more_horiz, color: Colors.black54),
             onPressed: () {
-              _reportProfile(context, bondedUser['name']);
+              _reportProfile(context, match!.firstName);
             },
           ),
         ],
@@ -65,7 +132,21 @@ class _BondScreenState extends State<BondScreen> {
         child: Column(
           children: [
             const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
-            const SizedBox(height: 16),
+            Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                      onPressed: () => showDialog<String>(
+                        context: context,
+                        builder:
+                            (BuildContext context) => AlertDialog(
+                          title: const Text("Why was I matched with this profile?"),
+                          content: Text(getMatchReason())),
+                        ),
+                      icon: Icon(Icons.info_outline),
+                  )
+                ]
+            ),
             Stack(
               children: [
                 CircleAvatar(
@@ -77,9 +158,9 @@ class _BondScreenState extends State<BondScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(bondedUser['name'], style: Theme.of(context).textTheme.headlineMedium),
+            Text(match!.firstName, style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 8),
-            Text("${bondedUser['age']} | ${bondedUser['major']}",
+            Text("${match!.age} | ${match!.major}",
                 style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic, color: Color(0xFF5E77DF))),
             const SizedBox(height: 16),
 

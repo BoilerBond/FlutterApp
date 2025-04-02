@@ -1,4 +1,9 @@
+import 'package:datingapp/presentation/screens/dashboard/profile/profile_privacy.dart';
 import 'package:datingapp/presentation/screens/dashboard/profile/profile_screen.dart';
+import 'package:datingapp/presentation/screens/dashboard/profile/view_profile.dart';
+import 'package:datingapp/presentation/screens/dashboard/settings/legal_information/legal_information.dart';
+import 'package:datingapp/presentation/screens/dashboard/settings/user_guide/boilerbond_guide.dart';
+import 'package:datingapp/presentation/screens/dashboard/settings/blocked_profiles/blocked_profiles.dart';
 import 'package:flutter/material.dart';
 import 'package:datingapp/utils/middlewares/auth_middleware.dart';
 import 'package:datingapp/presentation/screens/dashboard/dashboard.dart';
@@ -30,8 +35,18 @@ class Routes {
         return MaterialPageRoute(builder: (context) => AuthMiddleware(child: DangerZone()));
       case '/settings/privacy':
         return MaterialPageRoute(builder: (context) => AuthMiddleware(child: PrivacySettings()));
+      case '/settings/user_guide':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: BoilerBondGuide()));
+      case '/settings/legal_information':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: LegalInformation()));
+      case '/settings/blocked_profiles':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: BlockedProfiles()));
       case '/profile/edit_profile':
         return MaterialPageRoute(builder: (context) => AuthMiddleware(child: EditProfile()));
+      case '/profile/view_profile':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: ViewProfileScreen()));
+      case '/profile/profile_privacy':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: ProfilePrivacyScreen()));
       case '/onboarding':
         return MaterialPageRoute(builder: (context) => AuthMiddleware(child: OnBoarding()));
       case '/app_description':
