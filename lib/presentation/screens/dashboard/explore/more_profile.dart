@@ -11,21 +11,41 @@ class MoreProfileScreen extends StatelessWidget {
   final String major;
   final String bio;
   final List<String> displayedInterests;
+  final bool showHeight;
+  final String heightUnit;
+  final double heightValue;
   final List<String> photosURL;
   final String pfpLink;
   final currentUser = FirebaseAuth.instance.currentUser;
 
-  MoreProfileScreen({
-    super.key,
-    required this.uid,
-    required this.name,
-    required this.age,
-    required this.major,
-    required this.bio,
-    required this.displayedInterests,
-    required this.photosURL,
-    required this.pfpLink,
-  });
+  MoreProfileScreen(
+      {super.key,
+      required this.uid,
+      required this.name,
+      required this.age,
+      required this.major,
+      required this.bio,
+      required this.displayedInterests,
+      required this.showHeight,
+      required this.heightUnit,
+      required this.heightValue,
+      required this.photosURL,
+      required this.pfpLink});
+
+  String _getFormattedHeight() {
+    if (!showHeight) {
+      return "";
+    }
+
+    if (heightUnit == "cm") {
+      return "$heightValue cm";
+    } else {
+      int totalInches = (heightValue / 2.54).round();
+      int feet = totalInches ~/ 12;
+      int inches = totalInches % 12;
+      return "$feet' $inches\"";
+    }
+  }
 
   Future<void> blockUser() async {
     await FirebaseFirestore.instance.collection("users").doc(currentUser!.uid).update({
@@ -36,15 +56,17 @@ class MoreProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('$name\'s Profile', style: const TextStyle(color: Color(0xFF5E77DF))),
-          backgroundColor: Colors.white,
-          elevation: 0,
-          iconTheme: const IconThemeData(color: Color(0xFF5E77DF)),
-        ),
-        body: Center(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+      appBar: AppBar(
+        title: Text('$name\'s Profile', style: const TextStyle(color: Color(0xFF5E77DF))),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF5E77DF)),
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 10),
               CircleAvatar(
@@ -109,7 +131,9 @@ class MoreProfileScreen extends StatelessWidget {
               ),
             ],
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   Widget _buildProfileField(String label, String value) {
