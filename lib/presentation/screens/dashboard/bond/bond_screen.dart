@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:datingapp/presentation/screens/dashboard/explore/more_profile.dart';
-
 import '../../../../data/entity/app_user.dart';
+import 'match_intro_screen.dart';
 
 class BondScreen extends StatefulWidget {
   const BondScreen({super.key});
@@ -20,14 +20,28 @@ class _BondScreenState extends State<BondScreen> {
   Future<void> getUserProfiles() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     final db = FirebaseFirestore.instance;
-    final curUserSnapshot = await db.collection("users").doc(currentUser?.uid).get();
+    final curUserSnapshot =
+        await db.collection("users").doc(currentUser?.uid).get();
     AppUser user = AppUser.fromSnapshot(curUserSnapshot);
     //final matchSnapshot = await db.collection("users").doc(user.match).get();
-    final matchSnapshot = await db.collection("users").doc(placeholder_match).get();
+    final matchSnapshot =
+        await db.collection("users").doc(placeholder_match).get();
     setState(() {
       curUser = user;
       match = AppUser.fromSnapshot(matchSnapshot);
     });
+
+    final hasSeenIntro = curUserSnapshot.data()?['hasSeenMatchIntro'] ?? false;
+    if (!hasSeenIntro) {
+      // Wait for build to finish
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showIntroduction(context);
+      });
+
+      await db.collection("users").doc(currentUser!.uid).update({
+        'hasSeenMatchIntro': true,
+      });
+    }
   }
 
   @override
@@ -56,56 +70,78 @@ class _BondScreenState extends State<BondScreen> {
           major: match!.major,
           bio: match!.bio,
           showHeight: match!.showHeight,
-          heightUnit: match!.heightUnit, 
+          heightUnit: match!.heightUnit,
           heightValue: match!.heightValue,
           displayedInterests: match!.displayedInterests,
-          photosURL: ["https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+          photosURL: [
             "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
             "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
             "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"],
-          pfpLink: "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
+          ],
+          pfpLink:
+              "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
         ),
       ),
     );
   }
 
   String getMatchReason() {
-    final List<int> user1Traits = curUser!.personalTraits.values.toList();
-    final List<int> user2Traits = match!.personalTraits.values.toList();
-    int minIndex = 0;
-    int minDiff = 10;
-    for (int i = 0; i < 5; i++) {
-      int diff = (user1Traits[i] - user2Traits[i]).abs();
-      if (diff < minDiff) {
-        minDiff = diff;
-        minIndex = i;
-      }
-    }
-    String message = "You and " + match!.firstName;
-    switch(minIndex) {
-      case 1:
-        message += " have similar levels of extroversion.";
-        break;
-      case 0:
-        message += " have similar views on the importance of family.";
-        break;
-      case 2:
-        message += " have lifestyles with similar levels of physical activity.";
-        break;
-      case 4:
-        message += " perform similarly under pressure.";
-        break;
-      case 3:
-        message += " have similar views on trying new things and taking risks.";
-        break;
-    }
-    return message;
+  final user1Traits = curUser?.personalTraits.values.toList() ?? [];
+  final user2Traits = match?.personalTraits.values.toList() ?? [];
+
+  if (user1Traits.length < 5 || user2Traits.length < 5) {
+    return "You share some common personality traits.";
   }
+
+  int minIndex = 0;
+  int minDiff = 10;
+  for (int i = 0; i < 5; i++) {
+    int diff = (user1Traits[i] - user2Traits[i]).abs();
+    if (diff < minDiff) {
+      minDiff = diff;
+      minIndex = i;
+    }
+  }
+
+  String message = "You and ${match!.firstName}";
+  switch (minIndex) {
+    case 0:
+      message += " have similar views on the importance of family.";
+      break;
+    case 1:
+      message += " have similar levels of extroversion.";
+      break;
+    case 2:
+      message += " have lifestyles with similar levels of physical activity.";
+      break;
+    case 3:
+      message += " have similar views on trying new things and taking risks.";
+      break;
+    case 4:
+      message += " perform similarly under pressure.";
+      break;
+    default:
+      message += " share some key personality traits.";
+  }
+  return message;
+}
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    if (curUser == null || match == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    final sharedTraits = curUser!.getSharedTraits(match!);
+
+    return SafeArea(
+        child: Scaffold(
       appBar: AppBar(
         title: const Text(
           "My Bond",
@@ -127,26 +163,22 @@ class _BondScreenState extends State<BondScreen> {
         ],
         toolbarHeight: 40,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16).copyWith(top: 0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 32),
         child: Column(
           children: [
             const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
-            Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                      onPressed: () => showDialog<String>(
-                        context: context,
-                        builder:
-                            (BuildContext context) => AlertDialog(
-                          title: const Text("Why was I matched with this profile?"),
-                          content: Text(getMatchReason())),
-                        ),
-                      icon: Icon(Icons.info_outline),
-                  )
-                ]
-            ),
+            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              IconButton(
+                onPressed: () => showDialog<String>(
+                  context: context,
+                  builder: (BuildContext context) => AlertDialog(
+                      title: const Text("Why was I matched with this profile?"),
+                      content: Text(getMatchReason())),
+                ),
+                icon: Icon(Icons.info_outline),
+              )
+            ]),
             Stack(
               children: [
                 CircleAvatar(
@@ -158,12 +190,15 @@ class _BondScreenState extends State<BondScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(match!.firstName, style: Theme.of(context).textTheme.headlineMedium),
+            Text(match!.firstName,
+                style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 8),
             Text("${match!.age} | ${match!.major}",
-                style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic, color: Color(0xFF5E77DF))),
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontStyle: FontStyle.italic,
+                    color: Color(0xFF5E77DF))),
             const SizedBox(height: 16),
-
             IntrinsicHeight(
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -193,25 +228,37 @@ class _BondScreenState extends State<BondScreen> {
               ),
             ),
             const Divider(),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("What you have in common:",
+                    style: TextStyle(fontSize: 16)),
+                if (sharedTraits.isEmpty)
+                  const Text("No traits in common yet.")
+                else
+                  ...sharedTraits.map((trait) => Text("• $trait")).toList(),
+              ],
+            ),
             const SizedBox(height: 8),
-
             _buildActionButton(Icons.chat_bubble, "Go to our messages", () {}),
-
-            _buildActionButton(Icons.favorite, "Relationship suggestions", () {}),
+            _buildActionButton(
+                Icons.favorite, "Relationship suggestions", () {}),
           ],
         ),
       ),
-    );
+    ));
   }
 
-  Widget _buildActionButton(IconData icon, String label, VoidCallback onPressed) {
+  Widget _buildActionButton(
+      IconData icon, String label, VoidCallback onPressed) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: SizedBox(
         width: double.infinity,
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
-            side: BorderSide(width: 1, color: Theme.of(context).colorScheme.outlineVariant),
+            side: BorderSide(
+                width: 1, color: Theme.of(context).colorScheme.outlineVariant),
             foregroundColor: Theme.of(context).colorScheme.primary,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
@@ -232,7 +279,7 @@ class _BondScreenState extends State<BondScreen> {
     );
   }
 
-    void _confirmUnbondDialog(BuildContext context) {
+  void _confirmUnbondDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -290,87 +337,96 @@ class _BondScreenState extends State<BondScreen> {
     // Implement the logic to unbond the user
   }
 
-void _reportProfile(BuildContext context, String name) {
-  showDialog(
-    context: context,
-    builder: (context) => Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.85,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Report ${name}'s Profile",
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 15),
+  void _showIntroduction(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            MatchIntroScreen(curUser: curUser!, match: match!),
+      ),
+    );
+  }
 
-              SizedBox(
-                width: double.infinity,
-                child: DropdownButtonFormField<int>(
-                  decoration: InputDecoration(
-                    labelText: 'Why do you want to report this profile?',
-                    filled: true,
-                    fillColor: Colors.grey.shade200,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
+  void _reportProfile(BuildContext context, String name) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.85,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Report ${name}'s Profile",
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 15),
+                SizedBox(
+                  width: double.infinity,
+                  child: DropdownButtonFormField<int>(
+                    decoration: InputDecoration(
+                      labelText: 'Why do you want to report this profile?',
+                      filled: true,
+                      fillColor: Colors.grey.shade200,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 1,
+                        child: Text(
+                            "Profile goes against one of my non-negotiables."),
+                      ),
+                      DropdownMenuItem(
+                        value: 2,
+                        child:
+                            Text("Profile appears to be fake or catfishing."),
+                      ),
+                      DropdownMenuItem(
+                        value: 3,
+                        child: Text(
+                            "Offensive content against community standards."),
+                      ),
+                    ],
+                    onChanged: (value) {},
                   ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 1,
-                      child: Text("Profile goes against one of my non-negotiables."),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Close"),
                     ),
-                    DropdownMenuItem(
-                      value: 2,
-                      child: Text("Profile appears to be fake or catfishing."),
-                    ),
-                    DropdownMenuItem(
-                      value: 3,
-                      child: Text("Offensive content against community standards."),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        // implement reporting logic
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF2C519C),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text("Report"),
                     ),
                   ],
-                  onChanged: (value) {
-                    
-                  },
                 ),
-              ),
-
-              const SizedBox(height: 20),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text("Close"),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                       // implement reporting logic
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF2C519C),
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text("Report"),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

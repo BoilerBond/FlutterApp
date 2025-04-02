@@ -48,6 +48,7 @@ class AppUser {
   Map<String, int> personalTraits;
   Map<String, int> partnerPreferences;
   int weeksWithoutMatch;
+  bool hasSeenMatchIntro;
 
   AppUser({
     required this.uid,
@@ -75,7 +76,8 @@ class AppUser {
     this.facebookLink = '',
     this.showHeight = false,
     this.heightUnit = '',
-    this.heightValue = 0.0, // height is stored in cm and displayed according to user preference
+    this.heightValue =
+        0.0, // height is stored in cm and displayed according to user preference
     this.showMajorToMatch = true,
     this.showMajorToOthers = true,
     this.showBioToMatch = true,
@@ -93,6 +95,7 @@ class AppUser {
     this.personalTraits = const {},
     this.partnerPreferences = const {},
     this.weeksWithoutMatch = 0,
+    this.hasSeenMatchIntro = false,
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -111,7 +114,8 @@ class AppUser {
       profilePictureURL: data['profilePictureURL'] ?? '',
       photosURL: List<String>.from(data['photosURL'] ?? []),
       blockedUserUIDs: List<String>.from(data['blockedUserUIDs'] ?? []),
-      displayedInterests: List<String>.from(data['displayedInterests'] ?? []), // Fetch from Firestore
+      displayedInterests: List<String>.from(
+          data['displayedInterests'] ?? []), // Fetch from Firestore
       profileVisible: data['profileVisible'] ?? true,
       photoVisible: data['photoVisible'] ?? true,
       interestsVisible: data['interestsVisible'] ?? true,
@@ -141,7 +145,8 @@ class AppUser {
       longFormQuestion: data['longFormQuestion'] ?? 0,
       longFormAnswer: data['longFormAnswer'] ?? '',
       personalTraits: Map<String, int>.from(data['personalTraits'] ?? {}),
-      partnerPreferences: Map<String, int>.from(data['partnerPreferences'] ?? {}),
+      partnerPreferences:
+          Map<String, int>.from(data['partnerPreferences'] ?? {}),
       weeksWithoutMatch: data['weeksWithoutMatch'] ?? 0,
     );
   }
@@ -157,10 +162,10 @@ class AppUser {
   }
 
   Future<void> save({String id = "", bool merge = false}) async {
-    await FirebaseFirestore.instance.collection("users").doc(id).set(
-      toMap(),
-      SetOptions(merge: merge)
-    );
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(id)
+        .set(toMap(), SetOptions(merge: merge));
   }
 
   static Gender _parseGender(String? gender) {
@@ -230,5 +235,29 @@ class AppUser {
     }
     dist = sqrt(sum);
     return dist;
+  }
+
+  List<String> getSharedTraits(AppUser other) {
+    List<String> common = [];
+
+    if (this.major == other.major) common.add("Same major: ${major}");
+    if (this.age == other.age) common.add("Same age: $age");
+
+    final sharedInterests = displayedInterests
+        .toSet()
+        .intersection(other.displayedInterests.toSet());
+
+    if (sharedInterests.isNotEmpty) {
+      common.add("Shared interests: ${sharedInterests.join(", ")}");
+    }
+
+    final traitKeys = personalTraits.keys;
+    for (var key in traitKeys) {
+      if (personalTraits[key] == other.personalTraits[key]) {
+        common.add("Similar trait: $key");
+      }
+    }
+
+    return common;
   }
 }
