@@ -11,6 +11,9 @@ class MoreProfileScreen extends StatelessWidget {
   final String major;
   final String bio;
   final List<String> displayedInterests;
+  final bool showHeight;
+  final String heightUnit;
+  final double heightValue;
   final List<String> photosURL;
   final String pfpLink;
   final currentUser = FirebaseAuth.instance.currentUser;
@@ -23,6 +26,24 @@ class MoreProfileScreen extends StatelessWidget {
     required this.major,
     required this.bio,
     required this.displayedInterests,
+    required this.showHeight,
+    required this.heightUnit,
+    required this.heightValue,
+  });
+
+  String _getFormattedHeight() {
+    if (!showHeight) {
+      return "";
+    }
+
+    if (heightUnit == "cm") {
+      return "$heightValue cm";
+    } else {
+      int totalInches = (heightValue / 2.54).round();
+      int feet = totalInches ~/ 12;
+      int inches = totalInches % 12;
+      return "$feet' $inches\"";
+    }
     required this.photosURL,
     required this.pfpLink,
   });
@@ -36,15 +57,18 @@ class MoreProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('$name\'s Profile', style: const TextStyle(color: Color(0xFF5E77DF))),
-          backgroundColor: Colors.white,
-          elevation: 0,
-          iconTheme: const IconThemeData(color: Color(0xFF5E77DF)),
-        ),
-        body: Center(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+      appBar: AppBar(
+        title: Text('$name\'s Profile',
+            style: const TextStyle(color: Color(0xFF5E77DF))),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF5E77DF)),
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 10),
               CircleAvatar(
@@ -79,6 +103,7 @@ class MoreProfileScreen extends StatelessWidget {
               _buildProfileField("Name", name),
               _buildProfileField("Age", age),
               _buildProfileField("Major", major),
+              if (showHeight) _buildProfileField("Height", _getFormattedHeight()),
               _buildProfileField("Bio", bio),
               const SizedBox(height: 10),
               _buildInterestsSection(),
@@ -142,11 +167,15 @@ class MoreProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSocialMediaButton(BuildContext context, {required IconData icon, required String label, required String url}) {
+  Widget _buildSocialMediaButton(BuildContext context,
+      {required IconData icon, required String label, required String url}) {
     return OutlinedButton.icon(
       onPressed: url.isNotEmpty ? () => _launchURL(context, url) : null,
       icon: Icon(icon, color: url.isNotEmpty ? Colors.blueAccent : Colors.grey),
-      label: Text(label, style: TextStyle(fontSize: 16, color: url.isNotEmpty ? Colors.blueAccent : Colors.grey)),
+      label: Text(label,
+          style: TextStyle(
+              fontSize: 16,
+              color: url.isNotEmpty ? Colors.blueAccent : Colors.grey)),
       style: OutlinedButton.styleFrom(
         side: BorderSide(
           width: 1,
@@ -203,7 +232,8 @@ class MoreProfileScreen extends StatelessWidget {
                         ),
                       ),
                       backgroundColor: const Color(0xFF5E77DF),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
