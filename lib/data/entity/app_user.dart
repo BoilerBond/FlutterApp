@@ -27,7 +27,6 @@ class AppUser {
   bool matchResultNotificationEnabled;
   bool messagingNotificationEnabled;
   bool eventNotificationEnabled;
-  bool termsAccepted;
   bool showHeight;
   String heightUnit;
   double heightValue;
@@ -48,7 +47,7 @@ class AppUser {
   String longFormAnswer;
   Map<String, int> personalTraits;
   Map<String, int> partnerPreferences;
-  int weeksWithoutMatch
+  int weeksWithoutMatch;
 
   AppUser({
     required this.uid,

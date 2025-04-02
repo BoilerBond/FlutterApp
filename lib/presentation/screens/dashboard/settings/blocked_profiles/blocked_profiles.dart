@@ -31,17 +31,14 @@ class _BlockedProfilesState extends State<BlockedProfiles> {
         if (keyword.isEmpty || blockedUserObject.firstName.contains(keyword) || blockedUserObject.lastName.contains(keyword)) {
           searchedResult[uid] = {
             "successful": true,
-            "index": index,
             "firstName": blockedUserObject.firstName,
             "lastName": blockedUserObject.lastName,
-            "age": blockedUserObject.age,
-            "major": blockedUserObject.major,
+            "profilePictureURL": blockedUserObject.profilePictureURL,
           };
         }
       } catch (e) {
         searchedResult[uid] = {
           "successful": false,
-          "index": index,
         };
       }
     }
@@ -54,7 +51,7 @@ class _BlockedProfilesState extends State<BlockedProfiles> {
 
   // Remove blocked user from the block list
   Future<void> unblockUser(String uid) async {
-    userObject!.blockedUserUIDs.removeAt(blockedUserData[uid]["index"]);
+    userObject!.blockedUserUIDs.remove(uid);
     await FirebaseFirestore.instance.collection("users").doc(currentUser!.uid).update({
       "blockedUserUIDs": FieldValue.arrayRemove([uid])
     });
@@ -121,7 +118,19 @@ class _BlockedProfilesState extends State<BlockedProfiles> {
                                     child: Row(
                                       children: [
                                         Container(
-                                          width: 100,
+                                          width: 50,
+                                          child: CircleAvatar(
+                                          radius: 20,
+                                          backgroundImage: NetworkImage(
+                                            blockedUserData[key]["profilePictureURL"].isNotEmpty
+                                                ? blockedUserData[key]["profilePictureURL"].isNotEmpty
+                                                : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+                                          ),
+                                          backgroundColor: const Color(0xFFCDFCFF),
+                                        ),
+                                        ),
+                                        Container(
+                                          width: 160,
                                           child: ProtectedText(
                                             "${blockedUserData[key]["firstName"]} ${blockedUserData[key]["lastName"]}",
                                             style: TextStyle(color: Theme.of(context).colorScheme.onSecondaryContainer),
@@ -130,25 +139,6 @@ class _BlockedProfilesState extends State<BlockedProfiles> {
                                           ),
                                         ),
                                         SizedBox(width: 22),
-                                        Container(
-                                          width: 20,
-                                          child: Text(
-                                            blockedUserData[key]["age"].toString(),
-                                            style: TextStyle(color: Theme.of(context).colorScheme.onSecondaryContainer),
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 1,
-                                          ),
-                                        ),
-                                        SizedBox(width: 22),
-                                        Container(
-                                          width: 50,
-                                          child: ProtectedText(
-                                            blockedUserData[key]["major"],
-                                            style: TextStyle(color: Theme.of(context).colorScheme.onSecondaryContainer),
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 1,
-                                          ),
-                                        ),
                                         TextButton(
                                           onPressed: () {
                                             unblockUser(key);

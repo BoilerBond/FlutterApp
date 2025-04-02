@@ -18,18 +18,19 @@ class MoreProfileScreen extends StatelessWidget {
   final String pfpLink;
   final currentUser = FirebaseAuth.instance.currentUser;
 
-  MoreProfileScreen({
-    super.key,
-    required this.uid,
-    required this.name,
-    required this.age,
-    required this.major,
-    required this.bio,
-    required this.displayedInterests,
-    required this.showHeight,
-    required this.heightUnit,
-    required this.heightValue,
-  });
+  MoreProfileScreen(
+      {super.key,
+      required this.uid,
+      required this.name,
+      required this.age,
+      required this.major,
+      required this.bio,
+      required this.displayedInterests,
+      required this.showHeight,
+      required this.heightUnit,
+      required this.heightValue,
+      required this.photosURL,
+      required this.pfpLink});
 
   String _getFormattedHeight() {
     if (!showHeight) {
@@ -44,9 +45,7 @@ class MoreProfileScreen extends StatelessWidget {
       int inches = totalInches % 12;
       return "$feet' $inches\"";
     }
-    required this.photosURL,
-    required this.pfpLink,
-  });
+  }
 
   Future<void> blockUser() async {
     await FirebaseFirestore.instance.collection("users").doc(currentUser!.uid).update({
@@ -58,8 +57,7 @@ class MoreProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('$name\'s Profile',
-            style: const TextStyle(color: Color(0xFF5E77DF))),
+        title: Text('$name\'s Profile', style: const TextStyle(color: Color(0xFF5E77DF))),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFF5E77DF)),
@@ -134,7 +132,9 @@ class MoreProfileScreen extends StatelessWidget {
               ),
             ],
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   Widget _buildProfileField(String label, String value) {
