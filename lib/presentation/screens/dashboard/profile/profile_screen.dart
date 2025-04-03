@@ -33,7 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           await db.collection("users").doc(currentUser?.uid).get();
       final user = AppUser.fromSnapshot(userSnapshot);
       setState(() {
-        userName = user.firstName + " " + user.lastName;
+        userName = "${user.firstName} ${user.lastName}";
         bio = user.bio;
         _imageURL = user.profilePictureURL;
       });

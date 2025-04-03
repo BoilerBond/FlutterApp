@@ -42,6 +42,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Navigator.pushNamed(context, "/settings/legal_information");
   }
 
+  void _onRedirectToOnboardingPress(BuildContext context) {
+    Navigator.pushNamedAndRemoveUntil(context, "/onboarding", (route) => false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> buttons = [
@@ -50,6 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       {'title': 'Blocked Profiles', 'type': ButtonType.normal, 'icon': Icons.block, 'onPressed': _onBlockedProfilesPress},
       {'title': 'Legal Information', 'type': ButtonType.normal, 'icon': Icons.list, 'onPressed': _onLegalInformationPress},
       {'title': 'BoilerBond Guide', 'type': ButtonType.normal, 'icon': Icons.help_outline, 'onPressed': _onBoilerBondGuidePress},
+      {'title': 'Back to Onboarding', 'type': ButtonType.normal, 'icon': Icons.arrow_forward, 'onPressed': _onRedirectToOnboardingPress},
       {'title': 'Danger Zone', 'type': ButtonType.danger, 'icon': Icons.warning_amber_rounded, 'onPressed': _onDangerZonePress},
       {'title': 'Log Out', 'type': ButtonType.warning, 'icon': Icons.exit_to_app, 'onPressed': _onLogoutPress},
     ];
@@ -118,7 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ),
-            )).toList(),
+            )),
 
             const Spacer(flex: 5),
           ],

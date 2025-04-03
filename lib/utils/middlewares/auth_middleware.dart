@@ -14,7 +14,7 @@ class AuthMiddleware extends StatefulWidget {
   final Widget child;
   final FirebaseFirestore db = FirebaseFirestore.instance;
 
-  AuthMiddleware({required this.child});
+  AuthMiddleware({super.key, required this.child});
 
   @override
   _AuthMiddlewareState createState() => _AuthMiddlewareState();

@@ -1,5 +1,4 @@
 import 'package:datingapp/presentation/screens/dashboard/profile/profile_privacy.dart';
-import 'package:datingapp/presentation/screens/dashboard/profile/profile_screen.dart';
 import 'package:datingapp/presentation/screens/dashboard/profile/view_profile.dart';
 import 'package:datingapp/presentation/screens/dashboard/settings/legal_information/legal_information.dart';
 import 'package:datingapp/presentation/screens/dashboard/settings/user_guide/boilerbond_guide.dart';

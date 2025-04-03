@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 // ignore: must_be_immutable
 class AppDescriptionScreen extends StatefulWidget {
   final Map<dynamic, dynamic> arguments;
-  AppDescriptionScreen({super.key, required this.arguments});
+  const AppDescriptionScreen({super.key, required this.arguments});
 
   @override
   _AppDescriptionScreenState createState() => _AppDescriptionScreenState();
