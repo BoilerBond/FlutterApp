@@ -20,6 +20,7 @@ class _BondScreenState extends State<BondScreen> {
   AppUser? curUser;
   AppUser? match;
   bool isMatchBlocked = false;
+  bool isMatchUnbonded = false;
   bool keepMatchToggle = true;
 
   Future<void> getUserProfiles() async {
@@ -36,6 +37,7 @@ class _BondScreenState extends State<BondScreen> {
       match = matchUser;
       keepMatchToggle = user.keepMatch;
       isMatchBlocked = user.blockedUserUIDs.contains(matchUser.uid);
+      isMatchUnbonded = !user.keepMatch;
     });
 
     final hasSeenIntro = curUserSnapshot.data()?['hasSeenMatchIntro'] ?? false;
@@ -169,7 +171,7 @@ class _BondScreenState extends State<BondScreen> {
         toolbarHeight: 40,
       ),
 
-      body: isMatchBlocked ? _buildBlockedView() : SingleChildScrollView(
+      body: isMatchBlocked ? _buildBlockedView() : isMatchUnbonded ? _buildUnbondedView() : SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16).copyWith(top: 0),
           child: Column(
@@ -422,8 +424,30 @@ class _BondScreenState extends State<BondScreen> {
     );
   }
 
-  void _unbond() {
-    // Implement the logic to unbond the user
+  Future<void> _unbond() async {
+    if (curUser == null || match == null) return;
+    
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    
+    // Update Firebase to indicate the user doesn't want to keep the match
+    await FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .update({'keepMatch': false});
+    
+    // Update local state
+    setState(() {
+      keepMatchToggle = false;
+      isMatchUnbonded = true;
+      if (curUser != null) {
+        curUser!.keepMatch = false;
+      }
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("You've unbonded from this user. You'll receive a new match next week"))
+    );
   }
 
   void _showIntroduction(BuildContext context) {
@@ -463,6 +487,57 @@ class _BondScreenState extends State<BondScreen> {
     }
   }
 
+  // Shows the unbonded view
+  Widget _buildUnbondedView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.link_off, 
+              size: 72, 
+              color: Colors.grey,
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              "You've unbonded from this user",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "You'll receive a new match next week. "
+              "Until then, you can explore other profiles.",
+              style: TextStyle(
+                fontSize: 16,
+                fontStyle: FontStyle.italic,
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            OutlinedButton.icon(
+              onPressed: () {
+                // Navigate to the dashboard with the explore tab (index 0) selected
+                Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false, arguments: {'initialIndex': 0});
+              },
+              icon: const Icon(Icons.explore),
+              label: const Text("Explore Profiles"),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
   // Shows the blocked user view
   Widget _buildBlockedView() {
     return Center(

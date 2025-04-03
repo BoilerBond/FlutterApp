@@ -23,7 +23,17 @@ class Routes {
 
     switch (settings.name) {
       case '/':
-        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: Dashboard()));
+        return PageRouteBuilder(
+          settings: settings,
+          pageBuilder: (context, animation, secondaryAnimation) => AuthMiddleware(child: Dashboard()),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 150),
+        );
       case '/register':
         return MaterialPageRoute(builder: (context) => RegisterScreen());
       case '/login':

@@ -15,9 +15,6 @@ class _NonNegotiablesFilterScreenState extends State<NonNegotiablesFilterScreen>
 
   final TextEditingController minAgeController = TextEditingController();
   final TextEditingController maxAgeController = TextEditingController();
-  
-  // No blocked users filter - enabled by default
-  bool noBlockedUsers = true;
 
   final List<String> allInterests = [
     'Animals', 'Music', 'Sports', 'Outdoor activities', 'Dancing', 'Yoga',
@@ -64,7 +61,6 @@ class _NonNegotiablesFilterScreenState extends State<NonNegotiablesFilterScreen>
       },
       'mustHaveHobbies': mustHaveHobbies.toList(),
       'mustNotHaveHobbies': mustNotHaveHobbies.toList(),
-      'noBlockedUsers': noBlockedUsers,
     };
 
     try {
@@ -270,26 +266,6 @@ class _NonNegotiablesFilterScreenState extends State<NonNegotiablesFilterScreen>
     );
   }
 
-  Widget _buildNoBlockedUsersOption() {
-    return SwitchListTile(
-      title: const Text(
-        'No Blocked Users',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      ),
-      subtitle: const Text(
-        'Only show profiles of users who are not in your blocked list',
-        style: TextStyle(fontSize: 14),
-      ),
-      value: noBlockedUsers,
-      activeColor: const Color(0xFF5E77DF),
-      onChanged: (bool value) {
-        setState(() {
-          noBlockedUsers = value;
-        });
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -308,8 +284,6 @@ class _NonNegotiablesFilterScreenState extends State<NonNegotiablesFilterScreen>
               _buildAgeRangeFields(),
               const SizedBox(height: 20),
               _buildHobbiesSelection(),
-              const SizedBox(height: 20),
-              _buildNoBlockedUsersOption(),
               Center(
                 child: ElevatedButton(
                   onPressed: _submitForm,
