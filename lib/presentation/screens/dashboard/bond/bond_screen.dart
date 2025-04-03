@@ -2,6 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:datingapp/presentation/screens/dashboard/explore/more_profile.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../../../data/entity/app_user.dart';
 
@@ -16,6 +19,7 @@ class _BondScreenState extends State<BondScreen> {
   final placeholder_match = "BP25avUQfZUVYNVLZ2Eoiw5jYlf1";
   AppUser? curUser;
   AppUser? match;
+  bool keepMatchToggle = true;
 
   Future<void> getUserProfiles() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -27,6 +31,7 @@ class _BondScreenState extends State<BondScreen> {
     setState(() {
       curUser = user;
       match = AppUser.fromSnapshot(matchSnapshot);
+      keepMatchToggle = user.keepMatch;
     });
   }
 
@@ -65,6 +70,7 @@ class _BondScreenState extends State<BondScreen> {
             "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
             "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"],
           pfpLink: "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+          spotifyUsername: match!.spotifyUsername,
         ),
       ),
     );
@@ -127,9 +133,10 @@ class _BondScreenState extends State<BondScreen> {
         ],
         toolbarHeight: 40,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16).copyWith(top: 0),
-        child: Column(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16).copyWith(top: 0),
+          child: Column(
           children: [
             const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
             Row(
@@ -194,11 +201,62 @@ class _BondScreenState extends State<BondScreen> {
             ),
             const Divider(),
             const SizedBox(height: 8),
+            
+            // Spotify Button
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  final spotifyUsername = match?.spotifyUsername;
+                  final String url = spotifyUsername != null && spotifyUsername.isNotEmpty
+                      ? "https://open.spotify.com/user/" + spotifyUsername
+                      : "";
+                  _launchURL(url);
+                },
+                icon: Icon(Icons.music_note, color: match?.spotifyUsername != null && match!.spotifyUsername.isNotEmpty ? Colors.blueAccent : Colors.grey),
+                label: Text("Spotify",
+                    style: TextStyle(
+                        fontSize: 16,
+                        color: match?.spotifyUsername != null && match!.spotifyUsername.isNotEmpty ? Colors.blueAccent : Colors.grey)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    width: 1,
+                    color: match?.spotifyUsername != null && match!.spotifyUsername.isNotEmpty ? Colors.blueAccent : Colors.grey,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
 
             _buildActionButton(Icons.chat_bubble, "Go to our messages", () {}),
 
             _buildActionButton(Icons.favorite, "Relationship suggestions", () {}),
+
+            const SizedBox(height: 15),
+            const Divider(),
+            const SizedBox(height: 5),
+            
+            // Keep Match Toggle
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: SwitchListTile(
+                title: const Text("Keep this match for next week",
+                  style: TextStyle(fontSize: 16)),
+                subtitle: Text(keepMatchToggle 
+                  ? "You'll keep this match" 
+                  : "You'll get a new match next week",
+                  style: TextStyle(fontSize: 12, color: Colors.grey)),
+                value: keepMatchToggle,
+                activeColor: const Color(0xFF5E77DF),
+                onChanged: (bool value) {
+                  _updateKeepMatch(value);
+                },
+              ),
+            ),
           ],
+        ),
         ),
       ),
     );
@@ -290,7 +348,56 @@ class _BondScreenState extends State<BondScreen> {
     // Implement the logic to unbond the user
   }
 
-void _reportProfile(BuildContext context, String name) {
+  Future<void> _updateKeepMatch(bool value) async {
+    setState(() {
+      keepMatchToggle = value;
+    });
+    
+    if (curUser != null) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      
+      await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .update({'keepMatch': value});
+      
+      // Update local data model
+      if (curUser != null) {
+        curUser!.keepMatch = value;
+      }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(value 
+          ? "You'll keep this match for next week" 
+          : "You'll receive a new match next week"))
+      );
+    }
+  }
+
+  Future<void> _launchURL(String url) async {
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No link available")),
+      );
+      return;
+    }
+
+    if (kIsWeb) {
+      await launchUrlString(url, webOnlyWindowName: '_blank');
+    } else {
+      final Uri uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Could not open $url")),
+        );
+      }
+    }
+  }
+
+  void _reportProfile(BuildContext context, String name) {
   showDialog(
     context: context,
     builder: (context) => Dialog(

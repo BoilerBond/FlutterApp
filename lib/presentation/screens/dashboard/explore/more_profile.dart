@@ -3,6 +3,9 @@ import 'package:datingapp/presentation/widgets/confirm_dialog.dart';
 import 'package:datingapp/presentation/widgets/protected_text.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:url_launcher/url_launcher_string.dart';
 
 class MoreProfileScreen extends StatelessWidget {
   final String uid;
@@ -16,6 +19,7 @@ class MoreProfileScreen extends StatelessWidget {
   final double heightValue;
   final List<String> photosURL;
   final String pfpLink;
+  final String? spotifyUsername;
   final currentUser = FirebaseAuth.instance.currentUser;
 
   MoreProfileScreen(
@@ -30,7 +34,8 @@ class MoreProfileScreen extends StatelessWidget {
       required this.heightUnit,
       required this.heightValue,
       required this.photosURL,
-      required this.pfpLink});
+      required this.pfpLink,
+      this.spotifyUsername});
 
   String _getFormattedHeight() {
     if (!showHeight) {
@@ -93,6 +98,22 @@ class MoreProfileScreen extends StatelessWidget {
                       icon: Icons.facebook,
                       label: "Facebook",
                       url: "",
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: _buildSocialMediaButton(
+                      context,
+                      icon: Icons.music_note,
+                      label: "Spotify",
+                      url: spotifyUsername != null && spotifyUsername!.isNotEmpty
+                          ? "https://open.spotify.com/user/" + spotifyUsername!
+                          : "",
                     ),
                   ),
                 ],
@@ -194,6 +215,19 @@ class MoreProfileScreen extends StatelessWidget {
         const SnackBar(content: Text("No link available")),
       );
       return;
+    }
+
+    if (kIsWeb) {
+      await launchUrlString(url, webOnlyWindowName: '_blank');
+    } else {
+      final Uri uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Could not open $url")),
+        );
+      }
     }
   }
 
