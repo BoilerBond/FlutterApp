@@ -5,6 +5,8 @@ import 'package:datingapp/presentation/screens/dashboard/explore/more_profile.da
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:intl/intl.dart';
+import 'dart:async';
 import '../../../../data/entity/app_user.dart';
 import 'match_intro_screen.dart';
 
@@ -22,6 +24,11 @@ class _BondScreenState extends State<BondScreen> {
   bool isMatchBlocked = false;
   bool isMatchUnbonded = false;
   bool keepMatchToggle = true;
+  
+  // Countdown timer variables
+  Timer? _countdownTimer;
+  Duration _timeUntilNextBond = Duration.zero;
+  DateTime? _nextBondDate;
 
   Future<void> getUserProfiles() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -57,6 +64,51 @@ class _BondScreenState extends State<BondScreen> {
   void initState() {
     super.initState();
     getUserProfiles();
+    _calculateNextBondDate();
+    _startCountdownTimer();
+  }
+  
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+  
+  void _calculateNextBondDate() {
+    // Assuming new bonds are given every Monday at 12:00 AM
+    final now = DateTime.now();
+    final currentWeekday = now.weekday;
+    
+    // Calculate days until next Monday (weekday 1)
+    int daysUntilNextMonday = (8 - currentWeekday) % 7;
+    if (daysUntilNextMonday == 0) daysUntilNextMonday = 7; // If today is Monday, next bond is next Monday
+    
+    // Create next bond date (next Monday at midnight)
+    _nextBondDate = DateTime(
+      now.year,
+      now.month,
+      now.day + daysUntilNextMonday,
+    ).subtract(Duration(hours: now.hour, minutes: now.minute, seconds: now.second));
+    
+    // Calculate time remaining
+    _updateRemainingTime();
+  }
+  
+  void _updateRemainingTime() {
+    if (_nextBondDate != null) {
+      final now = DateTime.now();
+      final remaining = _nextBondDate!.difference(now);
+      setState(() {
+        _timeUntilNextBond = remaining.isNegative ? Duration.zero : remaining;
+      });
+    }
+  }
+  
+  void _startCountdownTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _updateRemainingTime();
+    });
   }
 
   // We use this sample user to test View Profile functionalities
@@ -489,6 +541,19 @@ class _BondScreenState extends State<BondScreen> {
 
   // Shows the unbonded view
   Widget _buildUnbondedView() {
+    // Format the countdown timer values for display
+    final days = _timeUntilNextBond.inDays;
+    final hours = _timeUntilNextBond.inHours % 24;
+    final minutes = _timeUntilNextBond.inMinutes % 60;
+    final seconds = _timeUntilNextBond.inSeconds % 60;
+    
+    // Format the next bond date for display
+    String formattedDate = '';
+    if (_nextBondDate != null) {
+      final DateFormat formatter = DateFormat('EEEE, MMMM d');
+      formattedDate = formatter.format(_nextBondDate!);
+    }
+    
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -511,8 +576,7 @@ class _BondScreenState extends State<BondScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              "You'll receive a new match next week. "
-              "Until then, you can explore other profiles.",
+              "You'll receive a new match next week.",
               style: TextStyle(
                 fontSize: 16,
                 fontStyle: FontStyle.italic,
@@ -520,6 +584,68 @@ class _BondScreenState extends State<BondScreen> {
               ),
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 24),
+            
+            // Countdown timer container
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEF2FA),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF5E77DF), width: 1),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    "Your next bond will be available on:",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF2C519C),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    formattedDate,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2C519C),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Time remaining:",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF2C519C),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // Countdown display
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildCountdownUnit(days.toString(), "Days"),
+                      const SizedBox(width: 8),
+                      const Text(":", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 8),
+                      _buildCountdownUnit(hours.toString().padLeft(2, '0'), "Hours"),
+                      const SizedBox(width: 8),
+                      const Text(":", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 8),
+                      _buildCountdownUnit(minutes.toString().padLeft(2, '0'), "Mins"),
+                      const SizedBox(width: 8),
+                      const Text(":", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 8),
+                      _buildCountdownUnit(seconds.toString().padLeft(2, '0'), "Secs"),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
             const SizedBox(height: 32),
             OutlinedButton.icon(
               onPressed: () {
@@ -670,6 +796,37 @@ class _BondScreenState extends State<BondScreen> {
         );
       }
     }
+  }
+
+  // Helper method to build each countdown unit (days, hours, minutes, seconds)
+  Widget _buildCountdownUnit(String value, String label) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFF5E77DF),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFF454746),
+          ),
+        ),
+      ],
+    );
   }
 
   void _reportProfile(BuildContext context, String name) {
