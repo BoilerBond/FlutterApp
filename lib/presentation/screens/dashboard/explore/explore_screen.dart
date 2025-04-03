@@ -24,7 +24,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Future<void> getProfile() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     final db = FirebaseFirestore.instance;
-    final userSnapshot = await db.collection("users").doc(currentUser?.uid).get();
+    final userSnapshot =
+        await db.collection("users").doc(currentUser?.uid).get();
     setState(() {
       curUser = AppUser.fromSnapshot(userSnapshot);
     });
@@ -41,7 +42,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Future<void> _fetchVisibleUsers() async {
     if (curUser != null) print("curuser not null");
     try {
-      final querySnapshot = await FirebaseFirestore.instance.collection("users").where('__name__', isNotEqualTo: curUser?.uid).where("profileVisible", isEqualTo: true).get();
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection("users")
+          .where('__name__', isNotEqualTo: curUser?.uid)
+          .where("profileVisible", isEqualTo: true)
+          .get();
 
       final fetchedUsers = querySnapshot.docs
           .where((doc) {
@@ -89,7 +94,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           showHeight: users[profileIndex].showHeight,
           heightUnit: users[profileIndex].heightUnit,
           heightValue: users[profileIndex].heightValue,
-          photosURL: (users[profileIndex].photoVisible) ? users[profileIndex].photosURL : [],
+          photosURL: (users[profileIndex].photoVisible)
+              ? users[profileIndex].photosURL
+              : [],
           pfpLink: users[profileIndex].profilePictureURL,
         ),
       ),
@@ -115,7 +122,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   ProtectedText(
                     users[profileIndex].firstName,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const Text(
                     "'s Profile",
@@ -137,7 +145,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 items: const [
                   DropdownMenuItem(
                     value: 1,
-                    child: Text("Profile goes against one of my non-negotiables."),
+                    child:
+                        Text("Profile goes against one of my non-negotiables."),
                   ),
                   DropdownMenuItem(
                     value: 2,
@@ -145,7 +154,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   DropdownMenuItem(
                     value: 3,
-                    child: Text("Offensive content against community standards."),
+                    child:
+                        Text("Offensive content against community standards."),
                   ),
                 ],
                 onChanged: (value) {},
@@ -235,238 +245,260 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return SafeArea(
-    child: Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Explore",
-          style: TextStyle(
-            fontStyle: FontStyle.italic,
-            fontWeight: FontWeight.w100,
-            fontSize: 22,
-            color: Color(0xFF454746),
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            "Explore",
+            style: TextStyle(
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.w100,
+              fontSize: 22,
+              color: Color(0xFF454746),
+            ),
           ),
+          automaticallyImplyLeading: false,
+          toolbarHeight: 40,
+          actions: [
+            Row(
+              children: [
+                const Text(
+                  "Edit my non-negotiables",
+                  style: TextStyle(fontSize: 16, color: Colors.black),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                const NonNegotiablesFormScreen()));
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
-        automaticallyImplyLeading: false,
-        toolbarHeight: 40,
-        actions: [
-          Row(
-            children: [
-              const Text(
-                "Edit my non-negotiables",
-                style: TextStyle(fontSize: 16, color: Colors.black),
-              ),
-              IconButton(
-                icon: const Icon(Icons.settings),
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(
-                      builder: (context) => const NonNegotiablesFormScreen()));
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : users.isEmpty
-              ? const Center(child: Text("No profiles available."))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 130),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          const Text(
-                            "Filter by non-negotiables",
-                            style: TextStyle(fontSize: 16, color: Colors.black),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.filter_list_alt),
-                            onPressed: () {
-                              Navigator.push(context, MaterialPageRoute(
-                                  builder: (context) =>
-                                      const NonNegotiablesFilterScreen()));
-                            },
-                          ),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Column(
+        body: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : users.isEmpty
+                ? const Center(child: Text("No profiles available."))
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 130),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            const Divider(
-                              height: 20,
-                              thickness: 1,
-                              color: Color(0xFFE7EFEE),
+                            const Text(
+                              "Filter by non-negotiables",
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.black),
                             ),
-                            const SizedBox(height: 10),
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 500),
-                              child: Container(
-                                key: ValueKey(profileIndex),
-                                padding: const EdgeInsets.all(15),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE7EFEE),
-                                  borderRadius: BorderRadius.circular(15),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey,
-                                      blurRadius: 5,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        IconButton(
-                                          onPressed: () => showDialog<String>(
-                                            context: context,
-                                            builder: (BuildContext context) =>
-                                                AlertDialog(
-                                              title: const Text("Why am I seeing this profile?"),
-                                              content: Text(getSimilarity(users[profileIndex])),
-                                            ),
-                                          ),
-                                          icon: const Icon(Icons.info_outline),
-                                        ),
-                                      ],
-                                    ),
-                                    GestureDetector(
-                                      onTap: _navigateToMoreProfile,
-                                      child: CircleAvatar(
-                                        radius: MediaQuery.of(context).size.width * 0.2,
-                                        backgroundImage: NetworkImage(
-                                          users[profileIndex]
-                                                  .profilePictureURL
-                                                  .isNotEmpty
-                                              ? users[profileIndex].profilePictureURL
-                                              : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-                                        ),
-                                        backgroundColor: const Color(0xFFCDFCFF),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        ProtectedText(
-                                          users[profileIndex].firstName,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
-                                            color: Color(0xFF2C519C),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 5),
-                                        IconButton(
-                                          onPressed: _reportProfile,
-                                          icon: const Icon(Icons.more_horiz, color: Colors.black54),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          users[profileIndex].age.toString(),
-                                          style: const TextStyle(
-                                              fontStyle: FontStyle.italic,
-                                              color: Color(0xFF5E77DF)),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        const Text("|", style: TextStyle(color: Color(0xFF2C519C))),
-                                        const SizedBox(width: 10),
-                                        ProtectedText(
-                                          users[profileIndex].major,
-                                          style: const TextStyle(
-                                              fontStyle: FontStyle.italic,
-                                              color: Color(0xFF5E77DF)),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(15),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFCDFCFF),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  const Text(
-                                    "About:",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF2C519C)),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  ProtectedText(
-                                    users[profileIndex].bio,
-                                    style: const TextStyle(
-                                      fontStyle: FontStyle.italic,
-                                      color: Color(0xFF454746),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            IconButton(
+                              icon: const Icon(Icons.filter_list_alt),
+                              onPressed: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const NonNegotiablesFilterScreen()));
+                              },
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-      bottomNavigationBar: users.isEmpty
-          ? null
-          : Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Rate this profile:",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Slider(
-                    value: sliderValue,
-                    min: -2,
-                    max: 2,
-                    divisions: 4,
-                    label: sliderValue.toString(),
-                    activeColor: const Color(0xFF5E77DF),
-                    onChanged: (value) {
-                      setState(() {
-                        sliderValue = value;
-                      });
-                    },
-                  ),
-                  ElevatedButton(
-                    onPressed: _submitRating,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2C519C),
-                      foregroundColor: Colors.white,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Column(
+                            children: [
+                              const Divider(
+                                height: 20,
+                                thickness: 1,
+                                color: Color(0xFFE7EFEE),
+                              ),
+                              const SizedBox(height: 10),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 500),
+                                child: Container(
+                                  key: ValueKey(profileIndex),
+                                  padding: const EdgeInsets.all(15),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE7EFEE),
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey,
+                                        blurRadius: 5,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          IconButton(
+                                            onPressed: () => showDialog<String>(
+                                              context: context,
+                                              builder: (BuildContext context) =>
+                                                  AlertDialog(
+                                                title: const Text(
+                                                    "Why am I seeing this profile?"),
+                                                content: Text(getSimilarity(
+                                                    users[profileIndex])),
+                                              ),
+                                            ),
+                                            icon:
+                                                const Icon(Icons.info_outline),
+                                          ),
+                                        ],
+                                      ),
+                                      GestureDetector(
+                                        onTap: _navigateToMoreProfile,
+                                        child: CircleAvatar(
+                                          radius: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.2,
+                                          backgroundImage: NetworkImage(
+                                            users[profileIndex]
+                                                    .profilePictureURL
+                                                    .isNotEmpty
+                                                ? users[profileIndex]
+                                                    .profilePictureURL
+                                                : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+                                          ),
+                                          backgroundColor:
+                                              const Color(0xFFCDFCFF),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          ProtectedText(
+                                            users[profileIndex].firstName,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                              color: Color(0xFF2C519C),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          IconButton(
+                                            onPressed: _reportProfile,
+                                            icon: const Icon(Icons.more_horiz,
+                                                color: Colors.black54),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            users[profileIndex].age.toString(),
+                                            style: const TextStyle(
+                                                fontStyle: FontStyle.italic,
+                                                color: Color(0xFF5E77DF)),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          const Text("|",
+                                              style: TextStyle(
+                                                  color: Color(0xFF2C519C))),
+                                          const SizedBox(width: 10),
+                                          ProtectedText(
+                                            users[profileIndex].major,
+                                            style: const TextStyle(
+                                                fontStyle: FontStyle.italic,
+                                                color: Color(0xFF5E77DF)),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(15),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFCDFCFF),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    const Text(
+                                      "About:",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF2C519C)),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    ProtectedText(
+                                      users[profileIndex].bio,
+                                      style: const TextStyle(
+                                        fontStyle: FontStyle.italic,
+                                        color: Color(0xFF454746),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    child: const Text("Submit Rating"),
                   ),
-                ],
+        bottomNavigationBar: users.isEmpty
+            ? null
+            : Container(
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20.0, vertical: 10.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      "Rate this profile:",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    Slider(
+                      value: sliderValue,
+                      min: -2,
+                      max: 2,
+                      divisions: 4,
+                      label: sliderValue.toString(),
+                      activeColor: const Color(0xFF5E77DF),
+                      onChanged: (value) {
+                        setState(() {
+                          sliderValue = value;
+                        });
+                      },
+                    ),
+                    ElevatedButton(
+                      onPressed: _submitRating,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2C519C),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text("Submit Rating"),
+                    ),
+                  ],
+                ),
               ),
-            ),
-    ),
-  );
+      ),
+    );
   }
 }
