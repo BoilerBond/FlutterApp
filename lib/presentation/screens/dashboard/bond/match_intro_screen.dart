@@ -5,7 +5,8 @@ class MatchIntroScreen extends StatefulWidget {
   final AppUser curUser;
   final AppUser match;
 
-  const MatchIntroScreen({Key? key, required this.curUser, required this.match}) : super(key: key);
+  const MatchIntroScreen({Key? key, required this.curUser, required this.match})
+      : super(key: key);
 
   @override
   State<MatchIntroScreen> createState() => _MatchIntroScreenState();
@@ -26,9 +27,11 @@ class _MatchIntroScreenState extends State<MatchIntroScreen> {
       Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text("Why You Were Matched", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const Text("Why You Were Matched",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
-          Text(getMatchReason(widget.curUser, widget.match), style: const TextStyle(fontSize: 16)),
+          Text(getMatchReason(widget.curUser, widget.match),
+              style: const TextStyle(fontSize: 16)),
         ],
       ),
 
@@ -36,12 +39,16 @@ class _MatchIntroScreenState extends State<MatchIntroScreen> {
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("What You Have in Common", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const Text("What You Have in Common",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
-          ...widget.curUser.getSharedTraits(widget.match).map((trait) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text("• $trait", style: const TextStyle(fontSize: 16)),
-              )),
+          ...widget.curUser
+              .getSharedTraits(widget.match)
+              .map((trait) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child:
+                        Text("• $trait", style: const TextStyle(fontSize: 16)),
+                  )),
         ],
       ),
 
@@ -49,7 +56,8 @@ class _MatchIntroScreenState extends State<MatchIntroScreen> {
       Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text("Get to Know Them", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const Text("Get to Know Them",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
         ],
       ),
@@ -78,7 +86,8 @@ class _MatchIntroScreenState extends State<MatchIntroScreen> {
               padding: const EdgeInsets.all(12.0),
               child: ElevatedButton(
                 onPressed: _nextPage,
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2C519C)),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2C519C)),
                 child: const Text("Next"),
               ),
             )
@@ -86,7 +95,8 @@ class _MatchIntroScreenState extends State<MatchIntroScreen> {
               padding: const EdgeInsets.all(12.0),
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2C519C)),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2C519C)),
                 child: const Text("Done"),
               ),
             ),
@@ -96,6 +106,12 @@ class _MatchIntroScreenState extends State<MatchIntroScreen> {
   String getMatchReason(AppUser u1, AppUser u2) {
     final user1Traits = u1.personalTraits.values.toList();
     final user2Traits = u2.personalTraits.values.toList();
+
+    // checking length
+    if (user1Traits.length < 5 || user2Traits.length < 5) {
+      return "You and ${u2.firstName} share some personality similarities.";
+    }
+
     int minIndex = 0;
     int minDiff = 10;
     for (int i = 0; i < 5; i++) {
@@ -105,6 +121,7 @@ class _MatchIntroScreenState extends State<MatchIntroScreen> {
         minIndex = i;
       }
     }
+
     switch (minIndex) {
       case 0:
         return "You both value family highly.";

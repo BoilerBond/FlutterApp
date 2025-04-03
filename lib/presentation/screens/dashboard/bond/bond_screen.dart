@@ -88,45 +88,45 @@ class _BondScreenState extends State<BondScreen> {
   }
 
   String getMatchReason() {
-  final user1Traits = curUser?.personalTraits.values.toList() ?? [];
-  final user2Traits = match?.personalTraits.values.toList() ?? [];
+    final user1Traits = curUser?.personalTraits.values.toList() ?? [];
+    final user2Traits = match?.personalTraits.values.toList() ?? [];
 
-  if (user1Traits.length < 5 || user2Traits.length < 5) {
-    return "You share some common personality traits.";
-  }
-
-  int minIndex = 0;
-  int minDiff = 10;
-  for (int i = 0; i < 5; i++) {
-    int diff = (user1Traits[i] - user2Traits[i]).abs();
-    if (diff < minDiff) {
-      minDiff = diff;
-      minIndex = i;
+    if (user1Traits.length < 5 || user2Traits.length < 5) {
+      return "You share some common personality traits.";
     }
-  }
 
-  String message = "You and ${match!.firstName}";
-  switch (minIndex) {
-    case 0:
-      message += " have similar views on the importance of family.";
-      break;
-    case 1:
-      message += " have similar levels of extroversion.";
-      break;
-    case 2:
-      message += " have lifestyles with similar levels of physical activity.";
-      break;
-    case 3:
-      message += " have similar views on trying new things and taking risks.";
-      break;
-    case 4:
-      message += " perform similarly under pressure.";
-      break;
-    default:
-      message += " share some key personality traits.";
+    int minIndex = 0;
+    int minDiff = 10;
+    for (int i = 0; i < 5; i++) {
+      int diff = (user1Traits[i] - user2Traits[i]).abs();
+      if (diff < minDiff) {
+        minDiff = diff;
+        minIndex = i;
+      }
+    }
+
+    String message = "You and ${match!.firstName}";
+    switch (minIndex) {
+      case 0:
+        message += " have similar views on the importance of family.";
+        break;
+      case 1:
+        message += " have similar levels of extroversion.";
+        break;
+      case 2:
+        message += " have lifestyles with similar levels of physical activity.";
+        break;
+      case 3:
+        message += " have similar views on trying new things and taking risks.";
+        break;
+      case 4:
+        message += " perform similarly under pressure.";
+        break;
+      default:
+        message += " share some key personality traits.";
+    }
+    return message;
   }
-  return message;
-}
 
   @override
   Widget build(BuildContext context) {
@@ -243,6 +243,17 @@ class _BondScreenState extends State<BondScreen> {
             _buildActionButton(Icons.chat_bubble, "Go to our messages", () {}),
             _buildActionButton(
                 Icons.favorite, "Relationship suggestions", () {}),
+            _buildActionButton(Icons.info, "View Match Introduction", () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MatchIntroScreen(
+                    curUser: curUser!,
+                    match: match!,
+                  ),
+                ),
+              );
+            }),
           ],
         ),
       ),
