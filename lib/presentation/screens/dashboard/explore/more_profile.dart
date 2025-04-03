@@ -278,38 +278,63 @@ class MoreProfileScreen extends StatelessWidget {
       ],
     );
   }
-}
 
-Widget _buildPhotos(BuildContext context, List<String> photosURL) {
-  return Column(children: [
-    Text(
-      "Photos",
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w300,
-        color: Colors.grey[600],
+  Widget _buildPhotoItem(BuildContext context, String url) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+            PageRouteBuilder(
+                opaque: false,
+                barrierDismissible: true,
+                pageBuilder: (BuildContext context, _, __) {
+                  return Align(
+                      child: Padding (
+                          padding: EdgeInsets.all(20),
+                          child: Hero(
+                              tag: "zoom",
+                              child: Image.network(url)
+                          )
+                      )
+                  );
+                }
+            )
+        );
+      },
+      child: Image.network(url),
+    );
+  }
+
+  Widget _buildPhotos(BuildContext context, List<String> photosURL) {
+    return Column(children: [
+      Text(
+        "Photos",
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w300,
+          color: Colors.grey[600],
+        ),
+        textAlign: TextAlign.center,
       ),
-      textAlign: TextAlign.center,
-    ),
-    const SizedBox(height: 4),
-    photosURL.isEmpty
-        ? const Text(
-            "No photos uploaded.",
-            style: TextStyle(color: Colors.grey, fontSize: 16),
-          )
-        : SizedBox(
-            width: double.infinity,
-            height: MediaQuery.of(context).size.height * 0.5,
-            child: GridView.count(
-              crossAxisCount: (photosURL.length == 1) ? 1 : 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              children: photosURL.map(
+      const SizedBox(height: 4),
+      photosURL.isEmpty
+          ? const Text(
+        "No photos uploaded.",
+        style: TextStyle(color: Colors.grey, fontSize: 16),
+      )
+          : SizedBox(
+        width: double.infinity,
+        height: MediaQuery.of(context).size.height * 0.5,
+        child: GridView.count(
+          crossAxisCount: (photosURL.length == 1) ? 1 : 2,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          children: photosURL.map(
                 (photoURL) {
-                  return Container(padding: EdgeInsets.all(5), width: 50, height: 50, child: Image.network(photoURL));
-                },
-              ).toList(),
-            ),
-          ),
-  ]);
+              return _buildPhotoItem(context, photoURL);
+            },
+          ).toList(),
+        ),
+      ),
+    ]);
+  }
 }

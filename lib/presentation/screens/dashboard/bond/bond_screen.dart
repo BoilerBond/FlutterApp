@@ -134,57 +134,12 @@ class _BondScreenState extends State<BondScreen> {
           heightUnit: match!.heightUnit,
           heightValue: match!.heightValue,
           displayedInterests: match!.displayedInterests,
-          photosURL: [
-            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"],
-          pfpLink: "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
+          photosURL: match!.photosURL,
+          pfpLink: match!.profilePictureURL,
           spotifyUsername: match!.spotifyUsername,
         ),
       ),
     );
-  }
-
-  String getMatchReason() {
-    final user1Traits = curUser?.personalTraits.values.toList() ?? [];
-    final user2Traits = match?.personalTraits.values.toList() ?? [];
-
-    if (user1Traits.length < 5 || user2Traits.length < 5) {
-      return "You share some common personality traits.";
-    }
-
-    int minIndex = 0;
-    int minDiff = 10;
-    for (int i = 0; i < 5; i++) {
-      int diff = (user1Traits[i] - user2Traits[i]).abs();
-      if (diff < minDiff) {
-        minDiff = diff;
-        minIndex = i;
-      }
-    }
-    
-    String message = "You and ${match!.firstName}";
-    switch (minIndex) {
-      case 0:
-        message += " have similar views on the importance of family.";
-        break;
-      case 1:
-        message += " have similar levels of extroversion.";
-        break;
-      case 2:
-        message += " have lifestyles with similar levels of physical activity.";
-        break;
-      case 3:
-        message += " have similar views on trying new things and taking risks.";
-        break;
-      case 4:
-        message += " perform similarly under pressure.";
-        break;
-      default:
-        message += " share some key personality traits.";
-    }
-    return message;
   }
 
   @override
@@ -235,20 +190,17 @@ class _BondScreenState extends State<BondScreen> {
                   context: context,
                   builder: (BuildContext context) => AlertDialog(
                       title: const Text("Why was I matched with this profile?"),
-                      content: Text(getMatchReason())),
+                      content: Text(curUser!.getMatchReason(match!))),
                 ),
                 icon: Icon(Icons.info_outline),
               )
             ]),
-            Stack(
-              children: [
-                CircleAvatar(
-                  radius: MediaQuery.of(context).size.width * 0.2,
-                  backgroundImage: NetworkImage(
-                      "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"),
-                  backgroundColor: const Color(0xFFCDFCFF),
-                ),
-              ],
+            CircleAvatar(
+              radius: MediaQuery.of(context).size.width * 0.2,
+              backgroundImage: match!.profilePictureURL.isEmpty ? NetworkImage(
+                  "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png")
+                  : NetworkImage(match!.profilePictureURL),
+              backgroundColor: const Color(0xFFCDFCFF),
             ),
             const SizedBox(height: 8),
             Text(match!.firstName,

@@ -40,7 +40,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   /// Fetch visible users from Firestore
   Future<void> _fetchVisibleUsers() async {
-    if (curUser != null) print("curuser not null");
     try {
       final querySnapshot = await FirebaseFirestore.instance
           .collection("users")
