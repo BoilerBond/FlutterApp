@@ -12,6 +12,7 @@ class AppUser {
   String lastName;
   String bio;
   String major;
+  String college;
   String instagramLink;
   String facebookLink;
   String profilePictureURL;
@@ -57,6 +58,7 @@ class AppUser {
     this.lastName = '',
     this.bio = '',
     this.major = '',
+    this.college = '',
     this.gender = Gender.none,
     this.age = 0,
     this.priorityLevel = 0,
@@ -105,6 +107,7 @@ class AppUser {
       lastName: data['lastName'] ?? '',
       bio: data['bio'] ?? '',
       major: data['major'] ?? '',
+      college: data['college'] ?? '',
       gender: _parseGender(data['gender']),
       age: data['age'] ?? 0,
       priorityLevel: (data['priorityLevel'] ?? 0).toDouble(),
@@ -184,6 +187,7 @@ class AppUser {
       'lastName': lastName,
       'bio': bio,
       'major': major,
+      'college': college,
       'gender': gender.toString().split('.').last,
       'age': age,
       'priorityLevel': priorityLevel,
@@ -223,7 +227,7 @@ class AppUser {
   double calculateDistance(AppUser user2) {
     double dist = 0.0;
     double sum = 0.0;
-    List<int> p1 = this.personalTraits.values.toList();
+    List<int> p1 = personalTraits.values.toList();
     List<int> p2 = user2.personalTraits.values.toList();
     for (int i = 0; i < 5; i++) {
       sum += pow(p1[i] - p2[i], 2);

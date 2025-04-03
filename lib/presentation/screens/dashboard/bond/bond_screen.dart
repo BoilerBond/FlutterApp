@@ -82,7 +82,7 @@ class _BondScreenState extends State<BondScreen> {
         minIndex = i;
       }
     }
-    String message = "You and " + match!.firstName;
+    String message = "You and ${match!.firstName}";
     switch(minIndex) {
       case 1:
         message += " have similar levels of extroversion.";
@@ -306,7 +306,7 @@ void _reportProfile(BuildContext context, String name) {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Report ${name}'s Profile",
+                "Report $name's Profile",
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 15),

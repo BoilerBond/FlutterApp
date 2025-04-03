@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:datingapp/data/entity/app_user.dart';
 
 class LongFormQuestionScreen extends StatefulWidget {
-  const LongFormQuestionScreen({Key? key}) : super(key: key);
+  const LongFormQuestionScreen({super.key});
 
   @override
   _LongFormQuestionScreenState createState() => _LongFormQuestionScreenState();

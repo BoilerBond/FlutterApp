@@ -117,7 +117,7 @@ class _BlockedProfilesState extends State<BlockedProfiles> {
                                     padding: EdgeInsets.all(16),
                                     child: Row(
                                       children: [
-                                        Container(
+                                        SizedBox(
                                           width: 50,
                                           child: CircleAvatar(
                                           radius: 20,
@@ -129,7 +129,7 @@ class _BlockedProfilesState extends State<BlockedProfiles> {
                                           backgroundColor: const Color(0xFFCDFCFF),
                                         ),
                                         ),
-                                        Container(
+                                        SizedBox(
                                           width: 160,
                                           child: ProtectedText(
                                             "${blockedUserData[key]["firstName"]} ${blockedUserData[key]["lastName"]}",

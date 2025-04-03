@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:datingapp/data/entity/app_user.dart';
 
 class NonNegotiablesFormScreen extends StatefulWidget {
-  const NonNegotiablesFormScreen({Key? key}) : super(key: key);
+  const NonNegotiablesFormScreen({super.key});
 
   @override
   _NonNegotiablesFormScreenState createState() =>
