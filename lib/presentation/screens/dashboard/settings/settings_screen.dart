@@ -83,7 +83,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
 
             ...buttons.map((button) => Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.only(bottom: 8),
               child: SizedBox(
                 width: MediaQuery.of(context).size.width,
                 child: OutlinedButton(
@@ -96,7 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Icon(
                         button['icon'],
                         color: button['type'] == ButtonType.warning
@@ -105,7 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ? Theme.of(context).colorScheme.error
                                 : Color(0xFF2C519C),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Text(
                         button['title'],
                         style: TextStyle(
