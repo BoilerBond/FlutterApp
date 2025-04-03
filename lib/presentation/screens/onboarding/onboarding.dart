@@ -18,6 +18,7 @@ class _OnBoardingState extends State<OnBoarding> {
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController ageController = TextEditingController();
   final TextEditingController majorController = TextEditingController();
+  final TextEditingController spotifyController = TextEditingController();
   final SuggestionsController<Map<String, String>> _suggestionsController =
       SuggestionsController<Map<String, String>>();
 
@@ -83,6 +84,7 @@ class _OnBoardingState extends State<OnBoarding> {
       'major': _selectedMajor,
       'college': _selectedCollege,
       'gender': _selectedGender,
+      'spotifyUsername': spotifyController.text.trim(),
     }, SetOptions(merge: true));
 
     Navigator.of(context).push(_createRoute(Step2()));
@@ -297,6 +299,23 @@ class _OnBoardingState extends State<OnBoarding> {
                         _selectedGender = value;
                       });
                     },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Spotify Username
+            Row(
+              children: [
+                const Expanded(child: Text("Spotify Username:")),
+                SizedBox(
+                  width: width * 0.4,
+                  child: TextField(
+                    controller: spotifyController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: "Enter your Spotify username",
+                    ),
                   ),
                 ),
               ],
@@ -1128,7 +1147,9 @@ class _Step6State extends State<Step6> {
                       ),
                     ),
                     onPressed: () async {
-                      await _uploadImage(_image!);
+                      if (_image != null) {
+                        await _uploadImage(_image!);
+                      }
                       Navigator.of(context).push(_createRoute(Step7()));
                     },
                     child: Text("Next")),

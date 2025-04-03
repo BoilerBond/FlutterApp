@@ -132,6 +132,21 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: _buildSocialMediaButton(
+                          icon: Icons.music_note,
+                          label: "Spotify",
+                          url: appUser?.spotifyUsername != null && appUser!.spotifyUsername.isNotEmpty
+                              ? "https://open.spotify.com/user/" + appUser!.spotifyUsername
+                              : "",
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 20),
                   _buildProfileField("First Name", appUser?.firstName ?? "N/A"),
                   _buildProfileField("Last Name", appUser?.lastName ?? "N/A"),

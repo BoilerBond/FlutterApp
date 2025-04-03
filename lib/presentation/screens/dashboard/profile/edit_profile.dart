@@ -50,6 +50,7 @@ class _EditProfileState extends State<EditProfile> {
   final TextEditingController bioController = TextEditingController();
   final TextEditingController instagramController = TextEditingController();
   final TextEditingController facebookController = TextEditingController();
+  final TextEditingController spotifyController = TextEditingController();
   int? selectedAge;
   final TextEditingController majorController = TextEditingController();
   bool _showHeight = false;
@@ -113,6 +114,10 @@ class _EditProfileState extends State<EditProfile> {
       user.instagramLink = instagramController.text;
     }
 
+    if (spotifyController.text.isNotEmpty) {
+      user.spotifyUsername = spotifyController.text;
+    }
+
     user.showHeight = _showHeight;
 
     if (_showHeight == true) {
@@ -164,6 +169,7 @@ class _EditProfileState extends State<EditProfile> {
         majorController.text = appUser?.major ?? "";
         instagramController.text = appUser?.instagramLink ?? "";
         facebookController.text = appUser?.facebookLink ?? "";
+        spotifyController.text = appUser?.spotifyUsername ?? "";
         selectedAge =
             (appUser?.age != null && appUser!.age > 0 && appUser!.age <= 100)
                 ? appUser!.age
@@ -198,7 +204,7 @@ class _EditProfileState extends State<EditProfile> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("Enter $title Link"),
+          title: Text(title == "Spotify" ? "Enter Spotify Username" : "Enter $title Link"),
           content: TextField(
             controller: tempController,
             decoration: const InputDecoration(
@@ -225,8 +231,12 @@ class _EditProfileState extends State<EditProfile> {
                   controller.text = tempController.text.trim();
                 });
 
+                // Close the dialog
+                Navigator.pop(context);
+                
+                // Show success message
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("$title link updated successfully!")),
+                  SnackBar(content: Text(title == "Spotify" ? "Spotify username updated successfully!" : "$title link updated successfully!")),
                 );
               },
               child: const Text("Save"),
@@ -438,6 +448,21 @@ class _EditProfileState extends State<EditProfile> {
                               title: "Facebook",
                               controller: facebookController,
                               firestoreField: "facebookLink"),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildActionButtonWithIcon(
+                          Icons.music_note,
+                          "Link Spotify",
+                          () => _showSocialMediaDialog(
+                              title: "Spotify",
+                              controller: spotifyController,
+                              firestoreField: "spotifyUsername"),
                         ),
                       ),
                     ],

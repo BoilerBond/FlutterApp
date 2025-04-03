@@ -15,6 +15,7 @@ class AppUser {
   String college;
   String instagramLink;
   String facebookLink;
+  String spotifyUsername;
   String profilePictureURL;
   int age;
   double priorityLevel;
@@ -75,6 +76,7 @@ class AppUser {
     this.keepMatch = true,
     this.instagramLink = '',
     this.facebookLink = '',
+    this.spotifyUsername = '',
     this.showHeight = false,
     this.heightUnit = '',
     this.heightValue = 0.0, // height is stored in cm and displayed according to user preference
@@ -126,6 +128,7 @@ class AppUser {
       keepMatch: data['keepMatch'] ?? true,
       instagramLink: data['instagramLink'] ?? '',
       facebookLink: data['facebookLink'] ?? '',
+      spotifyUsername: data['spotifyUsername'] ?? '',
       showHeight: data['showHeight'] ?? true,
       heightUnit: data['heightUnit'] ?? '',
       heightValue: data['heightValue'] ?? 0.0,
@@ -220,7 +223,8 @@ class AppUser {
       'nonNegotiables': nonNegotiables,
       'longFormQuestion': longFormQuestion,
       'longFormAnswer': longFormAnswer,
-      'weeksWithoutMatch': weeksWithoutMatch
+      'weeksWithoutMatch': weeksWithoutMatch,
+      'spotifyUsername': spotifyUsername
     };
   }
 
