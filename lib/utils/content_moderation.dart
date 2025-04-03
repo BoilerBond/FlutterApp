@@ -1,15 +1,37 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
+/// Result type for content moderation
+enum ContentStatus {
+  appropriate,    // Content is safe
+  inappropriate,  // Content is not safe
+  uncertain,      // Can't determine definitively
+  error           // Error during processing
+}
+
+/// Result class with detailed information
+class ModerationResult {
+  final ContentStatus status;
+  final String message;
+  final double? score;
+  final Map<String, dynamic>? details;
+  
+  ModerationResult({
+    required this.status,
+    required this.message,
+    this.score,
+    this.details,
+  });
+}
 
 /// Content moderation utility class for checking both images and text
 /// Uses Google Cloud Vision API for image moderation and 
 /// Google Cloud Natural Language API for text moderation
 class ContentModeration {
-  /// Your Google Cloud API key - store this securely, preferably in environment variables
-  /// For this example, we're using a placeholder
+  // Move API key to environment or secure storage in production
+  // For testing purposes only
   static const String _apiKey = 'YOUR_GOOGLE_API_KEY';
   
   /// Vision API endpoint for image content moderation
@@ -21,29 +43,6 @@ class ContentModeration {
   /// Threshold for inappropriate content (scale from 0 to 1)
   static const double _inappropriateThreshold = 0.7;
   static const double _negativeThreshold = -0.5;
-  
-  /// Result type for content moderation
-  enum ContentStatus {
-    appropriate,    // Content is safe
-    inappropriate,  // Content is not safe
-    uncertain,      // Can't determine definitively
-    error           // Error during processing
-  }
-
-  /// Result class with detailed information
-  class ModerationResult {
-    final ContentStatus status;
-    final String message;
-    final double? score;
-    final Map<String, dynamic>? details;
-    
-    ModerationResult({
-      required this.status,
-      required this.message,
-      this.score,
-      this.details,
-    });
-  }
   
   /// Checks if an image is appropriate/SFW
   /// Takes either a File object or Uint8List (for memory images)
@@ -88,12 +87,22 @@ class ContentModeration {
         return ModerationResult(
           status: ContentStatus.error,
           message: 'API error: ${response.statusCode}',
-          details: jsonDecode(response.body),
+          details: response.body.isNotEmpty ? jsonDecode(response.body) : null,
         );
       }
       
       // Parse response
       final Map<String, dynamic> responseData = jsonDecode(response.body);
+      if (!responseData.containsKey('responses') || 
+          responseData['responses'].isEmpty ||
+          !responseData['responses'][0].containsKey('safeSearchAnnotation')) {
+        return ModerationResult(
+          status: ContentStatus.error,
+          message: 'Invalid API response format',
+          details: responseData,
+        );  
+      }
+      
       final safeSearchAnnotation = responseData['responses'][0]['safeSearchAnnotation'];
       
       // Convert likelihoods to scores (VERY_UNLIKELY=0, VERY_LIKELY=4)
@@ -114,7 +123,9 @@ class ContentModeration {
       // Calculate overall score (0-1 scale)
       final double maxPossibleScore = 4.0; // VERY_LIKELY is 4
       final double overallScore = 
-        [adultScore, violenceScore, racyScore].reduce((a, b) => a > b ? a : b) / maxPossibleScore;
+        [adultScore, violenceScore, racyScore].isNotEmpty 
+          ? [adultScore, violenceScore, racyScore].reduce((a, b) => a > b ? a : b) / maxPossibleScore
+          : 0.0;
       
       // Determine if image is appropriate
       if (overallScore >= _inappropriateThreshold) {
@@ -177,13 +188,24 @@ class ContentModeration {
         return ModerationResult(
           status: ContentStatus.error,
           message: 'API error: ${response.statusCode}',
-          details: jsonDecode(response.body),
+          details: response.body.isNotEmpty ? jsonDecode(response.body) : null,
         );
       }
       
       // Parse response
       final Map<String, dynamic> responseData = jsonDecode(response.body);
-      final double sentimentScore = responseData['documentSentiment']['score'].toDouble();
+      
+      // Validate response format
+      if (!responseData.containsKey('documentSentiment') || 
+          !responseData['documentSentiment'].containsKey('score')) {
+        return ModerationResult(
+          status: ContentStatus.error,
+          message: 'Invalid API response format',
+          details: responseData,
+        );
+      }
+      
+      final double sentimentScore = (responseData['documentSentiment']['score'] as num).toDouble();
       
       // Simple check based on negative sentiment
       // For more extensive content moderation, we would use additional APIs or custom models
@@ -213,11 +235,15 @@ class ContentModeration {
   /// Optional: Simple profanity filter that can be used client-side before API calls
   /// This is a basic implementation and not a replacement for API-based moderation
   static bool containsProfanity(String text) {
-    final List<String> profanityList = [
+    // This is a minimal placeholder list
+    // In production, use a comprehensive list or dedicated library
+    final List<String> profanityList = const [
       'badword1',
       'badword2',
       // Add common profanity words here
     ];
+    
+    if (text.isEmpty) return false;
     
     final lowercaseText = text.toLowerCase();
     return profanityList.any((word) => lowercaseText.contains(word));
