@@ -19,7 +19,7 @@ class _LongFormQuestionScreenState extends State<LongFormQuestionScreen> {
     'What is your love language like?'
   ];
 
-  int? selectedQuestionIndex; 
+  int? selectedQuestionIndex;
   final TextEditingController answerController = TextEditingController();
   bool isLoading = true;
 
@@ -60,7 +60,10 @@ class _LongFormQuestionScreenState extends State<LongFormQuestionScreen> {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
     try {
-      await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).update({
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .update({
         'longFormQuestion': selectedQuestionIndex ?? -1,
         'longFormAnswer': answerController.text.trim(),
       });
@@ -93,7 +96,11 @@ class _LongFormQuestionScreenState extends State<LongFormQuestionScreen> {
                   ),
                   DropdownButton<int>(
                     isExpanded: true,
-                    value: selectedQuestionIndex,
+                    value: (selectedQuestionIndex != null &&
+                            selectedQuestionIndex! >= 0 &&
+                            selectedQuestionIndex! < questions.length)
+                        ? selectedQuestionIndex
+                        : null,
                     hint: const Text('Select a question'),
                     items: List.generate(questions.length, (index) {
                       return DropdownMenuItem<int>(
