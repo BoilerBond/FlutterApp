@@ -25,6 +25,8 @@ class MoreProfileScreen extends StatefulWidget {
   final String? spotifyUsername;
   final String viewerUid;
   final bool isMatchViewer;
+  final String viewerHeightUnit;
+
 
   const MoreProfileScreen({
     super.key,
@@ -42,6 +44,7 @@ class MoreProfileScreen extends StatefulWidget {
     this.spotifyUsername,
     required this.viewerUid,
     required this.isMatchViewer,
+    required this.viewerHeightUnit,
   });
 
   @override
@@ -93,14 +96,19 @@ class _MoreProfileScreenState extends State<MoreProfileScreen> {
     });
   }
 
-  String _getFormattedHeight() {
-    if (!widget.showHeight || !visibilityPrefs['showHeight']!) return "";
-    if (widget.heightUnit == "cm") return "${widget.heightValue} cm";
-    int totalInches = (widget.heightValue / 2.54).round();
-    int feet = totalInches ~/ 12;
-    int inches = totalInches % 12;
-    return "$feet' $inches\"";
+String _getFormattedHeight() {
+  if (!widget.showHeight || !visibilityPrefs['showHeight']!) return "";
+
+  if (widget.viewerHeightUnit == "cm") {
+    return "${widget.heightValue} cm";
   }
+
+  int totalInches = (widget.heightValue / 2.54).round();
+  int feet = totalInches ~/ 12;
+  int inches = totalInches % 12;
+  return "$feet' $inches\"";
+}
+
 
   Future<void> blockUser() async {
     await FirebaseFirestore.instance
