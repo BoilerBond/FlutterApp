@@ -25,8 +25,6 @@ class _BondScreenState extends State<BondScreen> {
   AppUser? match;
   bool isMatchBlocked = false;
   bool keepMatchToggle = true;
-  bool isMatchBlocked = false;
-  bool keepMatchToggle = true;
 
   Future<void> getUserProfiles() async {
     final currentUser = FirebaseAuth.instance.currentUser;
