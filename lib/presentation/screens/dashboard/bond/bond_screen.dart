@@ -155,8 +155,15 @@ class _BondScreenState extends State<BondScreen> {
       );
     }
 
-    final sharedTraits = curUser!.getSharedTraits(match!);
-
+    // Add a safety check for personalTraits
+    List<String> sharedTraits = [];
+    try {
+      if (curUser!.personalTraits.isNotEmpty && match!.personalTraits.isNotEmpty) {
+        sharedTraits = curUser!.getSharedTraits(match!);
+      }
+    } catch (e) {
+      print("Error getting shared traits: $e");
+    }
     return SafeArea(
         child: Scaffold(
       appBar: AppBar(
