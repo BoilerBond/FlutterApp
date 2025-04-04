@@ -1,21 +1,15 @@
-import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class GeminiService {
   static final GeminiService _instance = GeminiService._internal();
-  late final GenerativeModel _model;
+  final String _apiKey = 'AIzaSyDuDyVRY6odZ5W4-3r8pPFQdzvxYVnoDNA'; // TODO: Replace with your API key before production
   
   factory GeminiService() {
     return _instance;
   }
 
-  GeminiService._internal() {
-    // The API key should be stored in .env file or fetched securely
-    // For development, we're using a placeholder
-    // In production, use environment variables or secure storage
-    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
-    _model = GenerativeModel(model: 'gemini-pro', apiKey: apiKey);
-  }
+  GeminiService._internal();
 
   /// Converts a long form text answer to a numerical scale from -5 to 5
   /// [question] The long form question that was asked
@@ -40,22 +34,38 @@ Based on the user's answer, provide a single integer value from -5 to 5, where:
 
 Return only the numerical value (just the number) without any explanation.""";
 
-      // Send request to Gemini API
-      final content = [Content.text(prompt)];
-      final response = await _model.generateContent(content);
-      final responseText = response.text?.trim() ?? '0';
+      // Call the Gemini API directly using HTTP
+      final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$_apiKey');
       
-      // Parse the response to get the numerical value
-      // First try direct parsing
-      try {
-        return int.parse(responseText);
-      } catch (_) {
-        // If that fails, try to extract a number from the text
-        final RegExp regex = RegExp(r'(-?\d+)');
-        final match = regex.firstMatch(responseText);
-        if (match != null) {
-          return int.parse(match.group(1) ?? '0');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [{
+            'parts': [{'text': prompt}]
+          }]
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        final responseText = jsonResponse['candidates'][0]['content']['parts'][0]['text'] ?? '0';
+        
+        // Parse the response to get the numerical value
+        // First try direct parsing
+        try {
+          return int.parse(responseText.trim());
+        } catch (_) {
+          // If that fails, try to extract a number from the text
+          final RegExp regex = RegExp(r'(-?\d+)');
+          final match = regex.firstMatch(responseText);
+          if (match != null) {
+            return int.parse(match.group(1) ?? '0');
+          }
         }
+      } else {
+        print('Failed to call Gemini API: ${response.statusCode}');
+        print('Response body: ${response.body}');
       }
       
       // Default return if parsing fails
