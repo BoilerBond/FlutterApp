@@ -620,10 +620,28 @@ class _Step3State extends State<Step3> {
                           value: _useCm,
                           onChanged: (bool value) {
                             setState(() {
+                              if (_showHeight) {
+                                if (_useCm && _cmController.text.isNotEmpty) {
+                                  // Switching from cm to ft/in
+                                  double cm = double.tryParse(_cmController.text.trim()) ?? 0.0;
+                                  int totalInches = (cm / 2.54).round();
+                                  int feet = totalInches ~/ 12;
+                                  int inches = totalInches % 12;
+                                  _ftController.text = feet.toString();
+                                  _inController.text = inches.toString();
+                                } else if (!_useCm &&
+                                    _ftController.text.isNotEmpty &&
+                                    _inController.text.isNotEmpty) {
+                                  // Switching from ft/in to cm
+                                  double ft = double.tryParse(_ftController.text.trim()) ?? 0.0;
+                                  double inch = double.tryParse(_inController.text.trim()) ?? 0.0;
+                                  double cm = (ft * 30.48) + (inch * 2.54);
+                                  _cmController.text = cm.round().toString();
+                                }
+                              }
                               _useCm = value;
                             });
-                          },
-                        ),
+                          },),
                         Text("cm"),
                       ],
                     ),
