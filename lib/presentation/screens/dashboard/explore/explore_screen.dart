@@ -6,7 +6,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'more_profile.dart';
 import '../../../../data/entity/app_user.dart';
 import 'package:datingapp/presentation/screens/dashboard/explore/non_negotiables_form_screen.dart';
-import 'package:datingapp/presentation/screens/dashboard/explore/non_negotiables_filter_screen.dart';
 class ExploreScreen extends StatefulWidget {
   static ValueNotifier<bool> shouldReload = ValueNotifier<bool>(false);
   const ExploreScreen({super.key});
@@ -16,12 +15,17 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
+  // possible users to display
+  List<AppUser> visibleUsers = [];
+  // after non-negotiables filter
   List<AppUser> recommendedUsers = [];
   int profileIndex = 0;
   double sliderValue = 0;
   bool isLoading = true;
   AppUser? curUser;
-  Map<String, dynamic> filterData = {};
+  // perma non-negotiables
+  Map<String, dynamic> nonnegotiablesData = {};
+  bool filterOn = false;
 
   Future<void> getProfiles() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -29,6 +33,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final userSnapshot = await db.collection("users").doc(currentUser?.uid).get();
     setState(() {
       curUser = AppUser.fromSnapshot(userSnapshot);
+      nonnegotiablesData = curUser!.nonNegotiables;
     });
 
     final callable = FirebaseFunctions.instance.httpsCallable('user-recommendation-recommendProfiles');
@@ -51,6 +56,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
             print("Missing uid in recommendation result");
             continue;
           }
+          if (curUser!.ratedUsers.contains(userId)) {
+            // skip profiles the user has rated before
+            continue;
+          }
 
           final snap = await db.collection("users").doc(userId).get();
 
@@ -65,33 +74,58 @@ class _ExploreScreenState extends State<ExploreScreen> {
           continue;
         }
       }
-
-      // Apply filters if needed
-      if (filterData.isNotEmpty) {
-        List<AppUser> listFiltered = [];
-        for (AppUser u in fetchedUsers) {
-          if (!u.matchGenderPreference(filterData["genderPreferences"]) ||
-              !u.matchAgePreference(filterData["ageRange"]) ||
-              !u.hasInterests(filterData["mustHaveHobbies"]) ||
-              !u.notHaveInterests(filterData["mustNotHaveHobbies"])) {
-            listFiltered.add(u);
-          }
-        }
-        for (AppUser x in listFiltered) {
-          fetchedUsers.remove(x);
-        }
-      }
-
       setState(() {
+        visibleUsers = fetchedUsers;
         recommendedUsers = fetchedUsers;
         isLoading = false;
       });
-    } catch (e) {
-      print("Error parsing data: $e");
+    }
+    catch (e) {
+      print(e);
+    }
+  }
+
+  void filterNN() {
+    List<AppUser> listFiltered = [];
+    try {
+      if (nonnegotiablesData.isNotEmpty) {
+        for (AppUser u in visibleUsers) {
+          if (!u.matchGenderPreference(nonnegotiablesData["genderPreferences"]) ||
+              !u.matchAgePreference(nonnegotiablesData["ageRange"]) ||
+              !u.hasInterests(nonnegotiablesData["mustHaveHobbies"]) ||
+              !u.notHaveInterests(nonnegotiablesData["mustNotHaveHobbies"])
+              /*|| !u.matchMajor(nonnegotiablesData["major"]*/) {
+            continue;
+          }
+          else {
+            listFiltered.add(u);
+          }
+        }
+      }
       setState(() {
+        recommendedUsers = listFiltered;
         isLoading = false;
       });
+      return;
     }
+    catch(e) {
+      print("unable to filter");
+      print(nonnegotiablesData["major"]); // <- this is null even when i have a major selected
+      print(e);
+    }
+  }
+
+  void filterRated(List<AppUser> users) {
+    List<AppUser> result = [];
+    for (AppUser u in users) {
+      if (!curUser!.ratedUsers.contains(u.uid)) {
+        // skip profiles the user has rated before
+        result.add(u);
+      }
+    }
+    setState(() {
+      recommendedUsers = result;
+    });
   }
 
   @override
@@ -111,6 +145,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   void _switchToNextProfile() {
+    visibleUsers.remove(recommendedUsers[profileIndex]);
     recommendedUsers.remove(recommendedUsers[profileIndex]);
   }
 
@@ -230,11 +265,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (recommendedUsers.isEmpty) return;
 
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    final db = FirebaseFirestore.instance;
     if (currentUserId == null) return;
 
     try {
       final callable = FirebaseFunctions.instance.httpsCallable('user-profileRating-rateProfile');
       await callable.call({"targetUid": recommendedUsers[profileIndex].uid, "score": sliderValue});
+      curUser!.ratedUsers.add(recommendedUsers[profileIndex].uid);
+      final newData = {"ratedUsers": curUser!.ratedUsers};
+      await db.collection("users").doc(curUser!.uid).set(newData, SetOptions(merge: true));
       setState(() {
         sliderValue = 0;
       });
@@ -293,47 +332,63 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ),
           automaticallyImplyLeading: false,
           toolbarHeight: 40,
-          actions: [
+        ),
+        body: Column (
+          children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 const Text(
                   "Edit my non-negotiables",
-                  style: TextStyle(fontSize: 16, color: Colors.black),
+                  style: TextStyle(fontSize: 12, color: Colors.black),
                 ),
                 IconButton(
                   icon: const Icon(Icons.settings),
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const NonNegotiablesFormScreen()));
+                  onPressed: () async {
+                    await Navigator.push(context, MaterialPageRoute(builder: (context) => NonNegotiablesFormScreen()));
+                    setState(() {
+                      nonnegotiablesData = curUser!.nonNegotiables;
+                    });
                   },
                 ),
               ],
             ),
-          ],
-        ),
-        body: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : recommendedUsers.isEmpty
-                ? const Center(child: Text("No profiles available."))
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children:[
+                const Text(
+                  "Filter by non-negotiables",
+                  style:
+                  TextStyle(fontSize: 12, color: Colors.black),
+                ),
+                Switch(
+                    value: filterOn,
+                    activeColor: Colors.green,
+                    onChanged: (bool v) {
+                      setState(() {
+                        isLoading = true;
+                        filterOn = v;
+                        if (filterOn) {
+                          filterNN();
+                        }
+                        else {
+                          print(visibleUsers);
+                          recommendedUsers = visibleUsers;
+                        }
+                        isLoading = false;
+                      });
+                    }
+                ),
+              ]),
+            isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : recommendedUsers.isEmpty
+                ? Expanded(child: Center(child: Text("No profiles available.")))
                 : SingleChildScrollView(
                     padding: const EdgeInsets.only(bottom: 130),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            const Text(
-                              "Filter by non-negotiables",
-                              style: TextStyle(fontSize: 16, color: Colors.black),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.filter_list_alt),
-                              onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => const NonNegotiablesFilterScreen()));
-                              },
-                            ),
-                          ],
-                        ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
@@ -461,6 +516,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       ],
                     ),
                   ),
+        ]
+        ),
         bottomNavigationBar: recommendedUsers.isEmpty
             ? null
             : Container(
