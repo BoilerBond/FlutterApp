@@ -16,6 +16,7 @@ import 'package:datingapp/presentation/screens/app_description/app_description_s
 import 'package:datingapp/presentation/screens/login/login_screen.dart';
 import 'package:datingapp/presentation/screens/register/register_screen.dart';
 import 'package:datingapp/presentation/screens/tos/terms_of_service.dart';
+import 'package:datingapp/presentation/screens/dashboard/settings/bug_reporting/bug_reports.dart';
 
 class Routes {
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
@@ -64,6 +65,8 @@ class Routes {
         return MaterialPageRoute(builder: (context) => TermsOfServicePage(arguments: arguments));
       case '/purdue_verification':
         return MaterialPageRoute(builder: (context) => const PurdueVerificationScreen());
+      case '/settings/bug_reporting':
+        return MaterialPageRoute(builder: (context) => AuthMiddleware(child: BugReportingScreen()));
 
       default:
         return MaterialPageRoute(

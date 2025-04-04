@@ -46,6 +46,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Navigator.pushNamedAndRemoveUntil(context, "/onboarding", (route) => false);
   }
 
+  void _onBugReportingPress(BuildContext context) {
+    Navigator.pushNamed(context, "/settings/bug_reporting");
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> buttons = [
@@ -57,6 +61,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       {'title': 'Back to Onboarding', 'type': ButtonType.normal, 'icon': Icons.arrow_forward, 'onPressed': _onRedirectToOnboardingPress},
       {'title': 'Danger Zone', 'type': ButtonType.danger, 'icon': Icons.warning_amber_rounded, 'onPressed': _onDangerZonePress},
       {'title': 'Log Out', 'type': ButtonType.warning, 'icon': Icons.exit_to_app, 'onPressed': _onLogoutPress},
+      {'title': 'Bug Reporting', 'type': ButtonType.normal, 'icon': Icons.bug_report, 'onPressed': _onBugReportingPress},
     ];
 
     return Scaffold(
