@@ -45,6 +45,7 @@ class AppUser {
   bool keepMatch;
   String match;
   Map<String, dynamic> nonNegotiables;
+  Map<String, dynamic> nonNegotiablesFilter;
   int longFormQuestion;
   String longFormAnswer;
   Map<String, int> personalTraits;
@@ -94,6 +95,7 @@ class AppUser {
     this.showSocialMediaToOthers = true,
     this.match = "",
     this.nonNegotiables = const {},
+    this.nonNegotiablesFilter = const {},
     this.longFormQuestion = 0,
     this.longFormAnswer = '',
     this.personalTraits = const {},
@@ -135,7 +137,7 @@ class AppUser {
       spotifyUsername: data['spotifyUsername'] ?? '',
       showHeight: data['showHeight'] ?? true,
       heightUnit: data['heightUnit'] ?? '',
-      heightValue: data['heightValue'] ?? 0.0,
+      heightValue: (data['heightValue'] ?? 0).toDouble(),
       showMajorToMatch: data['showMajorToMatch'] ?? true,
       showMajorToOthers: data['showMajorToOthers'] ?? true,
       showBioToMatch: data['showBioToMatch'] ?? true,
@@ -148,6 +150,7 @@ class AppUser {
       showSocialMediaToOthers: data['showSocialMediaToOthers'] ?? true,
       match: data['match'] ?? '',
       nonNegotiables: data['nonNegotiables'] ?? {},
+      nonNegotiablesFilter: Map<String, dynamic>.from(data['nonNegotiablesFilter'] ?? {}),
       longFormQuestion: data['longFormQuestion'] ?? 0,
       longFormAnswer: data['longFormAnswer'] ?? '',
       personalTraits: Map<String, int>.from(data['personalTraits'] ?? {}),
@@ -227,6 +230,7 @@ class AppUser {
       'showSocialMediaToOthers': showSocialMediaToOthers,
       'match': match,
       'nonNegotiables': nonNegotiables,
+      'nonNegotiablesFilter' : nonNegotiablesFilter,
       'longFormQuestion': longFormQuestion,
       'longFormAnswer': longFormAnswer,
       'weeksWithoutMatch': weeksWithoutMatch,
@@ -402,5 +406,62 @@ class AppUser {
     message += "\n";
     message += this.getPreferenceFrom(u2);
     return message;
+  }
+
+  bool hasInterests(List<dynamic> list) {
+    if (list.isEmpty) return true;
+    bool result = false;
+    for (String i in list) {
+      if (!this.displayedInterests.contains(i)) {
+        return false;
+      }
+    }
+    return result;
+  }
+
+  bool notHaveInterests(List<dynamic> list) {
+    if (list.isEmpty) return true;
+    bool result = true;
+    for (String i in list) {
+      if (this.displayedInterests.contains(i)) {
+        return false;
+      }
+    }
+    return result;
+  }
+
+  String gts(Gender g) {
+    switch (g) {
+      case Gender.man:
+        return 'man';
+      case Gender.woman:
+        return 'woman';
+      case Gender.other:
+        return 'other';
+      default:
+        return 'none';
+    }
+  }
+
+  bool matchGenderPreference(List<dynamic> list) {
+    if (list.isEmpty) return true;
+    bool result = false;
+    for (String i in list) {
+      if (gts(this.gender).toLowerCase() == i.toLowerCase()) {
+        return true;
+      }
+    }
+    return result;
+  }
+
+  bool matchAgePreference(Map<String, dynamic> list) {
+    bool result = true;
+    if (list.values.first != null) {
+      result && this.age >= list.values.first;
+    }
+    if (list.values.last != null) {
+      return this.age <= list.values.last;
+    }
+    return result;
   }
 }

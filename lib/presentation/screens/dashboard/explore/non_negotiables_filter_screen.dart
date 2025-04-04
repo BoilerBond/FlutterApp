@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:datingapp/data/entity/app_user.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class NonNegotiablesFilterScreen extends StatefulWidget {
@@ -10,7 +13,6 @@ class NonNegotiablesFilterScreen extends StatefulWidget {
 
 class _NonNegotiablesFilterScreenState extends State<NonNegotiablesFilterScreen> {
   final _formKey = GlobalKey<FormState>();
-
   final Set<String> selectedGenders = {};
 
   final TextEditingController minAgeController = TextEditingController();
@@ -26,6 +28,7 @@ class _NonNegotiablesFilterScreenState extends State<NonNegotiablesFilterScreen>
 
   final Set<String> mustHaveHobbies = {};
   final Set<String> mustNotHaveHobbies = {};
+
 
   @override
   void initState() {
@@ -53,6 +56,16 @@ class _NonNegotiablesFilterScreenState extends State<NonNegotiablesFilterScreen>
         return;
       }
     }
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final db = FirebaseFirestore.instance;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not authenticated.')),
+      );
+      return;
+    }
+    AppUser userProfile = await AppUser.getById(currentUser.uid);
+
     final Map<String, dynamic> nonNegotiablesData = {
       'genderPreferences': selectedGenders.toList(),
       'ageRange': {
@@ -64,9 +77,16 @@ class _NonNegotiablesFilterScreenState extends State<NonNegotiablesFilterScreen>
     };
 
     try {
+      print(nonNegotiablesData["genderPreferences"]);
+      print(nonNegotiablesData["ageRange"]);
+      print(nonNegotiablesData["mustHaveHobbies"]);
+      print(nonNegotiablesData["mustNotHaveHobbies"]);
+      final newData = {"nonNegotiablesFilter": nonNegotiablesData};
+      await db.collection("users").doc(userProfile.uid).set(newData, SetOptions(merge: true));
       Navigator.of(context).pop();
     } catch (e) {
-
+      print(e);
+      return;
     }
   }
 
@@ -79,61 +99,61 @@ class _NonNegotiablesFilterScreenState extends State<NonNegotiablesFilterScreen>
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ChoiceChip(
-              selected: selectedGenders.contains('Man'),
-              label: Text("Man",
-                style: TextStyle(
-                  color: selectedGenders.contains('Man') ? Color(0xFF2C519C) : Color(0xFF2C519C),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ChoiceChip(
+                selected: selectedGenders.contains('Man'),
+                label: Text("Man",
+                  style: TextStyle(
+                    color: selectedGenders.contains('Man') ? Color(0xFF2C519C) : Color(0xFF2C519C),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onSelected: (bool selected) {
+                  setState(() {
+                    if (selected) {
+                      selectedGenders.add("Man");
+                    } else {
+                      selectedGenders.remove("Man");
+                    }
+                  });
+                },
+                selectedColor: Theme.of(context).colorScheme.tertiary,
+                backgroundColor: Color(0xFFE7EFEE),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              onSelected: (bool selected) {
-                setState(() {
-                  if (selected) {
-                    selectedGenders.add("Man");
-                  } else {
-                    selectedGenders.remove("Man");
-                  }
-                });
-              },
-              selectedColor: Theme.of(context).colorScheme.tertiary,
-              backgroundColor: Color(0xFFE7EFEE),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            ChoiceChip(
-              selected: selectedGenders.contains('Woman'),
-              label: Text("Woman",
-                style: TextStyle(
-                  color: selectedGenders.contains('Woman') ? Color(0xFF2C519C) : Color(0xFF2C519C),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+              ChoiceChip(
+                selected: selectedGenders.contains("Woman"),
+                label: Text("Woman",
+                  style: TextStyle(
+                    color: selectedGenders.contains("Woman") ? Color(0xFF2C519C) : Color(0xFF2C519C),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onSelected: (bool selected) {
+                  setState(() {
+                    if (selected) {
+                      selectedGenders.add("Woman");
+                    } else {
+                      selectedGenders.remove("Woman");
+                    }
+                  });
+                },
+                selectedColor: Theme.of(context).colorScheme.tertiary,
+                backgroundColor: Color(0xFFE7EFEE),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              onSelected: (bool selected) {
-                setState(() {
-                  if (selected) {
-                    selectedGenders.add("Woman");
-                  } else {
-                    selectedGenders.remove("Woman");
-                  }
-                });
-              },
-              selectedColor: Theme.of(context).colorScheme.tertiary,
-              backgroundColor: Color(0xFFE7EFEE),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-          ]
+            ]
         )
       ],
     );
@@ -183,85 +203,85 @@ class _NonNegotiablesFilterScreenState extends State<NonNegotiablesFilterScreen>
           'Hobbies:',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Wrap(
-              spacing: 10.0,
-              runSpacing: 10.0,
-              children: allInterests.map((interest) {
-                final isSelected = mustHaveHobbies.contains(interest);
-                return ChoiceChip(
-                  label: Text(
-                    interest,
-                    style: TextStyle(
-                      color: isSelected ? Color(0xFF2C519C) : Color(0xFF2C519C),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Wrap(
+            spacing: 10.0,
+            runSpacing: 10.0,
+            children: allInterests.map((interest) {
+              final isSelected = mustHaveHobbies.contains(interest);
+              return ChoiceChip(
+                label: Text(
+                  interest,
+                  style: TextStyle(
+                    color: isSelected ? Color(0xFF2C519C) : Color(0xFF2C519C),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
                   ),
-                  selected: isSelected,
-                  onSelected: (bool selected) {
-                    setState(() {
-                      if (selected) {
-                        mustHaveHobbies.add(interest);
-                      } else {
-                        mustHaveHobbies.remove(interest);
-                      }
-                    });
-                  },
-                  selectedColor: Theme.of(context).colorScheme.tertiary,
-                  backgroundColor: Color(0xFFE7EFEE),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                );
-              }).toList(),
-            ),
+                ),
+                selected: isSelected,
+                onSelected: (bool selected) {
+                  setState(() {
+                    if (selected) {
+                      mustHaveHobbies.add(interest);
+                    } else {
+                      mustHaveHobbies.remove(interest);
+                    }
+                  });
+                },
+                selectedColor: Theme.of(context).colorScheme.tertiary,
+                backgroundColor: Color(0xFFE7EFEE),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              );
+            }).toList(),
           ),
-          const Text(
-            'Must not have Hobbies:',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const Text(
+          'Must not have Hobbies:',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Wrap(
+            spacing: 10.0,
+            runSpacing: 10.0,
+            children: allInterests.map((interest) {
+              final isSelected = mustNotHaveHobbies.contains(interest);
+              return ChoiceChip(
+                checkmarkColor: Colors.white,
+                label: Text(
+                  interest,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Color(0xFF2C519C),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                selected: isSelected,
+                onSelected: (bool selected) {
+                  setState(() {
+                    if (selected) {
+                      mustNotHaveHobbies.add(interest);
+                    } else {
+                      mustNotHaveHobbies.remove(interest);
+                    }
+                  });
+                },
+                selectedColor: Theme.of(context).colorScheme.errorContainer,
+                backgroundColor: Color(0xFFE7EFEE),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              );
+            }).toList(),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Wrap(
-              spacing: 10.0,
-              runSpacing: 10.0,
-              children: allInterests.map((interest) {
-                final isSelected = mustNotHaveHobbies.contains(interest);
-                return ChoiceChip(
-                  checkmarkColor: Colors.white,
-                  label: Text(
-                    interest,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Color(0xFF2C519C),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  selected: isSelected,
-                  onSelected: (bool selected) {
-                    setState(() {
-                      if (selected) {
-                        mustNotHaveHobbies.add(interest);
-                      } else {
-                        mustNotHaveHobbies.remove(interest);
-                      }
-                    });
-                  },
-                  selectedColor: Theme.of(context).colorScheme.errorContainer,
-                  backgroundColor: Color(0xFFE7EFEE),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                );
-              }).toList(),
-            ),
-          )
+        )
       ],
     );
   }
