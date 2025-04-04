@@ -148,17 +148,20 @@ class _MoreProfileScreenState extends State<MoreProfileScreen> {
                       backgroundColor: const Color(0xFFCDFCFF),
                     ),
                     const SizedBox(height: 20),
-                    if (visibilityPrefs['showSocialMedia']!)
+                    if ((visibilityPrefs['showSocialMedia'] ?? true))
                       Column(
                         children: [
                           _buildSocialMediaRow(
                               "Instagram", Icons.camera_alt, ""),
                           _buildSocialMediaRow("Facebook", Icons.facebook, ""),
-                          if (visibilityPrefs['showSpotify']! &&
+                          if ((visibilityPrefs['showSpotify'] ?? true) &&
                               widget.spotifyUsername != null &&
                               widget.spotifyUsername!.isNotEmpty)
-                            _buildSocialMediaRow("Spotify", Icons.music_note,
-                                "https://open.spotify.com/user/${widget.spotifyUsername}"),
+                            _buildSocialMediaRow(
+                              "Spotify",
+                              Icons.music_note,
+                              "https://open.spotify.com/user/${widget.spotifyUsername}",
+                            ),
                         ],
                       ),
                     const SizedBox(height: 20),

@@ -124,7 +124,8 @@ class _BondScreenState extends State<BondScreen> {
     "displayedInterests": ["Mindfulness", "Counseling", "Brain Science"]
   };
 
-  void _navigateToMoreProfile() {
+  void _navigateToMoreProfile()  {
+    // await populateMissingPrivacyFields(match!.uid);
     Navigator.push(
       context,
       MaterialPageRoute(

@@ -7,6 +7,7 @@ import 'more_profile.dart';
 import '../../../../data/entity/app_user.dart';
 import 'package:datingapp/presentation/screens/dashboard/explore/non_negotiables_form_screen.dart';
 import 'package:datingapp/presentation/screens/dashboard/explore/non_negotiables_filter_screen.dart';
+
 class ExploreScreen extends StatefulWidget {
   static ValueNotifier<bool> shouldReload = ValueNotifier<bool>(false);
   const ExploreScreen({super.key});
@@ -117,6 +118,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void _navigateToMoreProfile() {
     if (recommendedUsers.isEmpty) return;
 
+    // await populateMissingPrivacyFields(recommendedUsers[profileIndex].uid);
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -129,7 +131,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           displayedInterests: recommendedUsers[profileIndex].displayedInterests,
           showHeight: recommendedUsers[profileIndex].showHeight,
           heightUnit: recommendedUsers[profileIndex].heightUnit,
-          viewerHeightUnit: curUser!.heightUnit, // ✅ Add this
+          viewerHeightUnit: curUser!.heightUnit, 
           heightValue: recommendedUsers[profileIndex].heightValue,
           photosURL: recommendedUsers[profileIndex].photoVisible
               ? recommendedUsers[profileIndex].photosURL
@@ -137,6 +139,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           pfpLink: recommendedUsers[profileIndex].profilePictureURL,
           viewerUid: curUser!.uid,
           isMatchViewer: false,
+          spotifyUsername: recommendedUsers[profileIndex].spotifyUsername ?? "",
         ),
       ),
     );
