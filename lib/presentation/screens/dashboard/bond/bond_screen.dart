@@ -26,6 +26,7 @@ class _BondScreenState extends State<BondScreen> {
   bool isMatchUnbonded = false;
   bool keepMatchToggle = true;
   bool loading = true;
+  bool isAwaitingMatch = false; // Add this new state variable
 
   // Countdown timer variables
   Timer? _countdownTimer;
@@ -60,6 +61,11 @@ class _BondScreenState extends State<BondScreen> {
           'hasSeenMatchIntro': true,
         });
       }
+    } else if (user.keepMatch) {
+      // the user wanted a match but didnt get one
+      setState(() {
+        isAwaitingMatch = true;
+      });
     }
   }
 
@@ -102,6 +108,146 @@ class _BondScreenState extends State<BondScreen> {
 
     // Calculate time remaining
     _updateRemainingTime();
+  }
+
+  Widget _buildAwaitingMatchView() {
+    return SingleChildScrollView(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 12),
+              const Icon(
+                Icons.favorite_border,
+                size: 72,
+                color: Color(0xFF5E77DF),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                "Looking for your next match",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2C519C),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "We're working on finding someone compatible with you and have moved you up in priority. Check back soon!",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),  
+              const SizedBox(height: 32),
+              
+              // Suggestions container
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE7EFEE), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 5,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "While you wait, you can:",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                                      _buildSuggestionItem(
+                    Icons.edit,
+                    "Update your profile",
+                    "Add more photos or update your bio",
+                  ),
+                    _buildSuggestionItem(
+                      Icons.question_answer,
+                      "Complete personality questions", 
+                      "Help us match you more accurately",
+                    ),
+                    _buildSuggestionItem(
+                      Icons.interests,
+                      "Add more interests and hobbies",
+                      "Expand your profile to attract better matches",
+                    ),
+                    _buildSuggestionItem(
+                      Icons.swipe,
+                      "Swipe on more profiles",
+                      "Increase your visibility in our matching system",
+                    ),
+                    _buildSuggestionItem(
+                      Icons.tune,
+                      "Review your preferences",
+                      "Adjust your matching criteria",
+                    ),
+                    _buildSuggestionItem(
+                      Icons.update,
+                      "Use the app regularly",
+                      "Consistency improves your match quality",
+                    ),
+                    _buildSuggestionItem(
+                      Icons.search,
+                      "Explore other profiles",
+                      "Browse potential matches",
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildSuggestionItem(IconData icon, String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF5E77DF), size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _updateRemainingTime() {
@@ -189,6 +335,8 @@ class _BondScreenState extends State<BondScreen> {
       ),
       body: isMatchBlocked
           ? _buildBlockedView()
+          : isAwaitingMatch
+              ? _buildAwaitingMatchView()
           : isMatchUnbonded
               ? _buildUnbondedView()
               : SingleChildScrollView(
