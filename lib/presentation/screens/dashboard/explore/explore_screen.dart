@@ -26,7 +26,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Future<void> getProfiles() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     final db = FirebaseFirestore.instance;
-    final userSnapshot = await db.collection("users").doc(currentUser?.uid).get();
+    final userSnapshot =
+        await db.collection("users").doc(currentUser?.uid).get();
     setState(() {
       curUser = AppUser.fromSnapshot(userSnapshot);
     });
@@ -49,28 +50,31 @@ class _ExploreScreenState extends State<ExploreScreen> {
     // }
   }
 
-
   // Fetch visible users from Firestore
   Future<void> _fetchVisibleUsers() async {
     try {
-      final querySnapshot = await FirebaseFirestore.instance.collection("users").where('__name__', isNotEqualTo: curUser?.uid).where("profileVisible", isEqualTo: true).get();
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection("users")
+          .where('__name__', isNotEqualTo: curUser?.uid)
+          .where("profileVisible", isEqualTo: true)
+          .get();
 
       final fetchedUsers = await querySnapshot.docs
           .where((doc) {
             return !(curUser!.blockedUserUIDs.contains(doc.id));
-            })
+          })
           .map((doc) => AppUser.fromSnapshot(doc))
           .toList();
 
       List<AppUser> listFiltered = [];
       if (filterData.isNotEmpty) {
         for (AppUser u in fetchedUsers) {
-            if (!u.matchGenderPreference(filterData["genderPreferences"]) ||
-                !u.matchAgePreference(filterData["ageRange"]) ||
-                !u.hasInterests(filterData["mustHaveHobbies"]) ||
-                !u.notHaveInterests(filterData["mustNotHaveHobbies"])) {
-              listFiltered.add(u);
-            }
+          if (!u.matchGenderPreference(filterData["genderPreferences"]) ||
+              !u.matchAgePreference(filterData["ageRange"]) ||
+              !u.hasInterests(filterData["mustHaveHobbies"]) ||
+              !u.notHaveInterests(filterData["mustNotHaveHobbies"])) {
+            listFiltered.add(u);
+          }
         }
         for (AppUser x in listFiltered) {
           fetchedUsers.remove(x);
@@ -110,7 +114,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 age: recommendedUsers[profileIndex].age.toString(),
                 major: recommendedUsers[profileIndex].major,
                 bio: recommendedUsers[profileIndex].bio,
-                displayedInterests: recommendedUsers[profileIndex].displayedInterests,
+                displayedInterests:
+                    recommendedUsers[profileIndex].displayedInterests,
                 showHeight: recommendedUsers[profileIndex].showHeight,
                 heightUnit: recommendedUsers[profileIndex].heightUnit,
                 heightValue: recommendedUsers[profileIndex].heightValue,
@@ -143,7 +148,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   ProtectedText(
                     recommendedUsers[profileIndex].firstName,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const Text(
                     "'s Profile",
@@ -165,7 +171,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 items: const [
                   DropdownMenuItem(
                     value: 1,
-                    child: Text("Profile goes against one of my non-negotiables."),
+                    child:
+                        Text("Profile goes against one of my non-negotiables."),
                   ),
                   DropdownMenuItem(
                     value: 2,
@@ -173,7 +180,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   DropdownMenuItem(
                     value: 3,
-                    child: Text("Offensive content against community standards."),
+                    child:
+                        Text("Offensive content against community standards."),
                   ),
                 ],
                 onChanged: (value) {},
@@ -215,8 +223,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (currentUserId == null) return;
 
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable('user-profileRating-rateProfile');
-      await callable.call({"targetUid": recommendedUsers[profileIndex].uid, "score": sliderValue});
+      final callable = FirebaseFunctions.instance
+          .httpsCallable('user-profileRating-rateProfile');
+      await callable.call({
+        "targetUid": recommendedUsers[profileIndex].uid,
+        "score": sliderValue
+      });
       setState(() {
         sliderValue = 0;
       });
@@ -285,46 +297,46 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 IconButton(
                   icon: const Icon(Icons.settings),
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const NonNegotiablesFormScreen()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                const NonNegotiablesFormScreen()));
                   },
                 ),
               ],
             ),
           ],
         ),
-        body:
-        Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                const Text(
-                  "Filter by non-negotiables",
-                  style: TextStyle(fontSize: 16, color: Colors.black),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.filter_list_alt),
-                  onPressed: () async {
-                    await Navigator.push(context, MaterialPageRoute(builder: (context) => NonNegotiablesFilterScreen()));
-                    setState(() {
-                      isLoading = true;
-                      recommendedUsers = [];
-                      filterData = curUser!.nonNegotiablesFilter;
-                    });
-                    await _fetchVisibleUsers();
-                  },
-                ),
-            ],
-          ),
-          isLoading
+        body: isLoading
             ? const Center(child: CircularProgressIndicator())
             : recommendedUsers.isEmpty
-                ? const Expanded(child: const Center(child: Text("No profiles available.")))
+                ? const Center(child: Text("No profiles available."))
                 : SingleChildScrollView(
                     padding: const EdgeInsets.only(bottom: 130),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            const Text(
+                              "Filter by non-negotiables",
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.black),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.filter_list_alt),
+                              onPressed: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const NonNegotiablesFilterScreen()));
+                              },
+                            ),
+                          ],
+                        ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
@@ -354,38 +366,53 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   child: Column(
                                     children: [
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
                                         children: [
                                           IconButton(
                                             onPressed: () => showDialog<String>(
                                               context: context,
-                                              builder: (BuildContext context) => AlertDialog(
-                                                title: const Text("Why am I seeing this profile?"),
-                                                content: Text(getSimilarity(recommendedUsers[profileIndex])),
+                                              builder: (BuildContext context) =>
+                                                  AlertDialog(
+                                                title: const Text(
+                                                    "Why am I seeing this profile?"),
+                                                content: Text(getSimilarity(
+                                                    recommendedUsers[
+                                                        profileIndex])),
                                               ),
                                             ),
-                                            icon: const Icon(Icons.info_outline),
+                                            icon:
+                                                const Icon(Icons.info_outline),
                                           ),
                                         ],
                                       ),
                                       GestureDetector(
                                         onTap: _navigateToMoreProfile,
                                         child: CircleAvatar(
-                                          radius: MediaQuery.of(context).size.width * 0.2,
+                                          radius: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.2,
                                           backgroundImage: NetworkImage(
-                                            recommendedUsers[profileIndex].profilePictureURL.isNotEmpty
-                                                ? recommendedUsers[profileIndex].profilePictureURL
+                                            recommendedUsers[profileIndex]
+                                                    .profilePictureURL
+                                                    .isNotEmpty
+                                                ? recommendedUsers[profileIndex]
+                                                    .profilePictureURL
                                                 : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
                                           ),
-                                          backgroundColor: const Color(0xFFCDFCFF),
+                                          backgroundColor:
+                                              const Color(0xFFCDFCFF),
                                         ),
                                       ),
                                       const SizedBox(height: 8),
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           ProtectedText(
-                                            recommendedUsers[profileIndex].firstName,
+                                            recommendedUsers[profileIndex]
+                                                .firstName,
                                             style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 18,
@@ -395,24 +422,35 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                           const SizedBox(width: 5),
                                           IconButton(
                                             onPressed: _reportProfile,
-                                            icon: const Icon(Icons.more_horiz, color: Colors.black54),
+                                            icon: const Icon(Icons.more_horiz,
+                                                color: Colors.black54),
                                           ),
                                         ],
                                       ),
                                       const SizedBox(height: 5),
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Text(
-                                            recommendedUsers[profileIndex].age.toString(),
-                                            style: const TextStyle(fontStyle: FontStyle.italic, color: Color(0xFF5E77DF)),
+                                            recommendedUsers[profileIndex]
+                                                .age
+                                                .toString(),
+                                            style: const TextStyle(
+                                                fontStyle: FontStyle.italic,
+                                                color: Color(0xFF5E77DF)),
                                           ),
                                           const SizedBox(width: 10),
-                                          const Text("|", style: TextStyle(color: Color(0xFF2C519C))),
+                                          const Text("|",
+                                              style: TextStyle(
+                                                  color: Color(0xFF2C519C))),
                                           const SizedBox(width: 10),
                                           ProtectedText(
-                                            recommendedUsers[profileIndex].major,
-                                            style: const TextStyle(fontStyle: FontStyle.italic, color: Color(0xFF5E77DF)),
+                                            recommendedUsers[profileIndex]
+                                                .major,
+                                            style: const TextStyle(
+                                                fontStyle: FontStyle.italic,
+                                                color: Color(0xFF5E77DF)),
                                           ),
                                         ],
                                       ),
@@ -433,7 +471,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   children: [
                                     const Text(
                                       "About:",
-                                      style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C519C)),
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF2C519C)),
                                     ),
                                     const SizedBox(height: 5),
                                     ProtectedText(
@@ -452,19 +492,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       ],
                     ),
                   ),
-        ]
-      ),
         bottomNavigationBar: recommendedUsers.isEmpty
             ? null
             : Container(
                 color: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20.0, vertical: 10.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
                       "Rate this profile:",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     Slider(
                       value: sliderValue,
