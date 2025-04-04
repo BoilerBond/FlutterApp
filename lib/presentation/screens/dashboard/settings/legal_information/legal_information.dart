@@ -8,7 +8,7 @@ class LegalInformation extends StatefulWidget {
 }
 
 class _LegalInformationState extends State<LegalInformation> {
-  double _demoSliderValue = 0;
+  final double _demoSliderValue = 0;
 
   @override
   Widget build(BuildContext context) {

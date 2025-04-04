@@ -71,8 +71,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
         if (profileIndex == users.length - 1) {
           // rated all users already
           users.clear();
-        } else
+        } else {
           profileIndex += 1;
+        }
       }
     });
   }
@@ -223,7 +224,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         minIndex = i;
       }
     }
-    String message = "You and " + user2.firstName;
+    String message = "You and ${user2.firstName}";
     switch (minIndex) {
       case 1:
         message += " have similar levels of extroversion.";

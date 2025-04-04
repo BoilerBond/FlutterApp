@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class EditDisplayedInterests extends StatefulWidget {
-  const EditDisplayedInterests({Key? key}) : super(key: key);
+  const EditDisplayedInterests({super.key});
 
   @override
   State<EditDisplayedInterests> createState() => _EditDisplayedInterestsState();

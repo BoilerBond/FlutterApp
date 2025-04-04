@@ -3,7 +3,8 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:datingapp/utils/image_helper.dart';
-
+import 'package:datingapp/data/constants/majors.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 
 class OnBoarding extends StatefulWidget {
   const OnBoarding({super.key});
@@ -17,8 +18,13 @@ class _OnBoardingState extends State<OnBoarding> {
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController ageController = TextEditingController();
   final TextEditingController majorController = TextEditingController();
+  final TextEditingController spotifyController = TextEditingController();
+  final SuggestionsController<Map<String, String>> _suggestionsController =
+      SuggestionsController<Map<String, String>>();
 
   String? _selectedGender;
+  String? _selectedMajor;
+  String? _selectedCollege;
   Map<String, String> _errors = {};
   bool _formSubmitted = false;
 
@@ -47,8 +53,11 @@ class _OnBoardingState extends State<OnBoarding> {
         _errors['age'] = 'Enter a valid number';
       }
     }
-    if (majorController.text.trim().isEmpty) {
+    if (_selectedMajor == null || _selectedMajor!.isEmpty) {
       _errors['major'] = 'Major is required';
+    }
+    if (_selectedCollege == null || _selectedCollege!.isEmpty) {
+      _errors['college'] = 'College is required';
     }
     if (_selectedGender == null) {
       _errors['gender'] = 'Gender is required';
@@ -61,7 +70,7 @@ class _OnBoardingState extends State<OnBoarding> {
       );
       return;
     }
-    
+
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       print("User is not logged in");
@@ -72,8 +81,10 @@ class _OnBoardingState extends State<OnBoarding> {
       'firstName': firstNameController.text,
       'lastName': lastNameController.text,
       'age': int.parse(ageController.text),
-      'major': majorController.text,
+      'major': _selectedMajor,
+      'college': _selectedCollege,
       'gender': _selectedGender,
+      'spotifyUsername': spotifyController.text.trim(),
     }, SetOptions(merge: true));
 
     Navigator.of(context).push(_createRoute(Step2()));
@@ -103,9 +114,10 @@ class _OnBoardingState extends State<OnBoarding> {
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: "Enter your first name",
-                      errorText: _formSubmitted && _errors.containsKey('firstName')
-                          ? _errors['firstName']
-                          : null,
+                      errorText:
+                          _formSubmitted && _errors.containsKey('firstName')
+                              ? _errors['firstName']
+                              : null,
                     ),
                   ),
                 ),
@@ -123,9 +135,10 @@ class _OnBoardingState extends State<OnBoarding> {
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: "Enter your last name",
-                      errorText: _formSubmitted && _errors.containsKey('lastName')
-                          ? _errors['lastName']
-                          : null,
+                      errorText:
+                          _formSubmitted && _errors.containsKey('lastName')
+                              ? _errors['lastName']
+                              : null,
                     ),
                   ),
                 ),
@@ -154,22 +167,110 @@ class _OnBoardingState extends State<OnBoarding> {
             ),
             const SizedBox(height: 20),
             // Major
-            Row(
+            Column(
               children: [
-                const Expanded(child: Text("Major:")),
-                SizedBox(
-                  width: width * 0.4,
-                  child: TextField(
-                    controller: majorController,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: "Enter your major",
-                      errorText: _formSubmitted && _errors.containsKey('major')
-                          ? _errors['major']
-                          : null,
+                Row(
+                  children: [
+                    const Expanded(child: Text("Major:")),
+                    SizedBox(
+                      width: width * 0.4,
+                      child: TypeAheadField<Map<String, String>>(
+                        suggestionsCallback: (pattern) {
+                          // filter major list
+                          return majorsList
+                              .where((major) =>
+                                  major['major']!
+                                      .toLowerCase()
+                                      .contains(pattern.toLowerCase()) ||
+                                  major['college']!
+                                      .toLowerCase()
+                                      .contains(pattern.toLowerCase()))
+                              .toList();
+                        },
+                        builder: (context, controller, focusNode) {
+                          return TextField(
+                            controller: controller,
+                            focusNode: focusNode,
+                            autofocus: true,
+                            decoration: InputDecoration(
+                              border: const OutlineInputBorder(),
+                              hintText: "Search for your major",
+                              errorText:
+                                  _formSubmitted && _errors.containsKey('major')
+                                      ? _errors['major']
+                                      : null,
+                            ),
+                          );
+                        },
+                        itemBuilder: (context, suggestion) {
+                          return ListTile(
+                            title: Text(suggestion['major']!),
+                            subtitle: Text(suggestion['college']!),
+                          );
+                        },
+                        onSelected: (suggestion) {
+                          setState(() {
+                            _selectedMajor = suggestion['major'];
+                            _selectedCollege = suggestion['college'];
+                            majorController
+                                .clear(); 
+                          });
+                        },
+                        emptyBuilder: (context) {
+                          return const ListTile(
+                            title: Text("No majors found"),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                // display major and college
+                if (_selectedMajor != null && _selectedCollege != null)
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Selected Major:',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 12),
+                              ),
+                              Text(_selectedMajor!),
+                              const SizedBox(height: 4),
+                              Text(
+                                'College:',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 12),
+                              ),
+                              Text(_selectedCollege!),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            setState(() {
+                              _selectedMajor = null;
+                              _selectedCollege = null;
+                            });
+                          },
+                          tooltip: 'Clear selection',
+                        ),
+                      ],
                     ),
                   ),
-                ),
+                const SizedBox(height: 20),
               ],
             ),
             const SizedBox(height: 20),
@@ -198,6 +299,23 @@ class _OnBoardingState extends State<OnBoarding> {
                         _selectedGender = value;
                       });
                     },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Spotify Username
+            Row(
+              children: [
+                const Expanded(child: Text("Spotify Username:")),
+                SizedBox(
+                  width: width * 0.4,
+                  child: TextField(
+                    controller: spotifyController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: "Enter your Spotify username",
+                    ),
                   ),
                 ),
               ],
@@ -236,10 +354,10 @@ class Step2 extends StatefulWidget {
 
 class _Step2State extends State<Step2> {
   final TextEditingController _bioController = TextEditingController();
-  bool _saving = false; 
+  bool _saving = false;
   Future<void> _saveBioAndContinue() async {
     setState(() {
-      _saving = true; 
+      _saving = true;
     });
 
     User? user = FirebaseAuth.instance.currentUser;
@@ -254,7 +372,10 @@ class _Step2State extends State<Step2> {
     }
 
     try {
-      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(user.uid)
+          .update({
         "bio": _bioController.text.trim(),
       });
 
@@ -320,7 +441,9 @@ class _Step2State extends State<Step2> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    onPressed: _saving ? null : _saveBioAndContinue, // Disable button while saving
+                    onPressed: _saving
+                        ? null
+                        : _saveBioAndContinue, // Disable button while saving
                     child: _saving
                         ? CircularProgressIndicator()
                         : Icon(Icons.arrow_forward)),
@@ -367,7 +490,8 @@ class _Step3State extends State<Step3> {
       if (_useCm) {
         heightValue = double.tryParse(_cmController.text.trim()) ?? -1;
         if (heightValue < 50 || heightValue > 300) {
-          throw Exception("Invalid height. Please enter a value between 50cm and 300cm.");
+          throw Exception(
+              "Invalid height. Please enter a value between 50cm and 300cm.");
         }
       } else {
         double feet = double.tryParse(_ftController.text.trim()) ?? -1;
@@ -378,7 +502,10 @@ class _Step3State extends State<Step3> {
         heightValue = (feet * 30.48) + (inches * 2.54);
       }
 
-      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(user.uid)
+          .update({
         "showHeight": _showHeight,
         "heightUnit": _useCm ? "cm" : "ft",
         "heightValue": heightValue,
@@ -408,7 +535,8 @@ class _Step3State extends State<Step3> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: EdgeInsets.only(left: MediaQuery.of(context).size.width * 0.05),
+              padding: EdgeInsets.only(
+                  left: MediaQuery.of(context).size.width * 0.05),
               child: Text("Onboarding", style: TextStyle(fontSize: 30)),
             ),
             Divider(
@@ -419,9 +547,12 @@ class _Step3State extends State<Step3> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Text("3. Would you like to attach your height to your profile?", style: TextStyle(fontSize: 20)),
+                  Text(
+                      "3. Would you like to attach your height to your profile?",
+                      style: TextStyle(fontSize: 20)),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
                     child: Text(
                       "Adding a height to your profile is optional. You can opt in or out from displaying your height in your profile at any moment after completing onboarding.",
                       textAlign: TextAlign.left,
@@ -533,8 +664,6 @@ class _Step3State extends State<Step3> {
   }
 }
 
-
-
 class Step4 extends StatefulWidget {
   const Step4({super.key});
 
@@ -544,11 +673,33 @@ class Step4 extends StatefulWidget {
 
 class _Step4State extends State<Step4> {
   final List<String> _allInterests = [
-    'Animals', 'Music', 'Sports', 'Outdoor activities', 'Dancing', 'Yoga',
-    'Health', 'Gym & Fitness', 'Art', 'Gaming', 'Writing', 'Books',
-    'Movies', 'Space', 'Science', 'Design', 'Food', 'Camping',
-    'Photography', 'Fashion', 'Comedy', 'Politics', 'News',
-    'Technology', 'Entertainment', 'Architecture', 'Business'
+    'Animals',
+    'Music',
+    'Sports',
+    'Outdoor activities',
+    'Dancing',
+    'Yoga',
+    'Health',
+    'Gym & Fitness',
+    'Art',
+    'Gaming',
+    'Writing',
+    'Books',
+    'Movies',
+    'Space',
+    'Science',
+    'Design',
+    'Food',
+    'Camping',
+    'Photography',
+    'Fashion',
+    'Comedy',
+    'Politics',
+    'News',
+    'Technology',
+    'Entertainment',
+    'Architecture',
+    'Business'
   ];
 
   final Set<String> _selectedInterests = {};
@@ -571,11 +722,13 @@ class _Step4State extends State<Step4> {
     }
 
     try {
-      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(user.uid)
+          .update({
         'displayedInterests': _selectedInterests.toList(),
       });
       Navigator.of(context).push(_createRoute(Step5()));
-
     } catch (e) {
       print("Failed to save interests: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -642,10 +795,13 @@ class _Step4State extends State<Step4> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                           side: BorderSide(
-                            color: isSelected ? Colors.transparent : Colors.grey.shade300,
+                            color: isSelected
+                                ? Colors.transparent
+                                : Colors.grey.shade300,
                           ),
                         ),
-                        onSelected: (selected) => _onInterestSelected(selected, interest),
+                        onSelected: (selected) =>
+                            _onInterestSelected(selected, interest),
                       );
                     }).toList(),
                   ),
@@ -687,7 +843,7 @@ class _Step4State extends State<Step4> {
 }
 
 class Step5 extends StatefulWidget {
-  const Step5({Key? key}) : super(key: key);
+  const Step5({super.key});
 
   @override
   State<Step5> createState() => _Step5State();
@@ -734,7 +890,10 @@ class _Step5State extends State<Step5> {
     });
 
     try {
-      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(user.uid)
+          .update({
         'favoriteStudySpot': studySpotController.text.trim(),
         'favoriteDiningCourt': _selectedDiningCourt,
         'purduePetPeeve': petPeeveController.text.trim(),
@@ -769,10 +928,12 @@ class _Step5State extends State<Step5> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("4. Purdue-Specific Questions", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                  const Text("4. Purdue-Specific Questions",
+                      style:
+                          TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                   const Divider(),
                   const SizedBox(height: 20),
-                  
+
                   // Favorite Study Spot
                   Row(
                     children: [
@@ -784,7 +945,8 @@ class _Step5State extends State<Step5> {
                           decoration: InputDecoration(
                             border: const OutlineInputBorder(),
                             hintText: "e.g., WALC, HSSE",
-                            errorText: _formSubmitted && _errors.containsKey('studySpot')
+                            errorText: _formSubmitted &&
+                                    _errors.containsKey('studySpot')
                                 ? _errors['studySpot']
                                 : null,
                           ),
@@ -793,7 +955,7 @@ class _Step5State extends State<Step5> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Favorite Dining Court
                   Row(
                     children: [
@@ -804,13 +966,20 @@ class _Step5State extends State<Step5> {
                           value: _selectedDiningCourt,
                           decoration: InputDecoration(
                             border: const OutlineInputBorder(),
-                            errorText: _formSubmitted && _errors.containsKey('diningCourt')
+                            errorText: _formSubmitted &&
+                                    _errors.containsKey('diningCourt')
                                 ? _errors['diningCourt']
                                 : null,
                           ),
                           hint: Text("Select dining court"),
                           isExpanded: true,
-                          items: ['Wiley', 'Earhart', 'Windsor', 'Ford', 'Hillenbrand'].map((court) {
+                          items: [
+                            'Wiley',
+                            'Earhart',
+                            'Windsor',
+                            'Ford',
+                            'Hillenbrand'
+                          ].map((court) {
                             return DropdownMenuItem(
                               value: court,
                               child: Text(court),
@@ -826,7 +995,7 @@ class _Step5State extends State<Step5> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Biggest Purdue Pet Peeve
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -843,7 +1012,7 @@ class _Step5State extends State<Step5> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Best Purdue Memory
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -884,7 +1053,6 @@ class _Step5State extends State<Step5> {
     );
   }
 }
-
 
 class Step6 extends StatefulWidget {
   const Step6({super.key});
@@ -979,7 +1147,9 @@ class _Step6State extends State<Step6> {
                       ),
                     ),
                     onPressed: () async {
-                      await _uploadImage(_image!);
+                      if (_image != null) {
+                        await _uploadImage(_image!);
+                      }
                       Navigator.of(context).push(_createRoute(Step7()));
                     },
                     child: Text("Next")),
@@ -1024,11 +1194,14 @@ class _Step7State extends State<Step7> {
     }
 
     try {
-      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(user.uid)
+          .update({
         'personalTraits': _personalTraits,
         'partnerPreferences': _partnerPreferences,
       });
-      
+
       // Navigate to the dashboard or finish onboarding
       Navigator.pushReplacementNamed(context, "/");
     } catch (e) {
@@ -1079,7 +1252,7 @@ class _Step7State extends State<Step7> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    
+
     return Scaffold(
       appBar: AppBar(title: const Text('BBond')),
       body: Column(
@@ -1097,7 +1270,7 @@ class _Step7State extends State<Step7> {
             indent: width * 0.04,
             endIndent: width * 0.04,
           ),
-          
+
           // Main content
           Expanded(
             child: SingleChildScrollView(
@@ -1110,35 +1283,33 @@ class _Step7State extends State<Step7> {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 24),
-                  
+
                   const Text(
                     "About You",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 16),
-                  
+
                   // Personal traits sliders
-                  ..._personalTraits.keys.map((question) => 
-                    _buildSlider(question, _personalTraits)
-                  ).toList(),
-                  
+                  ..._personalTraits.keys.map(
+                      (question) => _buildSlider(question, _personalTraits)),
+
                   SizedBox(height: 24),
-                  
+
                   const Text(
                     "What You're Looking For",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 16),
-                  
+
                   // Partner preference sliders
-                  ..._partnerPreferences.keys.map((question) => 
-                    _buildSlider(question, _partnerPreferences)
-                  ).toList(),
+                  ..._partnerPreferences.keys.map((question) =>
+                      _buildSlider(question, _partnerPreferences)),
                 ],
               ),
             ),
           ),
-          
+
           // Finish Button
           Center(
             child: Padding(

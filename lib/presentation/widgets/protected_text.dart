@@ -63,8 +63,11 @@ class SafetyCache {
         if (_cache.length > _cacheCapacity && _tail != null) {
           _cache.remove(_tail!.str);
           _tail = _tail!.prev;
-          if (_tail != null) _tail!.next = null;
-          else _head = null;
+          if (_tail != null) {
+            _tail!.next = null;
+          } else {
+            _head = null;
+          }
         }
       }
     });
@@ -82,7 +85,7 @@ class ProtectedText extends StatefulWidget {
   final double? revealButtonSpacing;
 
   const ProtectedText(
-    this.content, {
+    this.content, {super.key, 
     this.style,
     this.overflow = TextOverflow.clip,
     this.maxLines,

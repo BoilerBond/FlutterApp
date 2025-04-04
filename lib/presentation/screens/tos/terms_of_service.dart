@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class TermsOfServicePage extends StatefulWidget {
   final Map<dynamic, dynamic> arguments;
-  TermsOfServicePage({super.key, required this.arguments});
+  const TermsOfServicePage({super.key, required this.arguments});
 
   @override
   TermsOfServicePageState createState() => TermsOfServicePageState();

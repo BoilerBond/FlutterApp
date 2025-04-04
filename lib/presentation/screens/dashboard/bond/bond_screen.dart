@@ -5,6 +5,9 @@ import 'package:datingapp/presentation/screens/dashboard/explore/more_profile.da
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:url_launcher/url_launcher_string.dart';
 import '../../../../data/entity/app_user.dart';
 import 'match_intro_screen.dart';
 import 'relationship_advice_screen.dart';
@@ -20,6 +23,8 @@ class _BondScreenState extends State<BondScreen> {
   final placeholder_match = "BP25avUQfZUVYNVLZ2Eoiw5jYlf1";
   AppUser? curUser;
   AppUser? match;
+  bool isMatchBlocked = false;
+  bool keepMatchToggle = true;
   bool isMatchBlocked = false;
   bool keepMatchToggle = true;
 
@@ -108,7 +113,7 @@ class _BondScreenState extends State<BondScreen> {
         minIndex = i;
       }
     }
-
+    
     String message = "You and ${match!.firstName}";
     switch (minIndex) {
       case 0:

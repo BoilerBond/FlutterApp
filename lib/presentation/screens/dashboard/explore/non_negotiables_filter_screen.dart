@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class NonNegotiablesFilterScreen extends StatefulWidget {
-  const NonNegotiablesFilterScreen({Key? key}) : super(key: key);
+  const NonNegotiablesFilterScreen({super.key});
 
   @override
   _NonNegotiablesFilterScreenState createState() =>
