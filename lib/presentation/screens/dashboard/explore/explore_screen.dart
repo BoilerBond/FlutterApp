@@ -22,6 +22,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool isLoading = true;
   AppUser? curUser;
   Map<String, dynamic> filterData = {};
+  Map<int, String> reportReasons = {
+    0: "Profile goes against one of my non-negotiables.",
+    1: "Profile appears to be fake or catfishing.",
+    2: "Offensive content against community standards."
+  };
+  int selectedReportReasonIdx = 0;
 
   Future<void> getProfiles() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -171,6 +177,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
               const SizedBox(height: 15),
               DropdownButtonFormField<int>(
+                value: selectedReportReasonIdx,
+                onChanged: (value) {
+                  setState(() {
+                    selectedReportReasonIdx = value!;
+                  });
+                },
                 decoration: InputDecoration(
                   labelText: 'Why do you want to report this profile?',
                   filled: true,
@@ -180,21 +192,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     borderSide: BorderSide.none,
                   ),
                 ),
-                items: const [
-                  DropdownMenuItem(
-                    value: 1,
-                    child: Text("Profile goes against one of my non-negotiables."),
-                  ),
-                  DropdownMenuItem(
-                    value: 2,
-                    child: Text("Profile appears to be fake or catfishing."),
-                  ),
-                  DropdownMenuItem(
-                    value: 3,
-                    child: Text("Offensive content against community standards."),
-                  ),
+                items: [
+                  ...reportReasons.entries.map((entry) => DropdownMenuItem(
+                    value: entry.key,
+                    child: Text(entry.value),
+                  ))
                 ],
-                onChanged: (value) {},
               ),
               const SizedBox(height: 20),
               Row(
@@ -206,7 +209,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   const SizedBox(width: 10),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      await FirebaseFirestore.instance.collection('reports').add({
+                        'type': 'USER',
+                        'target': recommendedUsers[profileIndex].uid,
+                        'description': reportReasons[selectedReportReasonIdx],
+                        'createdAt': FieldValue.serverTimestamp(),
+                      });
                       Navigator.pop(context);
                       _switchToNextProfile();
                     },
