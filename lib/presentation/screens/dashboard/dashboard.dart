@@ -97,9 +97,11 @@ class _DashboardState extends State<Dashboard> {
                   onPressed: () {
                     if (message.data.containsKey('type') && message.data['type'] == NotificationType.MATCH_RESULT.value) {
                       Navigator.of(context).pop();
-                      setState(() {
-                        _currentIndex = 1;
-                      });
+                      if (mounted) {
+                        setState(() {
+                          _currentIndex = 1;
+                        });
+                      }
                     }
                   },
                   child: const Text('View'),
