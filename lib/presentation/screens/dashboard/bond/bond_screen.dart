@@ -25,7 +25,7 @@ class _BondScreenState extends State<BondScreen> {
   bool isMatchBlocked = false;
   bool isMatchUnbonded = false;
   bool keepMatchToggle = true;
-  
+
   // Countdown timer variables
   Timer? _countdownTimer;
   Duration _timeUntilNextBond = Duration.zero;
@@ -69,33 +69,35 @@ class _BondScreenState extends State<BondScreen> {
     _calculateNextBondDate();
     _startCountdownTimer();
   }
-  
+
   @override
   void dispose() {
     _countdownTimer?.cancel();
     super.dispose();
   }
-  
+
   void _calculateNextBondDate() {
     // Assuming new bonds are given every Monday at 12:00 AM
     final now = DateTime.now();
     final currentWeekday = now.weekday;
-    
+
     // Calculate days until next Monday (weekday 1)
     int daysUntilNextMonday = (8 - currentWeekday) % 7;
-    if (daysUntilNextMonday == 0) daysUntilNextMonday = 7; // If today is Monday, next bond is next Monday
-    
+    if (daysUntilNextMonday == 0)
+      daysUntilNextMonday = 7; // If today is Monday, next bond is next Monday
+
     // Create next bond date (next Monday at midnight)
     _nextBondDate = DateTime(
       now.year,
       now.month,
       now.day + daysUntilNextMonday,
-    ).subtract(Duration(hours: now.hour, minutes: now.minute, seconds: now.second));
-    
+    ).subtract(
+        Duration(hours: now.hour, minutes: now.minute, seconds: now.second));
+
     // Calculate time remaining
     _updateRemainingTime();
   }
-  
+
   void _updateRemainingTime() {
     if (_nextBondDate != null) {
       final now = DateTime.now();
@@ -105,7 +107,7 @@ class _BondScreenState extends State<BondScreen> {
       });
     }
   }
-  
+
   void _startCountdownTimer() {
     _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -135,6 +137,7 @@ class _BondScreenState extends State<BondScreen> {
                 displayedInterests: match!.displayedInterests,
                 showHeight: match!.showHeight,
                 heightUnit: match!.heightUnit,
+                viewerHeightUnit: curUser!.heightUnit,
                 heightValue: match!.heightValue,
                 photosURL: match!.photosURL,
                 pfpLink: match!.profilePictureURL,
@@ -158,7 +161,8 @@ class _BondScreenState extends State<BondScreen> {
     // Add a safety check for personalTraits
     List<String> sharedTraits = [];
     try {
-      if (curUser!.personalTraits.isNotEmpty && match!.personalTraits.isNotEmpty) {
+      if (curUser!.personalTraits.isNotEmpty &&
+          match!.personalTraits.isNotEmpty) {
         sharedTraits = curUser!.getSharedTraits(match!);
       }
     } catch (e) {
@@ -187,195 +191,207 @@ class _BondScreenState extends State<BondScreen> {
         ],
         toolbarHeight: 40,
       ),
-      body: isMatchBlocked ? _buildBlockedView() : isMatchUnbonded ? _buildUnbondedView() : SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16).copyWith(top: 0),
-          child: Column(
-          children: [
-            const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
-            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-              IconButton(
-                onPressed: () => showDialog<String>(
-                  context: context,
-                  builder: (BuildContext context) => AlertDialog(
-                      title: const Text("Why was I matched with this profile?"),
-                      content: Text(curUser!.getMatchReason(match!))),
-                ),
-                icon: Icon(Icons.info_outline),
-              )
-            ]),
-            CircleAvatar(
-              radius: MediaQuery.of(context).size.width * 0.2,
-              backgroundImage: match!.profilePictureURL.isEmpty ? NetworkImage(
-                  "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png")
-                  : NetworkImage(match!.profilePictureURL),
-              backgroundColor: const Color(0xFFCDFCFF),
-            ),
-            const SizedBox(height: 8),
-            Text(match!.firstName,
-                style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: 8),
-            Text("${match!.age} | ${match!.major}",
-                style: const TextStyle(
-                    fontSize: 16,
-                    fontStyle: FontStyle.italic,
-                    color: Color(0xFF5E77DF))),
-            const SizedBox(height: 16),
-            IntrinsicHeight(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width / 3,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: TextButton(
-                        onPressed: _navigateToMoreProfile,
-                        child: const Text("View More"),
-                              ),
-                            ),
-                          ),
-                          const VerticalDivider(indent: 16, endIndent: 16),
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width / 3,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: TextButton(
-                                onPressed: () => _confirmUnbondDialog(context),
-                                child: const Text("Unbond"),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+      body: isMatchBlocked
+          ? _buildBlockedView()
+          : isMatchUnbonded
+              ? _buildUnbondedView()
+              : SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16).copyWith(top: 0),
+                    child: Column(
                       children: [
-                        const Text("What you have in common:",
-                            style: TextStyle(fontSize: 16)),
-                        if (sharedTraits.isEmpty)
-                          const Text("No traits in common yet.")
-                        else
-                          ...sharedTraits
-                              .map((trait) => Text("• $trait"))
-                              .toList(),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    // Spotify Button
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          final spotifyUsername = match?.spotifyUsername;
-                          final String url = spotifyUsername != null &&
-                                  spotifyUsername.isNotEmpty
-                              ? "https://open.spotify.com/user/" +
-                                  spotifyUsername
-                              : "";
-                          _launchURL(url);
-                        },
-                        icon: Icon(Icons.music_note,
-                            color: match?.spotifyUsername != null &&
-                                    match!.spotifyUsername.isNotEmpty
-                                ? Colors.blueAccent
-                                : Colors.grey),
-                        label: Text("Spotify",
-                            style: TextStyle(
+                        const Divider(
+                            height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              IconButton(
+                                onPressed: () => showDialog<String>(
+                                  context: context,
+                                  builder: (BuildContext context) => AlertDialog(
+                                      title: const Text(
+                                          "Why was I matched with this profile?"),
+                                      content: Text(
+                                          curUser!.getMatchReason(match!))),
+                                ),
+                                icon: Icon(Icons.info_outline),
+                              )
+                            ]),
+                        CircleAvatar(
+                          radius: MediaQuery.of(context).size.width * 0.2,
+                          backgroundImage: match!.profilePictureURL.isEmpty
+                              ? NetworkImage(
+                                  "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png")
+                              : NetworkImage(match!.profilePictureURL),
+                          backgroundColor: const Color(0xFFCDFCFF),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(match!.firstName,
+                            style: Theme.of(context).textTheme.headlineMedium),
+                        const SizedBox(height: 8),
+                        Text("${match!.age} | ${match!.major}",
+                            style: const TextStyle(
                                 fontSize: 16,
+                                fontStyle: FontStyle.italic,
+                                color: Color(0xFF5E77DF))),
+                        const SizedBox(height: 16),
+                        IntrinsicHeight(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width / 3,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: TextButton(
+                                    onPressed: _navigateToMoreProfile,
+                                    child: const Text("View More"),
+                                  ),
+                                ),
+                              ),
+                              const VerticalDivider(indent: 16, endIndent: 16),
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width / 3,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: TextButton(
+                                    onPressed: () =>
+                                        _confirmUnbondDialog(context),
+                                    child: const Text("Unbond"),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Divider(),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("What you have in common:",
+                                style: TextStyle(fontSize: 16)),
+                            if (sharedTraits.isEmpty)
+                              const Text("No traits in common yet.")
+                            else
+                              ...sharedTraits
+                                  .map((trait) => Text("• $trait"))
+                                  .toList(),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // Spotify Button
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              final spotifyUsername = match?.spotifyUsername;
+                              final String url = spotifyUsername != null &&
+                                      spotifyUsername.isNotEmpty
+                                  ? "https://open.spotify.com/user/" +
+                                      spotifyUsername
+                                  : "";
+                              _launchURL(url);
+                            },
+                            icon: Icon(Icons.music_note,
                                 color: match?.spotifyUsername != null &&
                                         match!.spotifyUsername.isNotEmpty
                                     ? Colors.blueAccent
-                                    : Colors.grey)),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                            width: 1,
-                            color: match?.spotifyUsername != null &&
-                                    match!.spotifyUsername.isNotEmpty
-                                ? Colors.blueAccent
-                                : Colors.grey,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    _buildActionButton(
-                        Icons.chat_bubble, "Go to our messages", () {}),
-                    _buildActionButton(
-                        Icons.favorite, "Relationship suggestions", () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => RelationshipAdviceScreen(
-                              user: curUser!, match: match!),
-                        ),
-                      );
-                    }),
-                    _buildActionButton(Icons.info, "View Match Introduction",
-                        () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MatchIntroScreen(
-                            curUser: curUser!,
-                            match: match!,
+                                    : Colors.grey),
+                            label: Text("Spotify",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    color: match?.spotifyUsername != null &&
+                                            match!.spotifyUsername.isNotEmpty
+                                        ? Colors.blueAccent
+                                        : Colors.grey)),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                width: 1,
+                                color: match?.spotifyUsername != null &&
+                                        match!.spotifyUsername.isNotEmpty
+                                    ? Colors.blueAccent
+                                    : Colors.grey,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
                           ),
                         ),
-                      );
-                    }),
 
-                    const SizedBox(height: 15),
-                    const Divider(),
-                    const SizedBox(height: 5),
+                        _buildActionButton(
+                            Icons.chat_bubble, "Go to our messages", () {}),
+                        _buildActionButton(
+                            Icons.favorite, "Relationship suggestions", () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RelationshipAdviceScreen(
+                                  user: curUser!, match: match!),
+                            ),
+                          );
+                        }),
+                        _buildActionButton(
+                            Icons.info, "View Match Introduction", () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MatchIntroScreen(
+                                curUser: curUser!,
+                                match: match!,
+                              ),
+                            ),
+                          );
+                        }),
 
-                    // Keep Match Toggle
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: SwitchListTile(
-                        title: const Text("Keep this match for next week",
-                            style: TextStyle(fontSize: 16)),
-                        subtitle: Text(
-                            keepMatchToggle
-                                ? "You'll keep this match"
-                                : "You'll get a new match next week",
-                            style: TextStyle(fontSize: 12, color: Colors.grey)),
-                        value: keepMatchToggle,
-                        activeColor: const Color(0xFF5E77DF),
-                        onChanged: (bool value) {
-                          _updateKeepMatch(value);
-                        },
-                      ),
-                    ),
+                        const SizedBox(height: 15),
+                        const Divider(),
+                        const SizedBox(height: 5),
 
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    const SizedBox(height: 16),
-
-                    // Block User Button
-                    ElevatedButton.icon(
-                      onPressed: _confirmBlockUser,
-                      icon: const Icon(Icons.block, color: Colors.white),
-                      label: const Text("Block User",
-                          style: TextStyle(color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                        // Keep Match Toggle
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: SwitchListTile(
+                            title: const Text("Keep this match for next week",
+                                style: TextStyle(fontSize: 16)),
+                            subtitle: Text(
+                                keepMatchToggle
+                                    ? "You'll keep this match"
+                                    : "You'll get a new match next week",
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey)),
+                            value: keepMatchToggle,
+                            activeColor: const Color(0xFF5E77DF),
+                            onChanged: (bool value) {
+                              _updateKeepMatch(value);
+                            },
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 16),
-                      ),
+
+                        const SizedBox(height: 16),
+                        const Divider(),
+                        const SizedBox(height: 16),
+
+                        // Block User Button
+                        ElevatedButton.icon(
+                          onPressed: _confirmBlockUser,
+                          icon: const Icon(Icons.block, color: Colors.white),
+                          label: const Text("Block User",
+                              style: TextStyle(color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 16),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
     ));
   }
 
@@ -465,16 +481,16 @@ class _BondScreenState extends State<BondScreen> {
 
   Future<void> _unbond() async {
     if (curUser == null || match == null) return;
-    
+
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
-    
+
     // Update Firebase to indicate the user doesn't want to keep the match
     await FirebaseFirestore.instance
-      .collection('users')
-      .doc(user.uid)
-      .update({'keepMatch': false});
-    
+        .collection('users')
+        .doc(user.uid)
+        .update({'keepMatch': false});
+
     // Update local state
     setState(() {
       keepMatchToggle = false;
@@ -483,10 +499,10 @@ class _BondScreenState extends State<BondScreen> {
         curUser!.keepMatch = false;
       }
     });
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("You've unbonded from this user. You'll receive a new match next week"))
-    );
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+            "You've unbonded from this user. You'll receive a new match next week")));
   }
 
   void _showIntroduction(BuildContext context) {
@@ -532,14 +548,14 @@ class _BondScreenState extends State<BondScreen> {
     final hours = _timeUntilNextBond.inHours % 24;
     final minutes = _timeUntilNextBond.inMinutes % 60;
     final seconds = _timeUntilNextBond.inSeconds % 60;
-    
+
     // Format the next bond date for display
     String formattedDate = '';
     if (_nextBondDate != null) {
       final DateFormat formatter = DateFormat('EEEE, MMMM d');
       formattedDate = formatter.format(_nextBondDate!);
     }
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -547,8 +563,8 @@ class _BondScreenState extends State<BondScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.link_off, 
-              size: 72, 
+              Icons.link_off,
+              size: 72,
               color: Colors.grey,
             ),
             const SizedBox(height: 24),
@@ -571,7 +587,7 @@ class _BondScreenState extends State<BondScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            
+
             // Countdown timer container
             Container(
               padding: const EdgeInsets.all(16),
@@ -608,40 +624,52 @@ class _BondScreenState extends State<BondScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Countdown display
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _buildCountdownUnit(days.toString(), "Days"),
                       const SizedBox(width: 8),
-                      const Text(":", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      const Text(":",
+                          style: TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold)),
                       const SizedBox(width: 8),
-                      _buildCountdownUnit(hours.toString().padLeft(2, '0'), "Hours"),
+                      _buildCountdownUnit(
+                          hours.toString().padLeft(2, '0'), "Hours"),
                       const SizedBox(width: 8),
-                      const Text(":", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      const Text(":",
+                          style: TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold)),
                       const SizedBox(width: 8),
-                      _buildCountdownUnit(minutes.toString().padLeft(2, '0'), "Mins"),
+                      _buildCountdownUnit(
+                          minutes.toString().padLeft(2, '0'), "Mins"),
                       const SizedBox(width: 8),
-                      const Text(":", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      const Text(":",
+                          style: TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold)),
                       const SizedBox(width: 8),
-                      _buildCountdownUnit(seconds.toString().padLeft(2, '0'), "Secs"),
+                      _buildCountdownUnit(
+                          seconds.toString().padLeft(2, '0'), "Secs"),
                     ],
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
             OutlinedButton.icon(
               onPressed: () {
                 // Navigate to the dashboard with the explore tab (index 0) selected
-                Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false, arguments: {'initialIndex': 0});
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                    '/', (route) => false,
+                    arguments: {'initialIndex': 0});
               },
               icon: const Icon(Icons.explore),
               label: const Text("Explore Profiles"),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],
@@ -649,7 +677,7 @@ class _BondScreenState extends State<BondScreen> {
       ),
     );
   }
-  
+
   // Shows the blocked user view
   Widget _buildBlockedView() {
     return Center(

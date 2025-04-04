@@ -39,22 +39,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
     });
     try {
       final List<dynamic> resultList = result.data as List<dynamic>;
-      
+
       List<AppUser> fetchedUsers = [];
-      
+
       for (final dynamic entry in resultList) {
         try {
           // Access properties without casting the entire object
           final userId = entry['uid']?.toString();
-          final distance = double.tryParse(entry['distance']?.toString() ?? '0.0') ?? 0.0;
-          
+          final distance =
+              double.tryParse(entry['distance']?.toString() ?? '0.0') ?? 0.0;
+
           if (userId == null) {
             print("Missing uid in recommendation result");
             continue;
           }
-          
+
           final snap = await db.collection("users").doc(userId).get();
-          
+
           if (snap.exists) {
             final user = AppUser.fromSnapshot(snap);
             print("User: ${user.firstName}, Distance: $distance");
@@ -66,7 +67,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           continue;
         }
       }
-      
+
       // Apply filters if needed
       if (filterData.isNotEmpty) {
         List<AppUser> listFiltered = [];
@@ -82,7 +83,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           fetchedUsers.remove(x);
         }
       }
-      
+
       setState(() {
         recommendedUsers = fetchedUsers;
         isLoading = false;
@@ -111,24 +112,25 @@ class _ExploreScreenState extends State<ExploreScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => MoreProfileScreen(
-                uid: recommendedUsers[profileIndex].uid,
-                name: recommendedUsers[profileIndex].firstName,
-                age: recommendedUsers[profileIndex].age.toString(),
-                major: recommendedUsers[profileIndex].major,
-                bio: recommendedUsers[profileIndex].bio,
-                displayedInterests:
-                    recommendedUsers[profileIndex].displayedInterests,
-                showHeight: recommendedUsers[profileIndex].showHeight,
-                heightUnit: recommendedUsers[profileIndex].heightUnit,
-                heightValue: recommendedUsers[profileIndex].heightValue,
-                photosURL: recommendedUsers[profileIndex].photoVisible
-                    ? recommendedUsers[profileIndex].photosURL
-                    : [],
-                pfpLink: recommendedUsers[profileIndex].profilePictureURL,
-                viewerUid: curUser!.uid,
-                isMatchViewer: false,
-              )),
+        builder: (context) => MoreProfileScreen(
+          uid: recommendedUsers[profileIndex].uid,
+          name: recommendedUsers[profileIndex].firstName,
+          age: recommendedUsers[profileIndex].age.toString(),
+          major: recommendedUsers[profileIndex].major,
+          bio: recommendedUsers[profileIndex].bio,
+          displayedInterests: recommendedUsers[profileIndex].displayedInterests,
+          showHeight: recommendedUsers[profileIndex].showHeight,
+          heightUnit: recommendedUsers[profileIndex].heightUnit,
+          viewerHeightUnit: curUser!.heightUnit, // ✅ Add this
+          heightValue: recommendedUsers[profileIndex].heightValue,
+          photosURL: recommendedUsers[profileIndex].photoVisible
+              ? recommendedUsers[profileIndex].photosURL
+              : [],
+          pfpLink: recommendedUsers[profileIndex].profilePictureURL,
+          viewerUid: curUser!.uid,
+          isMatchViewer: false,
+        ),
+      ),
     );
   }
 
