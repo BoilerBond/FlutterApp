@@ -93,7 +93,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
-  void filterNN() {
+  void filterNN() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final db = FirebaseFirestore.instance;
+    final userSnapshot =
+        await db.collection("users").doc(currentUser?.uid).get();
+    curUser = AppUser.fromSnapshot(userSnapshot);
+    nonnegotiablesData = curUser!.nonNegotiables;
+    print(nonnegotiablesData["majors"]);
     List<AppUser> listFiltered = [];
     try {
       if (nonnegotiablesData.isNotEmpty) {
@@ -370,8 +377,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         MaterialPageRoute(
                             builder: (context) => NonNegotiablesFormScreen()));
                     setState(() {
-                      nonnegotiablesData = curUser!.nonNegotiables;
+                      isLoading = true;
                     });
+                    filterNN();
                   },
                 ),
               ],
