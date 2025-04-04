@@ -52,6 +52,10 @@ class AppUser {
   Map<String, int> partnerPreferences;
   int weeksWithoutMatch;
   bool hasSeenMatchIntro;
+  bool showSpotifyToMatch;
+  bool showSpotifyToOthers;
+  bool showPhotosToMatch;
+  bool showPhotosToOthers;
 
   AppUser({
     required this.uid,
@@ -102,6 +106,10 @@ class AppUser {
     this.partnerPreferences = const {},
     this.weeksWithoutMatch = 0,
     this.hasSeenMatchIntro = false,
+    this.showSpotifyToMatch = true,
+    this.showSpotifyToOthers = true,
+    this.showPhotosToMatch = true,
+    this.showPhotosToOthers = true,
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -150,7 +158,8 @@ class AppUser {
       showSocialMediaToOthers: data['showSocialMediaToOthers'] ?? true,
       match: data['match'] ?? '',
       nonNegotiables: data['nonNegotiables'] ?? {},
-      nonNegotiablesFilter: Map<String, dynamic>.from(data['nonNegotiablesFilter'] ?? {}),
+      nonNegotiablesFilter:
+          Map<String, dynamic>.from(data['nonNegotiablesFilter'] ?? {}),
       longFormQuestion: data['longFormQuestion'] ?? 0,
       longFormAnswer: data['longFormAnswer'] ?? '',
       personalTraits: Map<String, int>.from(data['personalTraits'] ?? {}),
@@ -158,6 +167,10 @@ class AppUser {
           Map<String, int>.from(data['partnerPreferences'] ?? {}),
       weeksWithoutMatch: data['weeksWithoutMatch'] ?? 0,
       hasSeenMatchIntro: data['hasSeenMatchIntro'] ?? false,
+      showSpotifyToMatch: data['showSpotifyToMatch'] ?? true,
+      showSpotifyToOthers: data['showSpotifyToOthers'] ?? true,
+      showPhotosToMatch: data['showPhotosToMatch'] ?? true,
+      showPhotosToOthers: data['showPhotosToOthers'] ?? true,
     );
   }
 
@@ -230,12 +243,16 @@ class AppUser {
       'showSocialMediaToOthers': showSocialMediaToOthers,
       'match': match,
       'nonNegotiables': nonNegotiables,
-      'nonNegotiablesFilter' : nonNegotiablesFilter,
+      'nonNegotiablesFilter': nonNegotiablesFilter,
       'longFormQuestion': longFormQuestion,
       'longFormAnswer': longFormAnswer,
       'weeksWithoutMatch': weeksWithoutMatch,
       'spotifyUsername': spotifyUsername,
-      'hasSeenMatchIntro' : hasSeenMatchIntro,
+      'hasSeenMatchIntro': hasSeenMatchIntro,
+      'showSpotifyToMatch': showSpotifyToMatch,
+      'showSpotifyToOthers': showSpotifyToOthers,
+      'showPhotosToMatch': showPhotosToMatch,
+      'showPhotosToOthers': showPhotosToOthers,
     };
   }
 
@@ -326,7 +343,7 @@ class AppUser {
   String getPreferenceTo(AppUser user2) {
     final List<int> p1 = this.partnerPreferences.values.toList();
     final List<int> p2 = user2.personalTraits.values.toList();
-    List<int> difference = [0,0,0,0,0];
+    List<int> difference = [0, 0, 0, 0, 0];
     difference[0] = (p1[0] + p2[4]).abs();
     difference[1] = (p1[1] - p2[3]).abs();
     difference[2] = (p1[2] - p2[1]).abs();
@@ -343,19 +360,23 @@ class AppUser {
     String message = "${user2.firstName}";
     switch (minIndex) {
       case 1:
-        message += "'s level of extroversion matches your partner preference.\n";
+        message +=
+            "'s level of extroversion matches your partner preference.\n";
         break;
       case 0:
-        message += "'s views on the importance of family matches your partner preference\n.";
+        message +=
+            "'s views on the importance of family matches your partner preference\n.";
         break;
       case 2:
         message += "'s lifestyle matches your partner preference\n.";
         break;
       case 4:
-        message += "'s emotional expressiveness matches your partner preference\n.";
+        message +=
+            "'s emotional expressiveness matches your partner preference\n.";
         break;
       case 3:
-        message += "'s willingness to try new things and take risks matches your partner preference\n.";
+        message +=
+            "'s willingness to try new things and take risks matches your partner preference\n.";
         break;
     }
     return message;
@@ -364,7 +385,7 @@ class AppUser {
   String getPreferenceFrom(AppUser user2) {
     final List<int> p1 = this.personalTraits.values.toList();
     final List<int> p2 = user2.partnerPreferences.values.toList();
-    List<int> difference = [0,0,0,0,0];
+    List<int> difference = [0, 0, 0, 0, 0];
     difference[0] = (p1[0] + p2[4]).abs();
     difference[1] = (p1[1] - p2[3]).abs();
     difference[2] = (p1[2] - p2[1]).abs();
