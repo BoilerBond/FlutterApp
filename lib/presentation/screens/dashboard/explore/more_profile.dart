@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-
-import '../../../../data/entity/app_user.dart';
 import '../../../widgets/protected_text.dart';
 import '../../../widgets/confirm_dialog.dart';
 
@@ -26,7 +24,6 @@ class MoreProfileScreen extends StatefulWidget {
   final String viewerUid;
   final bool isMatchViewer;
   final String viewerHeightUnit;
-
 
   const MoreProfileScreen({
     super.key,
@@ -72,13 +69,6 @@ class _MoreProfileScreenState extends State<MoreProfileScreen> {
 
     setState(() {
       visibilityPrefs = {
-        'showAge':
-            data[widget.isMatchViewer ? 'showAgeToMatch' : 'showAgeToOthers'] ??
-                true,
-        'showMajor': data[widget.isMatchViewer
-                ? 'showMajorToMatch'
-                : 'showMajorToOthers'] ??
-            true,
         'showBio':
             data[widget.isMatchViewer ? 'showBioToMatch' : 'showBioToOthers'] ??
                 true,
@@ -91,24 +81,31 @@ class _MoreProfileScreenState extends State<MoreProfileScreen> {
                 : 'showSocialMediaToOthers'] ??
             true,
         'showHeight': data['showHeight'] ?? false,
+        'showSpotify': data[widget.isMatchViewer
+                ? 'showSpotifyToMatch'
+                : 'showSpotifyToOthers'] ??
+            true,
+        'showPhotos': data[widget.isMatchViewer
+                ? 'showPhotosToMatch'
+                : 'showPhotosToOthers'] ??
+            true,
       };
       isLoading = false;
     });
   }
 
-String _getFormattedHeight() {
-  if (!widget.showHeight || !visibilityPrefs['showHeight']!) return "";
+  String _getFormattedHeight() {
+    if (!widget.showHeight || !visibilityPrefs['showHeight']!) return "";
 
-  if (widget.viewerHeightUnit == "cm") {
-    return "${widget.heightValue} cm";
+    if (widget.viewerHeightUnit == "cm") {
+      return "${widget.heightValue} cm";
+    }
+
+    int totalInches = (widget.heightValue / 2.54).round();
+    int feet = totalInches ~/ 12;
+    int inches = totalInches % 12;
+    return "$feet' $inches\"";
   }
-
-  int totalInches = (widget.heightValue / 2.54).round();
-  int feet = totalInches ~/ 12;
-  int inches = totalInches % 12;
-  return "$feet' $inches\"";
-}
-
 
   Future<void> blockUser() async {
     await FirebaseFirestore.instance
@@ -155,7 +152,8 @@ String _getFormattedHeight() {
                           _buildSocialMediaRow(
                               "Instagram", Icons.camera_alt, ""),
                           _buildSocialMediaRow("Facebook", Icons.facebook, ""),
-                          if (widget.spotifyUsername != null &&
+                          if (visibilityPrefs['showSpotify']! &&
+                              widget.spotifyUsername != null &&
                               widget.spotifyUsername!.isNotEmpty)
                             _buildSocialMediaRow("Spotify", Icons.music_note,
                                 "https://open.spotify.com/user/${widget.spotifyUsername}"),
@@ -163,10 +161,8 @@ String _getFormattedHeight() {
                       ),
                     const SizedBox(height: 20),
                     _buildProfileField("Name", widget.name),
-                    if (visibilityPrefs['showAge']!)
-                      _buildProfileField("Age", widget.age),
-                    if (visibilityPrefs['showMajor']!)
-                      _buildProfileField("Major", widget.major),
+                    _buildProfileField("Age", widget.age),
+                    _buildProfileField("Major", widget.major),
                     if (widget.showHeight && visibilityPrefs['showHeight']!)
                       _buildProfileField("Height", _getFormattedHeight()),
                     if (visibilityPrefs['showBio']!)
@@ -175,7 +171,8 @@ String _getFormattedHeight() {
                     if (visibilityPrefs['showInterests']!)
                       _buildInterestsSection(),
                     const SizedBox(height: 20),
-                    _buildPhotos(context, widget.photosURL),
+                    if (visibilityPrefs['showPhotos']!)
+                      _buildPhotos(context, widget.photosURL),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
@@ -362,7 +359,7 @@ String _getFormattedHeight() {
                 width: double.infinity,
                 height: MediaQuery.of(context).size.height * 0.5,
                 child: GridView.count(
-                  crossAxisCount: (photosURL.length == 1) ? 1 : 2,
+                  crossAxisCount: (photosURL.length < 3) ? 1 : 3,
                   mainAxisSpacing: 10,
                   crossAxisSpacing: 10,
                   children: photosURL.map((photoURL) {

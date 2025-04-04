@@ -45,13 +45,17 @@ class AppUser {
   bool keepMatch;
   String match;
   Map<String, dynamic> nonNegotiables;
-  Map<String, dynamic> nonNegotiablesFilter;
   int longFormQuestion;
   String longFormAnswer;
   Map<String, int> personalTraits;
   Map<String, int> partnerPreferences;
   int weeksWithoutMatch;
   bool hasSeenMatchIntro;
+  bool showSpotifyToMatch;
+  bool showSpotifyToOthers;
+  bool showPhotosToMatch;
+  bool showPhotosToOthers;
+  List<String> ratedUsers;
 
   AppUser({
     required this.uid,
@@ -95,13 +99,17 @@ class AppUser {
     this.showSocialMediaToOthers = true,
     this.match = "",
     this.nonNegotiables = const {},
-    this.nonNegotiablesFilter = const {},
     this.longFormQuestion = 0,
     this.longFormAnswer = '',
     this.personalTraits = const {},
     this.partnerPreferences = const {},
     this.weeksWithoutMatch = 0,
     this.hasSeenMatchIntro = false,
+    this.showSpotifyToMatch = true,
+    this.showSpotifyToOthers = true,
+    this.showPhotosToMatch = true,
+    this.showPhotosToOthers = true,
+    this.ratedUsers = const [],
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -150,7 +158,6 @@ class AppUser {
       showSocialMediaToOthers: data['showSocialMediaToOthers'] ?? true,
       match: data['match'] ?? '',
       nonNegotiables: data['nonNegotiables'] ?? {},
-      nonNegotiablesFilter: Map<String, dynamic>.from(data['nonNegotiablesFilter'] ?? {}),
       longFormQuestion: data['longFormQuestion'] ?? 0,
       longFormAnswer: data['longFormAnswer'] ?? '',
       personalTraits: Map<String, int>.from(data['personalTraits'] ?? {}),
@@ -158,6 +165,11 @@ class AppUser {
           Map<String, int>.from(data['partnerPreferences'] ?? {}),
       weeksWithoutMatch: data['weeksWithoutMatch'] ?? 0,
       hasSeenMatchIntro: data['hasSeenMatchIntro'] ?? false,
+      showSpotifyToMatch: data['showSpotifyToMatch'] ?? true,
+      showSpotifyToOthers: data['showSpotifyToOthers'] ?? true,
+      showPhotosToMatch: data['showPhotosToMatch'] ?? true,
+      showPhotosToOthers: data['showPhotosToOthers'] ?? true,
+      ratedUsers: List<String>.from(data['ratedUsers'] ?? []),
     );
   }
 
@@ -230,12 +242,16 @@ class AppUser {
       'showSocialMediaToOthers': showSocialMediaToOthers,
       'match': match,
       'nonNegotiables': nonNegotiables,
-      'nonNegotiablesFilter' : nonNegotiablesFilter,
       'longFormQuestion': longFormQuestion,
       'longFormAnswer': longFormAnswer,
       'weeksWithoutMatch': weeksWithoutMatch,
       'spotifyUsername': spotifyUsername,
-      'hasSeenMatchIntro' : hasSeenMatchIntro,
+      'hasSeenMatchIntro': hasSeenMatchIntro,
+      'showSpotifyToMatch': showSpotifyToMatch,
+      'showSpotifyToOthers': showSpotifyToOthers,
+      'showPhotosToMatch': showPhotosToMatch,
+      'showPhotosToOthers': showPhotosToOthers,
+      'ratedUsers': ratedUsers,
     };
   }
 
@@ -410,7 +426,7 @@ class AppUser {
 
   bool hasInterests(List<dynamic> list) {
     if (list.isEmpty) return true;
-    bool result = false;
+    bool result = true;
     for (String i in list) {
       if (!this.displayedInterests.contains(i)) {
         return false;
@@ -461,6 +477,15 @@ class AppUser {
     }
     if (list.values.last != null) {
       return this.age <= list.values.last;
+    }
+    return result;
+  }
+
+  bool matchMajor(List<dynamic> list) {
+    if (list.isEmpty) return true;
+    bool result = false;
+    for (Map<String, String> i in list) {
+      if (i["major"] == this.major.toLowerCase()) return true;
     }
     return result;
   }

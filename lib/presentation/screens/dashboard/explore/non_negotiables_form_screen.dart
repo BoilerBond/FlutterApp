@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:datingapp/data/entity/app_user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:datingapp/data/entity/app_user.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
-import 'package:datingapp/data/constants/majors.dart';
+
+import '../../../../data/constants/majors.dart';
 
 class NonNegotiablesFormScreen extends StatefulWidget {
   const NonNegotiablesFormScreen({super.key});
@@ -15,6 +16,7 @@ class NonNegotiablesFormScreen extends StatefulWidget {
 
 class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
   final _formKey = GlobalKey<FormState>();
+
   final Set<String> selectedGenders = {};
 
   final TextEditingController minAgeController = TextEditingController();
@@ -60,6 +62,7 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
   @override
   void initState() {
     super.initState();
+    _loadNonNegotiables();
   }
 
   @override
@@ -69,7 +72,63 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
     super.dispose();
   }
 
-  // ONLY A FILTER, NOT SAVING THESE TO FIREBASE
+  Future<void> _loadNonNegotiables() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    try {
+      AppUser userProfile = await AppUser.getById(currentUser.uid);
+      final nonNegotiables = userProfile.nonNegotiables;
+      if (nonNegotiables.isNotEmpty) {
+        if (nonNegotiables.containsKey('genderPreferences')) {
+          final genders = nonNegotiables['genderPreferences'] as List<dynamic>;
+          setState(() {
+            selectedGenders.clear();
+            for (var gender in genders) {
+              selectedGenders.add(gender.toString());
+            }
+          });
+        }
+        if (nonNegotiables.containsKey('ageRange')) {
+          final ageRange =
+              nonNegotiables['ageRange'] as Map<String, dynamic>;
+          if (ageRange.containsKey('min') &&
+              ageRange['min'] != null) {
+            minAgeController.text = ageRange['min'].toString();
+          }
+          if (ageRange.containsKey('max') &&
+              ageRange['max'] != null) {
+            maxAgeController.text = ageRange['max'].toString();
+          }
+        }
+        if (nonNegotiables.containsKey('mustHaveHobbies')) {
+          final mustHave = nonNegotiables['mustHaveHobbies'] as List<dynamic>;
+          setState(() {
+            mustHaveHobbies.clear();
+            for (var hobby in mustHave) {
+              mustHaveHobbies.add(hobby.toString());
+            }
+          });
+        }
+        if (nonNegotiables.containsKey('mustNotHaveHobbies')) {
+          final mustNotHave =
+              nonNegotiables['mustNotHaveHobbies'] as List<dynamic>;
+          setState(() {
+            mustNotHaveHobbies.clear();
+            for (var hobby in mustNotHave) {
+              mustNotHaveHobbies.add(hobby.toString());
+            }
+          });
+        }
+      }
+    } catch (e) {
+      print("Error loading non-negotiables: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading non-negotiables: $e')),
+      );
+    }
+  }
+
   Future<void> _submitForm() async {
     if (_formKey.currentState?.validate() != true) return;
 
@@ -83,6 +142,7 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
         return;
       }
     }
+
     final currentUser = FirebaseAuth.instance.currentUser;
     final db = FirebaseFirestore.instance;
     if (currentUser == null) {
@@ -91,7 +151,6 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
       );
       return;
     }
-    AppUser userProfile = await AppUser.getById(currentUser.uid);
 
     final Map<String, dynamic> nonNegotiablesData = {
       'genderPreferences': selectedGenders.toList(),
@@ -105,18 +164,19 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
     };
 
     try {
-      print(nonNegotiablesData["genderPreferences"]);
-      print(nonNegotiablesData["ageRange"]);
-      print(nonNegotiablesData["mustHaveHobbies"]);
-      final newData = {"nonNegotiablesFilter": nonNegotiablesData};
-      await db
-          .collection("users")
-          .doc(userProfile.uid)
-          .set(newData, SetOptions(merge: true));
-      Navigator.of(context).pop();
+      AppUser userProfile = await AppUser.getById(currentUser.uid);
+      userProfile.nonNegotiables = nonNegotiablesData;
+      final newData = {"nonNegotiables": nonNegotiablesData};
+      await db.collection("users").doc(userProfile.uid).set(newData, SetOptions(merge: true));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Non-negotiables updated successfully.')),
+      );
+      Navigator.of(context).pop(); 
     } catch (e) {
-      print(e);
-      return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving data: $e')),
+      );
     }
   }
 
@@ -125,67 +185,35 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Gender Preferences:',
+          'Select Gender Preferences:',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-          ChoiceChip(
-            selected: selectedGenders.contains('Man'),
-            label: Text(
-              "Man",
-              style: TextStyle(
-                color: selectedGenders.contains('Man')
-                    ? Color(0xFF2C519C)
-                    : Color(0xFF2C519C),
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            onSelected: (bool selected) {
-              setState(() {
-                if (selected) {
-                  selectedGenders.add("Man");
-                } else {
-                  selectedGenders.remove("Man");
-                }
-              });
-            },
-            selectedColor: Theme.of(context).colorScheme.tertiary,
-            backgroundColor: Color(0xFFE7EFEE),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          ChoiceChip(
-            selected: selectedGenders.contains("Woman"),
-            label: Text(
-              "Woman",
-              style: TextStyle(
-                color: selectedGenders.contains("Woman")
-                    ? Color(0xFF2C519C)
-                    : Color(0xFF2C519C),
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            onSelected: (bool selected) {
-              setState(() {
-                if (selected) {
-                  selectedGenders.add("Woman");
-                } else {
-                  selectedGenders.remove("Woman");
-                }
-              });
-            },
-            selectedColor: Theme.of(context).colorScheme.tertiary,
-            backgroundColor: Color(0xFFE7EFEE),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-        ])
+        CheckboxListTile(
+          title: const Text('Man'),
+          value: selectedGenders.contains('man'),
+          onChanged: (bool? value) {
+            setState(() {
+              if (value == true) {
+                selectedGenders.add('man');
+              } else {
+                selectedGenders.remove('man');
+              }
+            });
+          },
+        ),
+        CheckboxListTile(
+          title: const Text('Woman'),
+          value: selectedGenders.contains('woman'),
+          onChanged: (bool? value) {
+            setState(() {
+              if (value == true) {
+                selectedGenders.add('woman');
+              } else {
+                selectedGenders.remove('woman');
+              }
+            });
+          },
+        ),
       ],
     );
   }
@@ -195,7 +223,7 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Desired Age Range:',
+          'Enter Desired Age Range:',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         TextFormField(
@@ -263,7 +291,7 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
                 selectedColor: Theme.of(context).colorScheme.tertiary,
                 backgroundColor: Color(0xFFE7EFEE),
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -305,7 +333,7 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
                 selectedColor: Theme.of(context).colorScheme.errorContainer,
                 backgroundColor: Color(0xFFE7EFEE),
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -317,50 +345,16 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Filter by Non-Negotiables'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildGenderSelection(),
-              const SizedBox(height: 20),
-              _buildAgeRangeFields(),
-              const SizedBox(height: 20),
-              _buildHobbiesSelection(),
-              const SizedBox(height: 20),
-              _buildMajorSelection(),
-              const SizedBox(height: 20),
-              Center(
-                child: ElevatedButton(
-                  onPressed: _submitForm,
-                  child: const Text('Save Filter'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   bool _isMajorSelected(Map<String, String> major) {
     return selectedMajors.any((element) =>
-        element['major'] == major['major'] &&
+    element['major'] == major['major'] &&
         element['college'] == major['college']);
   }
 
   void _removeMajor(Map<String, String> major) {
     setState(() {
       selectedMajors.removeWhere((element) =>
-          element['major'] == major['major'] &&
+      element['major'] == major['major'] &&
           element['college'] == major['college']);
     });
   }
@@ -386,12 +380,12 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
                   // filter major list
                   return majorsList
                       .where((major) =>
-                          major['major']!
-                              .toLowerCase()
-                              .contains(pattern.toLowerCase()) ||
-                          major['college']!
-                              .toLowerCase()
-                              .contains(pattern.toLowerCase()))
+                  major['major']!
+                      .toLowerCase()
+                      .contains(pattern.toLowerCase()) ||
+                      major['college']!
+                          .toLowerCase()
+                          .contains(pattern.toLowerCase()))
                       .toList();
                 },
                 builder: (context, controller, focusNode) {
@@ -455,45 +449,79 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
               const SizedBox(height: 5),
               ...selectedMajors
                   .map((majorInfo) => Container(
-                        margin: EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.blue.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    majorInfo['major']!,
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    majorInfo['college']!,
-                                    style: TextStyle(fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close, size: 20),
-                              onPressed: () => _removeMajor(majorInfo),
-                              padding: EdgeInsets.zero,
-                              constraints: BoxConstraints(),
-                              tooltip: 'Remove major',
-                            ),
-                          ],
-                        ),
-                      ))
+                margin: EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            majorInfo['major']!,
+                            style:
+                            TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            majorInfo['college']!,
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => _removeMajor(majorInfo),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                      tooltip: 'Remove major',
+                    ),
+                  ],
+                ),
+              ))
                   .toList(),
             ],
           ),
       ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Match Non-Negotiables'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildGenderSelection(),
+              const SizedBox(height: 20),
+              _buildAgeRangeFields(),
+              const SizedBox(height: 20),
+              _buildHobbiesSelection(),
+              const SizedBox(height: 20),
+              _buildMajorSelection(),
+              const SizedBox(height: 30),
+              Center(
+                child: ElevatedButton(
+                  onPressed: _submitForm,
+                  child: const Text('Save Non-Negotiables'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

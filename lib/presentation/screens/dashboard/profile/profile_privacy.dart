@@ -29,16 +29,24 @@ class _ProfilePrivacyScreenState extends State<ProfilePrivacyScreen> {
       currentUser = user;
       isLoading = false;
 
-      _visibilitySettings['showMajorToMatch'] = data['showMajorToMatch'] ?? true;
-      _visibilitySettings['showMajorToOthers'] = data['showMajorToOthers'] ?? true;
       _visibilitySettings['showBioToMatch'] = data['showBioToMatch'] ?? true;
       _visibilitySettings['showBioToOthers'] = data['showBioToOthers'] ?? true;
-      _visibilitySettings['showAgeToMatch'] = data['showAgeToMatch'] ?? true;
-      _visibilitySettings['showAgeToOthers'] = data['showAgeToOthers'] ?? true;
-      _visibilitySettings['showInterestsToMatch'] = data['showInterestsToMatch'] ?? true;
-      _visibilitySettings['showInterestsToOthers'] = data['showInterestsToOthers'] ?? true;
-      _visibilitySettings['showSocialMediaToMatch'] = data['showSocialMediaToMatch'] ?? true;
-      _visibilitySettings['showSocialMediaToOthers'] = data['showSocialMediaToOthers'] ?? true;
+      _visibilitySettings['showInterestsToMatch'] =
+          data['showInterestsToMatch'] ?? true;
+      _visibilitySettings['showInterestsToOthers'] =
+          data['showInterestsToOthers'] ?? true;
+      _visibilitySettings['showSocialMediaToMatch'] =
+          data['showSocialMediaToMatch'] ?? true;
+      _visibilitySettings['showSocialMediaToOthers'] =
+          data['showSocialMediaToOthers'] ?? true;
+      _visibilitySettings['showSpotifyToMatch'] =
+          data['showSpotifyToMatch'] ?? true;
+      _visibilitySettings['showSpotifyToOthers'] =
+          data['showSpotifyToOthers'] ?? true;
+      _visibilitySettings['showPhotosToMatch'] =
+          data['showPhotosToMatch'] ?? true;
+      _visibilitySettings['showPhotosToOthers'] =
+          data['showPhotosToOthers'] ?? true;
     });
   }
 
@@ -69,11 +77,20 @@ class _ProfilePrivacyScreenState extends State<ProfilePrivacyScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                _buildSection("Major", matchKey: 'showMajorToMatch', othersKey: 'showMajorToOthers'),
-                _buildSection("Bio", matchKey: 'showBioToMatch', othersKey: 'showBioToOthers'),
-                _buildSection("Age", matchKey: 'showAgeToMatch', othersKey: 'showAgeToOthers'),
-                _buildSection("Interests", matchKey: 'showInterestsToMatch', othersKey: 'showInterestsToOthers'),
-                _buildSection("Social Media", matchKey: 'showSocialMediaToMatch', othersKey: 'showSocialMediaToOthers'),
+                _buildSection("Bio",
+                    matchKey: 'showBioToMatch', othersKey: 'showBioToOthers'),
+                _buildSection("Interests",
+                    matchKey: 'showInterestsToMatch',
+                    othersKey: 'showInterestsToOthers'),
+                _buildSection("Social Media",
+                    matchKey: 'showSocialMediaToMatch',
+                    othersKey: 'showSocialMediaToOthers'),
+                _buildSection("Spotify",
+                    matchKey: 'showSpotifyToMatch',
+                    othersKey: 'showSpotifyToOthers'),
+                _buildSection("Photos",
+                    matchKey: 'showPhotosToMatch',
+                    othersKey: 'showPhotosToOthers'),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: saveSettings,
@@ -84,11 +101,13 @@ class _ProfilePrivacyScreenState extends State<ProfilePrivacyScreen> {
     );
   }
 
-  Widget _buildSection(String label, {required String matchKey, required String othersKey}) {
+  Widget _buildSection(String label,
+      {required String matchKey, required String othersKey}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(label,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         CheckboxListTile(
           title: const Text("Visible to Match"),
           value: _visibilitySettings[matchKey] ?? true,
