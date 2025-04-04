@@ -145,7 +145,7 @@ class _MoreProfileScreenState extends State<MoreProfileScreen> {
                     if (visibilityPrefs['showInterests']!) _buildInterestsSection(),
 
                     const SizedBox(height: 20),
-                    _buildPhotos(widget.photosURL),
+                    _buildPhotos(context, widget.photosURL),
 
                     const SizedBox(height: 16),
                     SizedBox(
@@ -272,6 +272,7 @@ class _MoreProfileScreenState extends State<MoreProfileScreen> {
             .showSnackBar(SnackBar(content: Text("Could not open $url")));
       }
     }
+  }
 
   Widget _buildPhotoItem(BuildContext context, String url) {
     return GestureDetector(

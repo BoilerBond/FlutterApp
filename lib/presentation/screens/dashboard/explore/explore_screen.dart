@@ -106,23 +106,22 @@ class _ExploreScreenState extends State<ExploreScreen> {
       MaterialPageRoute(
 
           builder: (context) => MoreProfileScreen(
-                uid: users[profileIndex].uid,
-                name: users[profileIndex].firstName,
-                age: users[profileIndex].age.toString(),
-                major: users[profileIndex].major,
-                bio: users[profileIndex].bio,
-                displayedInterests: users[profileIndex].displayedInterests,
-                showHeight: users[profileIndex].showHeight,
-                heightUnit: users[profileIndex].heightUnit,
-                heightValue: users[profileIndex].heightValue,
-                photosURL: users[profileIndex].photoVisible
-                    ? users[profileIndex].photosURL
+                uid: recommendedUsers[profileIndex].uid,
+                name: recommendedUsers[profileIndex].firstName,
+                age: recommendedUsers[profileIndex].age.toString(),
+                major: recommendedUsers[profileIndex].major,
+                bio: recommendedUsers[profileIndex].bio,
+                displayedInterests: recommendedUsers[profileIndex].displayedInterests,
+                showHeight: recommendedUsers[profileIndex].showHeight,
+                heightUnit: recommendedUsers[profileIndex].heightUnit,
+                heightValue: recommendedUsers[profileIndex].heightValue,
+                photosURL: recommendedUsers[profileIndex].photoVisible
+                    ? recommendedUsers[profileIndex].photosURL
                     : [],
-                pfpLink: users[profileIndex].profilePictureURL,
+                pfpLink: recommendedUsers[profileIndex].profilePictureURL,
                 viewerUid: curUser!.uid,
                 isMatchViewer: false,
               )),
-
     );
   }
 
