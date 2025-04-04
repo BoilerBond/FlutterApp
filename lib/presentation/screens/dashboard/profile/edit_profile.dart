@@ -7,6 +7,7 @@ import 'package:datingapp/presentation/screens/dashboard/profile/edit_interests.
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:datingapp/utils/image_helper.dart';
+import 'edit_traits.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});
@@ -413,7 +414,12 @@ class _EditProfileState extends State<EditProfile> {
                   }),
                   const SizedBox(height: 10),
 
-                  _buildActionButton("Edit onboarding information", () {}),
+                  _buildActionButton("Edit onboarding information", () {
+                    Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const EditTraitsScreen()),
+          );
+                  }),
                   const SizedBox(height: 20),
 
                   Row(
