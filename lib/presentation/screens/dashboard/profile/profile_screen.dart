@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../data/entity/app_user.dart';
 import 'long_form_questions_screen.dart';
+import 'edit_traits.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

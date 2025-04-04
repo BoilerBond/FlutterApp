@@ -13,15 +13,32 @@ class ProfilePrivacyScreen extends StatefulWidget {
 class _ProfilePrivacyScreenState extends State<ProfilePrivacyScreen> {
   AppUser? currentUser;
   bool isLoading = true;
+  final Map<String, bool> _visibilitySettings = {};
 
   Future<void> fetchUserData() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final snapshot = await FirebaseFirestore.instance.collection("users").doc(uid).get();
+    final snapshot =
+        await FirebaseFirestore.instance.collection("users").doc(uid).get();
+
+    final user = AppUser.fromSnapshot(snapshot);
+    final data = user.toMap();
+
     setState(() {
-      currentUser = AppUser.fromSnapshot(snapshot);
+      currentUser = user;
       isLoading = false;
+
+      _visibilitySettings['showMajorToMatch'] = data['showMajorToMatch'] ?? true;
+      _visibilitySettings['showMajorToOthers'] = data['showMajorToOthers'] ?? true;
+      _visibilitySettings['showBioToMatch'] = data['showBioToMatch'] ?? true;
+      _visibilitySettings['showBioToOthers'] = data['showBioToOthers'] ?? true;
+      _visibilitySettings['showAgeToMatch'] = data['showAgeToMatch'] ?? true;
+      _visibilitySettings['showAgeToOthers'] = data['showAgeToOthers'] ?? true;
+      _visibilitySettings['showInterestsToMatch'] = data['showInterestsToMatch'] ?? true;
+      _visibilitySettings['showInterestsToOthers'] = data['showInterestsToOthers'] ?? true;
+      _visibilitySettings['showSocialMediaToMatch'] = data['showSocialMediaToMatch'] ?? true;
+      _visibilitySettings['showSocialMediaToOthers'] = data['showSocialMediaToOthers'] ?? true;
     });
   }
 
@@ -30,7 +47,8 @@ class _ProfilePrivacyScreenState extends State<ProfilePrivacyScreen> {
     await FirebaseFirestore.instance
         .collection("users")
         .doc(currentUser!.uid)
-        .set(currentUser!.toMap(), SetOptions(merge: true));
+        .set(_visibilitySettings, SetOptions(merge: true));
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Privacy settings updated.")),
     );
@@ -51,21 +69,11 @@ class _ProfilePrivacyScreenState extends State<ProfilePrivacyScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                _buildSection("Major",
-                    match: 'showMajorToMatch',
-                    others: 'showMajorToOthers'),
-                _buildSection("Bio",
-                    match: 'showBioToMatch',
-                    others: 'showBioToOthers'),
-                _buildSection("Age",
-                    match: 'showAgeToMatch',
-                    others: 'showAgeToOthers'),
-                _buildSection("Interests",
-                    match: 'showInterestsToMatch',
-                    others: 'showInterestsToOthers'),
-                _buildSection("Social Media",
-                    match: 'showSocialMediaToMatch',
-                    others: 'showSocialMediaToOthers'),
+                _buildSection("Major", matchKey: 'showMajorToMatch', othersKey: 'showMajorToOthers'),
+                _buildSection("Bio", matchKey: 'showBioToMatch', othersKey: 'showBioToOthers'),
+                _buildSection("Age", matchKey: 'showAgeToMatch', othersKey: 'showAgeToOthers'),
+                _buildSection("Interests", matchKey: 'showInterestsToMatch', othersKey: 'showInterestsToOthers'),
+                _buildSection("Social Media", matchKey: 'showSocialMediaToMatch', othersKey: 'showSocialMediaToOthers'),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: saveSettings,
@@ -76,46 +84,26 @@ class _ProfilePrivacyScreenState extends State<ProfilePrivacyScreen> {
     );
   }
 
-  Widget _buildSection(String label, {required String match, required String others}) {
+  Widget _buildSection(String label, {required String matchKey, required String othersKey}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        SwitchListTile(
+        CheckboxListTile(
           title: const Text("Visible to Match"),
-          value: currentUser?.toMap()[match] ?? true,
+          value: _visibilitySettings[matchKey] ?? true,
           onChanged: (val) {
             setState(() {
-              currentUser = AppUser.fromSnapshot(
-                FirebaseFirestore.instance
-                    .collection("users")
-                    .doc(currentUser!.uid)
-                    .get()
-                    .then((_) {
-                      final map = currentUser!.toMap();
-                      map[match] = val;
-                      return currentUser!..toMap().update(match, (_) => val);
-                    }) as DocumentSnapshot<Object?>
-              );
+              _visibilitySettings[matchKey] = val!;
             });
           },
         ),
-        SwitchListTile(
+        CheckboxListTile(
           title: const Text("Visible to Others"),
-          value: currentUser?.toMap()[others] ?? true,
+          value: _visibilitySettings[othersKey] ?? true,
           onChanged: (val) {
             setState(() {
-              currentUser = AppUser.fromSnapshot(
-                FirebaseFirestore.instance
-                    .collection("users")
-                    .doc(currentUser!.uid)
-                    .get()
-                    .then((_) {
-                      final map = currentUser!.toMap();
-                      map[others] = val;
-                      return currentUser!..toMap().update(others, (_) => val);
-                    }) as DocumentSnapshot<Object?>
-              );
+              _visibilitySettings[othersKey] = val!;
             });
           },
         ),
@@ -123,4 +111,4 @@ class _ProfilePrivacyScreenState extends State<ProfilePrivacyScreen> {
       ],
     );
   }
-} 
+}

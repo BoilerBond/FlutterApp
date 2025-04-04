@@ -615,7 +615,7 @@ class _Step3State extends State<Step3> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("cm"),
+                        Text("ft/in"),
                         Switch(
                           value: _useCm,
                           onChanged: (bool value) {
@@ -624,7 +624,7 @@ class _Step3State extends State<Step3> {
                             });
                           },
                         ),
-                        Text("ft/in"),
+                        Text("cm"),
                       ],
                     ),
                   ],

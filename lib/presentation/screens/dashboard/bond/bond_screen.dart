@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'dart:async';
 import '../../../../data/entity/app_user.dart';
 import 'match_intro_screen.dart';
+import 'relationship_advice_screen.dart';
 
 class BondScreen extends StatefulWidget {
   const BondScreen({super.key});
@@ -37,7 +38,8 @@ class _BondScreenState extends State<BondScreen> {
         await db.collection("users").doc(currentUser?.uid).get();
     AppUser user = AppUser.fromSnapshot(curUserSnapshot);
     //final matchSnapshot = await db.collection("users").doc(user.match).get();
-    final matchSnapshot = await db.collection("users").doc(placeholder_match).get();
+    final matchSnapshot =
+        await db.collection("users").doc(placeholder_match).get();
     final matchUser = AppUser.fromSnapshot(matchSnapshot);
     setState(() {
       curUser = user;
@@ -124,21 +126,22 @@ class _BondScreenState extends State<BondScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MoreProfileScreen(
-          uid: match!.uid,
-          name: match!.firstName,
-          age: match!.age.toString(),
-          major: match!.major,
-          bio: match!.bio,
-          showHeight: match!.showHeight,
-          heightUnit: match!.heightUnit,
-          heightValue: match!.heightValue,
-          displayedInterests: match!.displayedInterests,
-          photosURL: match!.photosURL,
-          pfpLink: match!.profilePictureURL,
-          spotifyUsername: match!.spotifyUsername,
-        ),
-      ),
+          builder: (context) => MoreProfileScreen(
+                uid: match!.uid,
+                name: match!.firstName,
+                age: match!.age.toString(),
+                major: match!.major,
+                bio: match!.bio,
+                displayedInterests: match!.displayedInterests,
+                showHeight: match!.showHeight,
+                heightUnit: match!.heightUnit,
+                heightValue: match!.heightValue,
+                photosURL: match!.photosURL,
+                pfpLink: match!.profilePictureURL,
+                spotifyUsername: match!.spotifyUsername,
+                viewerUid: curUser!.uid,
+                isMatchViewer: true,
+              )),
     );
   }
 
@@ -177,7 +180,6 @@ class _BondScreenState extends State<BondScreen> {
         ],
         toolbarHeight: 40,
       ),
-
       body: isMatchBlocked ? _buildBlockedView() : isMatchUnbonded ? _buildUnbondedView() : SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16).copyWith(top: 0),
@@ -223,124 +225,150 @@ class _BondScreenState extends State<BondScreen> {
                       child: TextButton(
                         onPressed: _navigateToMoreProfile,
                         child: const Text("View More"),
+                              ),
+                            ),
+                          ),
+                          const VerticalDivider(indent: 16, endIndent: 16),
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width / 3,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: TextButton(
+                                onPressed: () => _confirmUnbondDialog(context),
+                                child: const Text("Unbond"),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  const VerticalDivider(indent: 16, endIndent: 16),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width / 3,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: TextButton(
-                        onPressed: () => _confirmUnbondDialog(context),
-                        child: const Text("Unbond"),
+                    const Divider(),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("What you have in common:",
+                            style: TextStyle(fontSize: 16)),
+                        if (sharedTraits.isEmpty)
+                          const Text("No traits in common yet.")
+                        else
+                          ...sharedTraits
+                              .map((trait) => Text("• $trait"))
+                              .toList(),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Spotify Button
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          final spotifyUsername = match?.spotifyUsername;
+                          final String url = spotifyUsername != null &&
+                                  spotifyUsername.isNotEmpty
+                              ? "https://open.spotify.com/user/" +
+                                  spotifyUsername
+                              : "";
+                          _launchURL(url);
+                        },
+                        icon: Icon(Icons.music_note,
+                            color: match?.spotifyUsername != null &&
+                                    match!.spotifyUsername.isNotEmpty
+                                ? Colors.blueAccent
+                                : Colors.grey),
+                        label: Text("Spotify",
+                            style: TextStyle(
+                                fontSize: 16,
+                                color: match?.spotifyUsername != null &&
+                                        match!.spotifyUsername.isNotEmpty
+                                    ? Colors.blueAccent
+                                    : Colors.grey)),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            width: 1,
+                            color: match?.spotifyUsername != null &&
+                                    match!.spotifyUsername.isNotEmpty
+                                ? Colors.blueAccent
+                                : Colors.grey,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("What you have in common:",
-                    style: TextStyle(fontSize: 16)),
-                if (sharedTraits.isEmpty)
-                  const Text("No traits in common yet.")
-                else
-                  ...sharedTraits.map((trait) => Text("• $trait")).toList(),
-              ],
-            ),
-            const SizedBox(height: 8),
-            
-            // Spotify Button
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  final spotifyUsername = match?.spotifyUsername;
-                  final String url = spotifyUsername != null && spotifyUsername.isNotEmpty
-                      ? "https://open.spotify.com/user/" + spotifyUsername
-                      : "";
-                  _launchURL(url);
-                },
-                icon: Icon(Icons.music_note, color: match?.spotifyUsername != null && match!.spotifyUsername.isNotEmpty ? Colors.blueAccent : Colors.grey),
-                label: Text("Spotify",
-                    style: TextStyle(
-                        fontSize: 16,
-                        color: match?.spotifyUsername != null && match!.spotifyUsername.isNotEmpty ? Colors.blueAccent : Colors.grey)),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(
-                    width: 1,
-                    color: match?.spotifyUsername != null && match!.spotifyUsername.isNotEmpty ? Colors.blueAccent : Colors.grey,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ),
 
-            _buildActionButton(Icons.chat_bubble, "Go to our messages", () {}),
-            _buildActionButton(
-                Icons.favorite, "Relationship suggestions", () {}),
-            _buildActionButton(Icons.info, "View Match Introduction", () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => MatchIntroScreen(
-                    curUser: curUser!,
-                    match: match!,
-                  ),
-                ),
-              );
-            }),
+                    _buildActionButton(
+                        Icons.chat_bubble, "Go to our messages", () {}),
+                    _buildActionButton(
+                        Icons.favorite, "Relationship suggestions", () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RelationshipAdviceScreen(
+                              user: curUser!, match: match!),
+                        ),
+                      );
+                    }),
+                    _buildActionButton(Icons.info, "View Match Introduction",
+                        () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MatchIntroScreen(
+                            curUser: curUser!,
+                            match: match!,
+                          ),
+                        ),
+                      );
+                    }),
 
-            const SizedBox(height: 15),
-            const Divider(),
-            const SizedBox(height: 5),
-            
-            // Keep Match Toggle
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: SwitchListTile(
-                title: const Text("Keep this match for next week",
-                  style: TextStyle(fontSize: 16)),
-                subtitle: Text(keepMatchToggle 
-                  ? "You'll keep this match" 
-                  : "You'll get a new match next week",
-                  style: TextStyle(fontSize: 12, color: Colors.grey)),
-                value: keepMatchToggle,
-                activeColor: const Color(0xFF5E77DF),
-                onChanged: (bool value) {
-                  _updateKeepMatch(value);
-                },
-              ),
-            ),
-            
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
-            
-            // Block User Button
-            ElevatedButton.icon(
-              onPressed: _confirmBlockUser,
-              icon: const Icon(Icons.block, color: Colors.white),
-              label: const Text("Block User", style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                    const SizedBox(height: 15),
+                    const Divider(),
+                    const SizedBox(height: 5),
+
+                    // Keep Match Toggle
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: SwitchListTile(
+                        title: const Text("Keep this match for next week",
+                            style: TextStyle(fontSize: 16)),
+                        subtitle: Text(
+                            keepMatchToggle
+                                ? "You'll keep this match"
+                                : "You'll get a new match next week",
+                            style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        value: keepMatchToggle,
+                        activeColor: const Color(0xFF5E77DF),
+                        onChanged: (bool value) {
+                          _updateKeepMatch(value);
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 16),
+
+                    // Block User Button
+                    ElevatedButton.icon(
+                      onPressed: _confirmBlockUser,
+                      icon: const Icon(Icons.block, color: Colors.white),
+                      label: const Text("Block User",
+                          style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 16),
+                      ),
+                    ),
+                  ],
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               ),
             ),
-          ],
-        ),
-        ),
-      ),
     ));
   }
 
@@ -463,31 +491,30 @@ class _BondScreenState extends State<BondScreen> {
       ),
     );
   }
-  
+
   Future<void> _updateKeepMatch(bool value) async {
     setState(() {
       keepMatchToggle = value;
     });
-    
+
     if (curUser != null) {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
-      
+
       await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .update({'keepMatch': value});
-      
+          .collection('users')
+          .doc(user.uid)
+          .update({'keepMatch': value});
+
       // Update local data model
       if (curUser != null) {
         curUser!.keepMatch = value;
       }
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(value 
-          ? "You'll keep this match for next week" 
-          : "You'll receive a new match next week"))
-      );
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(value
+              ? "You'll keep this match for next week"
+              : "You'll receive a new match next week")));
     }
   }
 
@@ -625,8 +652,8 @@ class _BondScreenState extends State<BondScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.block, 
-              size: 72, 
+              Icons.block,
+              size: 72,
               color: Colors.grey,
             ),
             const SizedBox(height: 24),
@@ -653,7 +680,8 @@ class _BondScreenState extends State<BondScreen> {
             OutlinedButton.icon(
               onPressed: () {
                 // Navigate to the blocked profiles screen and refresh data when returning
-                Navigator.pushNamed(context, '/settings/blocked_profiles').then((_) {
+                Navigator.pushNamed(context, '/settings/blocked_profiles')
+                    .then((_) {
                   // Refresh user data when returning from blocked profiles screen
                   getUserProfiles();
                 });
@@ -661,7 +689,8 @@ class _BondScreenState extends State<BondScreen> {
               icon: const Icon(Icons.settings),
               label: const Text("Manage Blocked Users"),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],
@@ -673,18 +702,15 @@ class _BondScreenState extends State<BondScreen> {
   // Block the current match with confirmation
   Future<void> _blockUser() async {
     if (match == null) return;
-    
+
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
-    
+
     // Update Firestore
-    await FirebaseFirestore.instance
-      .collection("users")
-      .doc(user.uid)
-      .update({
-        "blockedUserUIDs": FieldValue.arrayUnion([match!.uid])
-      });
-    
+    await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
+      "blockedUserUIDs": FieldValue.arrayUnion([match!.uid])
+    });
+
     // Update local state
     setState(() {
       if (curUser != null) {
@@ -692,24 +718,21 @@ class _BondScreenState extends State<BondScreen> {
       }
       isMatchBlocked = true;
     });
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("User has been blocked"))
-    );
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text("User has been blocked")));
   }
-  
+
   // Show confirmation dialog before blocking
   Future<void> _confirmBlockUser() async {
     if (match == null) return;
-    
+
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Block User?"),
-        content: Text(
-          "Are you sure you want to block ${match!.firstName}? \n\n"
-          "Blocked users won't appear in your explore feed, matches, or be able to contact you."
-        ),
+        content: Text("Are you sure you want to block ${match!.firstName}? \n\n"
+            "Blocked users won't appear in your explore feed, matches, or be able to contact you."),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -722,12 +745,12 @@ class _BondScreenState extends State<BondScreen> {
         ],
       ),
     );
-    
+
     if (confirmed == true) {
       await _blockUser();
     }
   }
-  
+
   Future<void> _launchURL(String url) async {
     if (url.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -782,25 +805,26 @@ class _BondScreenState extends State<BondScreen> {
   }
 
   void _reportProfile(BuildContext context, String name) {
-  showDialog(
-    context: context,
-    builder: (context) => Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.85,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Report $name's Profile",
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 15),
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.85,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Report $name's Profile",
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 15),
                 SizedBox(
                   width: double.infinity,
                   child: DropdownButtonFormField<int>(
