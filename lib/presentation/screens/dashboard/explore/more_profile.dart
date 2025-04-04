@@ -73,7 +73,7 @@ class _MoreProfileScreenState extends State<MoreProfileScreen> {
         'showBio': data[widget.isMatchViewer ? 'showBioToMatch' : 'showBioToOthers'] ?? true,
         'showInterests': data[widget.isMatchViewer ? 'showInterestsToMatch' : 'showInterestsToOthers'] ?? true,
         'showSocialMedia': data[widget.isMatchViewer ? 'showSocialMediaToMatch' : 'showSocialMediaToOthers'] ?? true,
-        'showHeight': data['showHeight'] ?? false, // ✅ Check this as well
+        'showHeight': data['showHeight'] ?? false, 
       };
       isLoading = false;
     });
@@ -331,4 +331,5 @@ class _MoreProfileScreenState extends State<MoreProfileScreen> {
       ),
     ]);
   }
+}
 }

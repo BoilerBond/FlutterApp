@@ -104,7 +104,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-
           builder: (context) => MoreProfileScreen(
                 uid: users[profileIndex].uid,
                 name: users[profileIndex].firstName,
@@ -122,7 +121,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 viewerUid: curUser!.uid,
                 isMatchViewer: false,
               )),
-
     );
   }
 
