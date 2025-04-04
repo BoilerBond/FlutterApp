@@ -145,6 +145,10 @@ class _EditProfileState extends State<EditProfile> {
     }
 
     await db.collection("users").doc(user.uid).update(user.toMap());
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Profile updated successfully")),
+    );
   }
 
   Future<void> _fetchUserData() async {
@@ -392,7 +396,7 @@ class _EditProfileState extends State<EditProfile> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("cm"),
+                        Text("ft/in"),
                         Switch(
                           value: _useCm,
                           onChanged: (bool value) {
@@ -401,7 +405,7 @@ class _EditProfileState extends State<EditProfile> {
                             });
                           },
                         ),
-                        Text("ft/in"),
+                        Text("cm"),
                       ],
                     ),
                   ],
@@ -416,9 +420,10 @@ class _EditProfileState extends State<EditProfile> {
 
                   _buildActionButton("Edit onboarding information", () {
                     Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const EditTraitsScreen()),
-          );
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const EditTraitsScreen()),
+                    );
                   }),
                   const SizedBox(height: 20),
 

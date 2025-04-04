@@ -72,27 +72,22 @@ class _BondScreenState extends State<BondScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MoreProfileScreen(
-          uid: match!.uid,
-          name: match!.firstName,
-          age: match!.age.toString(),
-          major: match!.major,
-          bio: match!.bio,
-          showHeight: match!.showHeight,
-          heightUnit: match!.heightUnit,
-          heightValue: match!.heightValue,
-          displayedInterests: match!.displayedInterests,
-          photosURL: [
-            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-            "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
-          ],
-          pfpLink:
-              "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
-          spotifyUsername: match!.spotifyUsername,
-        ),
-      ),
+          builder: (context) => MoreProfileScreen(
+                uid: match!.uid,
+                name: match!.firstName,
+                age: match!.age.toString(),
+                major: match!.major,
+                bio: match!.bio,
+                displayedInterests: match!.displayedInterests,
+                showHeight: match!.showHeight,
+                heightUnit: match!.heightUnit,
+                heightValue: match!.heightValue,
+                photosURL: match!.photosURL,
+                pfpLink: match!.profilePictureURL,
+                spotifyUsername: match!.spotifyUsername,
+                viewerUid: curUser!.uid,
+                isMatchViewer: true,
+              )),
     );
   }
 
