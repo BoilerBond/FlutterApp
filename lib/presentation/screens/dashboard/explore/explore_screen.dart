@@ -32,42 +32,44 @@ class _ExploreScreenState extends State<ExploreScreen> {
       curUser = AppUser.fromSnapshot(userSnapshot);
     });
 
-    // Call Firebase Function to get profiles to recommend to the user
-    // final callable = FirebaseFunctions.instance.httpsCallable('user-recommendation-recommendProfiles');
-    // final result = await callable.call({});
-    // try {
-    //   final data = result.data as List<Map<String, dynamic>>;
-    //   for (Map<String, dynamic> entry in data) {
-    //     final snap = await db.collection("users").doc(entry["uid"].value).get();
-    //     recommendedUsers.add(AppUser.fromSnapshot(snap));
-    //   }
-    //   setState(() {
-    //     isLoading = false;
-    //   });
-    // }
-    // catch (e) {
-    //   print(e);
-    // }
-  }
-
-  // Fetch visible users from Firestore
-  Future<void> _fetchVisibleUsers() async {
+    final callable = FirebaseFunctions.instance
+        .httpsCallable('user-recommendation-recommendProfiles');
+    final result = await callable.call({
+      'limit': 10,
+    });
     try {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection("users")
-          .where('__name__', isNotEqualTo: curUser?.uid)
-          .where("profileVisible", isEqualTo: true)
-          .get();
-
-      final fetchedUsers = await querySnapshot.docs
-          .where((doc) {
-            return !(curUser!.blockedUserUIDs.contains(doc.id));
-          })
-          .map((doc) => AppUser.fromSnapshot(doc))
-          .toList();
-
-      List<AppUser> listFiltered = [];
+      final List<dynamic> resultList = result.data as List<dynamic>;
+      
+      List<AppUser> fetchedUsers = [];
+      
+      for (final dynamic entry in resultList) {
+        try {
+          // Access properties without casting the entire object
+          final userId = entry['uid']?.toString();
+          final distance = double.tryParse(entry['distance']?.toString() ?? '0.0') ?? 0.0;
+          
+          if (userId == null) {
+            print("Missing uid in recommendation result");
+            continue;
+          }
+          
+          final snap = await db.collection("users").doc(userId).get();
+          
+          if (snap.exists) {
+            final user = AppUser.fromSnapshot(snap);
+            print("User: ${user.firstName}, Distance: $distance");
+            fetchedUsers.add(user);
+          }
+        } catch (e) {
+          print("Error processing recommendation entry: $e");
+          // Continue processing other entries even if one fails
+          continue;
+        }
+      }
+      
+      // Apply filters if needed
       if (filterData.isNotEmpty) {
+        List<AppUser> listFiltered = [];
         for (AppUser u in fetchedUsers) {
           if (!u.matchGenderPreference(filterData["genderPreferences"]) ||
               !u.matchAgePreference(filterData["ageRange"]) ||
@@ -80,14 +82,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
           fetchedUsers.remove(x);
         }
       }
-
+      
       setState(() {
         recommendedUsers = fetchedUsers;
         isLoading = false;
       });
     } catch (e) {
-      print("Failed to fetch visible users: $e");
-      setState(() => isLoading = false);
+      print("Error parsing data: $e");
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -95,7 +99,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void initState() {
     super.initState();
     getProfiles();
-    _fetchVisibleUsers();
   }
 
   void _switchToNextProfile() {
