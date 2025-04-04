@@ -484,7 +484,7 @@ class AppUser {
   bool matchMajor(List<dynamic> list) {
     if (list.isEmpty) return true;
     bool result = false;
-    for (Map<String, String> i in list) {
+    for (var i in list) {
       if (i["major"] == this.major.toLowerCase()) return true;
     }
     return result;

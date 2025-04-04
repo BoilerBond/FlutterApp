@@ -99,8 +99,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
           if (!u.matchGenderPreference(nonnegotiablesData["genderPreferences"]) ||
               !u.matchAgePreference(nonnegotiablesData["ageRange"]) ||
               !u.hasInterests(nonnegotiablesData["mustHaveHobbies"]) ||
-              !u.notHaveInterests(nonnegotiablesData["mustNotHaveHobbies"])
-              /*|| !u.matchMajor(nonnegotiablesData["major"]*/) {
+              !u.notHaveInterests(nonnegotiablesData["mustNotHaveHobbies"]) ||
+              !u.matchMajor(nonnegotiablesData["majors"])) {
             continue;
           }
           else {
@@ -115,8 +115,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
       return;
     }
     catch(e) {
-      print("unable to filter");
-      print(nonnegotiablesData["major"]); // <- this is null even when i have a major selected
       print(e);
     }
   }
@@ -381,7 +379,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           filterNN();
                         }
                         else {
-                          print(visibleUsers);
                           recommendedUsers = visibleUsers;
                         }
                         isLoading = false;

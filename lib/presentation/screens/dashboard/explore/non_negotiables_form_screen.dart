@@ -120,6 +120,18 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
             }
           });
         }
+        if (nonNegotiables.containsKey('majors')) {
+          final ms = nonNegotiables['majors'] as List<dynamic>;
+          setState(() {
+            selectedMajors.clear();
+            for (Map<String, dynamic> m in ms) {
+              Map<String, String> temp = {};
+              temp["major"] = m["major"].toString();
+              temp["college"] = m["college"].toString();
+              selectedMajors.add(temp);
+            }
+          });
+        }
       }
     } catch (e) {
       print("Error loading non-negotiables: $e");
