@@ -44,6 +44,23 @@ class _DashboardState extends State<Dashboard> {
     SettingsScreen(),
   ];
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check for arguments to set initial tab
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map) {
+      if (args.containsKey('initialIndex')) {
+        final index = args['initialIndex'];
+        if (index is int && index >= 0 && index < _screens.length) {
+          setState(() {
+            _currentIndex = index;
+          });
+        }
+      }
+    }
+  }
+
   Future<void> init(BuildContext context) async {
     // Requesting permission for notifications
     NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(

@@ -288,7 +288,7 @@ class _OnBoardingState extends State<OnBoarding> {
                           ? _errors['gender']
                           : null,
                     ),
-                    items: ['Male', 'Female', 'Other'].map((gender) {
+                    items: ['Man', 'Woman', 'Other'].map((gender) {
                       return DropdownMenuItem(
                         value: gender,
                         child: Text(gender),

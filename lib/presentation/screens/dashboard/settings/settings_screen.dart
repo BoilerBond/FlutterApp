@@ -46,6 +46,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Navigator.pushNamedAndRemoveUntil(context, "/onboarding", (route) => false);
   }
 
+  void _onBugReportingPress(BuildContext context) {
+    Navigator.pushNamed(context, "/settings/bug_reporting");
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> buttons = [
@@ -57,6 +61,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       {'title': 'Back to Onboarding', 'type': ButtonType.normal, 'icon': Icons.arrow_forward, 'onPressed': _onRedirectToOnboardingPress},
       {'title': 'Danger Zone', 'type': ButtonType.danger, 'icon': Icons.warning_amber_rounded, 'onPressed': _onDangerZonePress},
       {'title': 'Log Out', 'type': ButtonType.warning, 'icon': Icons.exit_to_app, 'onPressed': _onLogoutPress},
+      {'title': 'Bug Reporting', 'type': ButtonType.normal, 'icon': Icons.bug_report, 'onPressed': _onBugReportingPress},
     ];
 
     return Scaffold(
@@ -83,7 +88,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
 
             ...buttons.map((button) => Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.only(bottom: 8),
               child: SizedBox(
                 width: MediaQuery.of(context).size.width,
                 child: OutlinedButton(
@@ -96,7 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Icon(
                         button['icon'],
                         color: button['type'] == ButtonType.warning
@@ -105,7 +110,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ? Theme.of(context).colorScheme.error
                                 : Color(0xFF2C519C),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Text(
                         button['title'],
                         style: TextStyle(

@@ -45,6 +45,7 @@ class AppUser {
   bool keepMatch;
   String match;
   Map<String, dynamic> nonNegotiables;
+  Map<String, dynamic> nonNegotiablesFilter;
   int longFormQuestion;
   String longFormAnswer;
   Map<String, int> personalTraits;
@@ -94,6 +95,7 @@ class AppUser {
     this.showSocialMediaToOthers = true,
     this.match = "",
     this.nonNegotiables = const {},
+    this.nonNegotiablesFilter = const {},
     this.longFormQuestion = 0,
     this.longFormAnswer = '',
     this.personalTraits = const {},
@@ -135,7 +137,7 @@ class AppUser {
       spotifyUsername: data['spotifyUsername'] ?? '',
       showHeight: data['showHeight'] ?? true,
       heightUnit: data['heightUnit'] ?? '',
-      heightValue: data['heightValue'] ?? 0.0,
+      heightValue: (data['heightValue'] ?? 0).toDouble(),
       showMajorToMatch: data['showMajorToMatch'] ?? true,
       showMajorToOthers: data['showMajorToOthers'] ?? true,
       showBioToMatch: data['showBioToMatch'] ?? true,
@@ -148,12 +150,14 @@ class AppUser {
       showSocialMediaToOthers: data['showSocialMediaToOthers'] ?? true,
       match: data['match'] ?? '',
       nonNegotiables: data['nonNegotiables'] ?? {},
+      nonNegotiablesFilter: Map<String, dynamic>.from(data['nonNegotiablesFilter'] ?? {}),
       longFormQuestion: data['longFormQuestion'] ?? 0,
       longFormAnswer: data['longFormAnswer'] ?? '',
       personalTraits: Map<String, int>.from(data['personalTraits'] ?? {}),
       partnerPreferences:
           Map<String, int>.from(data['partnerPreferences'] ?? {}),
       weeksWithoutMatch: data['weeksWithoutMatch'] ?? 0,
+      hasSeenMatchIntro: data['hasSeenMatchIntro'] ?? false,
     );
   }
 
@@ -226,10 +230,12 @@ class AppUser {
       'showSocialMediaToOthers': showSocialMediaToOthers,
       'match': match,
       'nonNegotiables': nonNegotiables,
+      'nonNegotiablesFilter' : nonNegotiablesFilter,
       'longFormQuestion': longFormQuestion,
       'longFormAnswer': longFormAnswer,
       'weeksWithoutMatch': weeksWithoutMatch,
-      'spotifyUsername': spotifyUsername
+      'spotifyUsername': spotifyUsername,
+      'hasSeenMatchIntro' : hasSeenMatchIntro,
     };
   }
 
@@ -265,7 +271,197 @@ class AppUser {
         common.add("Similar trait: $key");
       }
     }
+    common.add(getMostSimilarMetric(other));
 
     return common;
+  }
+
+  String getMostSimilarMetric(AppUser user2) {
+    final List<int> user1Traits = this.personalTraits.values.toList();
+    final List<int> user2Traits = user2.personalTraits.values.toList();
+    int minIndex = 0;
+    int minDiff = 10;
+    for (int i = 0; i < 5; i++) {
+      int diff = (user1Traits[i] - user2Traits[i]).abs();
+      if (diff < minDiff) {
+        minDiff = diff;
+        minIndex = i;
+      }
+    }
+    String message = "You and ${user2.firstName}";
+    switch (minIndex) {
+      case 1:
+        message += " have similar levels of extroversion.";
+        break;
+      case 0:
+        message += " have similar views on the importance of family.";
+        break;
+      case 2:
+        message += " have lifestyles with similar levels of physical activity.";
+        break;
+      case 4:
+        message += " are similarly emotionally expressive.";
+        break;
+      case 3:
+        message += " have similar views on trying new things and taking risks.";
+        break;
+    }
+    return message;
+  }
+
+  double preferenceCompatibility(AppUser user2) {
+    // get how closely user2 matches user1's preferences
+
+    double sum = 0.0;
+    List<int> p1 = this.partnerPreferences.values.toList();
+    List<int> p2 = user2.personalTraits.values.toList();
+    sum += pow(p1[0] + p2[4], 2); // emotionally expressive vs. calm
+    sum += pow(p1[1] - p2[3], 2); // spontaneous vs. trying new things
+    sum += pow(p1[2] - p2[1], 2); // outgoing vs. enjoy socializing
+    sum += pow(p1[3] - p2[2], 2); // active vs. physical activity
+    sum += pow(p1[4] - p2[0], 2); // family vs. family
+    return sqrt(sum);
+  }
+
+  String getPreferenceTo(AppUser user2) {
+    final List<int> p1 = this.partnerPreferences.values.toList();
+    final List<int> p2 = user2.personalTraits.values.toList();
+    List<int> difference = [0,0,0,0,0];
+    difference[0] = (p1[0] + p2[4]).abs();
+    difference[1] = (p1[1] - p2[3]).abs();
+    difference[2] = (p1[2] - p2[1]).abs();
+    difference[3] = (p1[3] - p2[2]).abs();
+    difference[4] = (p1[4] - p2[0]).abs();
+    int minIndex = 0;
+    int minDiff = 10;
+    for (int i = 0; i < 5; i++) {
+      if (difference[i] < minDiff) {
+        minDiff = difference[i];
+        minIndex = i;
+      }
+    }
+    String message = "${user2.firstName}";
+    switch (minIndex) {
+      case 1:
+        message += "'s level of extroversion matches your partner preference.\n";
+        break;
+      case 0:
+        message += "'s views on the importance of family matches your partner preference\n.";
+        break;
+      case 2:
+        message += "'s lifestyle matches your partner preference\n.";
+        break;
+      case 4:
+        message += "'s emotional expressiveness matches your partner preference\n.";
+        break;
+      case 3:
+        message += "'s willingness to try new things and take risks matches your partner preference\n.";
+        break;
+    }
+    return message;
+  }
+
+  String getPreferenceFrom(AppUser user2) {
+    final List<int> p1 = this.personalTraits.values.toList();
+    final List<int> p2 = user2.partnerPreferences.values.toList();
+    List<int> difference = [0,0,0,0,0];
+    difference[0] = (p1[0] + p2[4]).abs();
+    difference[1] = (p1[1] - p2[3]).abs();
+    difference[2] = (p1[2] - p2[1]).abs();
+    difference[3] = (p1[3] - p2[2]).abs();
+    difference[4] = (p1[4] - p2[0]).abs();
+    int minIndex = 0;
+    int minDiff = 10;
+    for (int i = 0; i < 5; i++) {
+      if (difference[i] < minDiff) {
+        minDiff = difference[i];
+        minIndex = i;
+      }
+    }
+    String message = "Your ";
+    switch (minIndex) {
+      case 1:
+        message += "level of extroversion ";
+        break;
+      case 0:
+        message += "views on the importance of family ";
+        break;
+      case 2:
+        message += "lifestyle ";
+        break;
+      case 4:
+        message += "emotional expressiveness ";
+        break;
+      case 3:
+        message += "willingness to try new things and take risks ";
+        break;
+    }
+    message += "matches ${user2.firstName}'s partner preference.\n";
+    return message;
+  }
+
+  String getMatchReason(AppUser u2) {
+    String message = "";
+    message += this.getPreferenceTo(u2);
+    message += "\n";
+    message += this.getPreferenceFrom(u2);
+    return message;
+  }
+
+  bool hasInterests(List<dynamic> list) {
+    if (list.isEmpty) return true;
+    bool result = false;
+    for (String i in list) {
+      if (!this.displayedInterests.contains(i)) {
+        return false;
+      }
+    }
+    return result;
+  }
+
+  bool notHaveInterests(List<dynamic> list) {
+    if (list.isEmpty) return true;
+    bool result = true;
+    for (String i in list) {
+      if (this.displayedInterests.contains(i)) {
+        return false;
+      }
+    }
+    return result;
+  }
+
+  String gts(Gender g) {
+    switch (g) {
+      case Gender.man:
+        return 'man';
+      case Gender.woman:
+        return 'woman';
+      case Gender.other:
+        return 'other';
+      default:
+        return 'none';
+    }
+  }
+
+  bool matchGenderPreference(List<dynamic> list) {
+    if (list.isEmpty) return true;
+    bool result = false;
+    for (String i in list) {
+      if (gts(this.gender).toLowerCase() == i.toLowerCase()) {
+        return true;
+      }
+    }
+    return result;
+  }
+
+  bool matchAgePreference(Map<String, dynamic> list) {
+    bool result = true;
+    if (list.values.first != null) {
+      result && this.age >= list.values.first;
+    }
+    if (list.values.last != null) {
+      return this.age <= list.values.last;
+    }
+    return result;
   }
 }

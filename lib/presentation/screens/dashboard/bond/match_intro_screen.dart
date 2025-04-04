@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../data/entity/app_user.dart';
+import '../../../widgets/protected_text.dart';
 
 class MatchIntroScreen extends StatefulWidget {
   final AppUser curUser;
@@ -21,17 +22,87 @@ class _MatchIntroScreenState extends State<MatchIntroScreen> {
     });
   }
 
+  Widget _buildPhotoItem(String url) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+            PageRouteBuilder(
+                opaque: false,
+                barrierDismissible: true,
+                pageBuilder: (BuildContext context, _, __) {
+                  return Align(
+                    child: Padding (
+                        padding: EdgeInsets.all(20),
+                        child: Hero(
+                                tag: "zoom",
+                                child: Image.network(url)
+                        )
+                    )
+                  );
+                }
+            )
+        );
+      },
+      child: Image.network(url),
+    );
+  }
+
   List<Widget> _buildPages() {
     return [
-      // First page: Match Reason
+      // First page: introduce match
       Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Why You Were Matched",
+          const Text("Get to Know Them",
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 20),
-          Text(getMatchReason(widget.curUser, widget.match),
-              style: const TextStyle(fontSize: 16)),
+          const SizedBox(height: 30),
+          Expanded(
+              child: Center(
+                  child: Column(
+                      children: [
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              CircleAvatar(
+                                backgroundImage: widget.match.profilePictureURL.isEmpty ?
+                                    NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png")
+                                    : NetworkImage(widget.match.profilePictureURL),
+                                radius: MediaQuery.of(context).size.width * 0.15,
+                                backgroundColor: const Color(0xFFCDFCFF),
+                              ),
+                              const SizedBox(height: 20),
+                              Column(
+                                  children: [
+                                    ProtectedText(widget.match.firstName + " " + widget.match.lastName,  style: TextStyle(fontSize: 20)),
+                                    Text("Age: " + widget.match.age.toString(), style: TextStyle(color: Colors.grey, fontSize: 20),),
+                                    ProtectedText("Bio: " + widget.match.bio, style: TextStyle(color: Colors.grey, fontSize: 20),)
+                                  ]
+                              )
+                            ]
+                        ),
+                        const SizedBox(height: 20),
+                        widget.match.photosURL.isEmpty
+                            ? Text(
+                          widget.match.firstName + " has no photos uploaded.",
+                          style: const TextStyle(color: Colors.grey, fontSize: 16),
+                        )
+                            : SizedBox(
+                          width: double.infinity,
+                          height: MediaQuery.of(context).size.height * 0.5,
+                          child: GridView.count(
+                            crossAxisCount: (widget.match.photosURL.length == 1) ? 1 : 3,
+                            mainAxisSpacing: 10,
+                            crossAxisSpacing: 10,
+                            children: widget.match.photosURL.map(
+                                  (photoURL) {
+                                    return _buildPhotoItem(photoURL);
+                                  }
+                            ).toList(),
+                          ),
+                        ),
+                      ]
+                  )
+              ))
         ],
       ),
 
@@ -52,13 +123,15 @@ class _MatchIntroScreenState extends State<MatchIntroScreen> {
         ],
       ),
 
-      // Third page: TODO: Match photos
+      // Third page: Match Reason
       Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Get to Know Them",
+          const Text("Your compatibility",
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
+          Text(widget.curUser.getMatchReason(widget.match),
+              style: const TextStyle(fontSize: 16)),
         ],
       ),
     ];
@@ -69,6 +142,7 @@ class _MatchIntroScreenState extends State<MatchIntroScreen> {
     final pages = _buildPages();
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text("You're Matched!"),
         actions: [
           IconButton(
@@ -88,7 +162,10 @@ class _MatchIntroScreenState extends State<MatchIntroScreen> {
                 onPressed: _nextPage,
                 style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2C519C)),
-                child: const Text("Next"),
+                child: const Text("Next",
+                  style: TextStyle(
+                    color: const Color(0xFFf2f7ff)
+                  )),
               ),
             )
           : Padding(
@@ -97,44 +174,12 @@ class _MatchIntroScreenState extends State<MatchIntroScreen> {
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2C519C)),
-                child: const Text("Done"),
+                child: const Text("Done",
+                    style: TextStyle(
+                        color: const Color(0xFFf2f7ff)
+                    )),
               ),
             ),
     );
-  }
-
-  String getMatchReason(AppUser u1, AppUser u2) {
-    final user1Traits = u1.personalTraits.values.toList();
-    final user2Traits = u2.personalTraits.values.toList();
-
-    // checking length
-    if (user1Traits.length < 5 || user2Traits.length < 5) {
-      return "You and ${u2.firstName} share some personality similarities.";
-    }
-
-    int minIndex = 0;
-    int minDiff = 10;
-    for (int i = 0; i < 5; i++) {
-      int diff = (user1Traits[i] - user2Traits[i]).abs();
-      if (diff < minDiff) {
-        minDiff = diff;
-        minIndex = i;
-      }
-    }
-
-    switch (minIndex) {
-      case 0:
-        return "You both value family highly.";
-      case 1:
-        return "You have similar levels of extroversion.";
-      case 2:
-        return "You both enjoy a similar pace of life.";
-      case 3:
-        return "You're both open to new experiences and taking risks.";
-      case 4:
-        return "You perform similarly under pressure.";
-      default:
-        return "You share some key personality traits.";
-    }
   }
 }
