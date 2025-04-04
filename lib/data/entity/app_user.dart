@@ -45,7 +45,6 @@ class AppUser {
   bool keepMatch;
   String match;
   Map<String, dynamic> nonNegotiables;
-  Map<String, dynamic> nonNegotiablesFilter;
   int longFormQuestion;
   String longFormAnswer;
   Map<String, int> personalTraits;
@@ -56,6 +55,7 @@ class AppUser {
   bool showSpotifyToOthers;
   bool showPhotosToMatch;
   bool showPhotosToOthers;
+  List<String> ratedUsers;
 
   AppUser({
     required this.uid,
@@ -99,7 +99,6 @@ class AppUser {
     this.showSocialMediaToOthers = true,
     this.match = "",
     this.nonNegotiables = const {},
-    this.nonNegotiablesFilter = const {},
     this.longFormQuestion = 0,
     this.longFormAnswer = '',
     this.personalTraits = const {},
@@ -110,6 +109,7 @@ class AppUser {
     this.showSpotifyToOthers = true,
     this.showPhotosToMatch = true,
     this.showPhotosToOthers = true,
+    this.ratedUsers = const [],
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -158,8 +158,6 @@ class AppUser {
       showSocialMediaToOthers: data['showSocialMediaToOthers'] ?? true,
       match: data['match'] ?? '',
       nonNegotiables: data['nonNegotiables'] ?? {},
-      nonNegotiablesFilter:
-          Map<String, dynamic>.from(data['nonNegotiablesFilter'] ?? {}),
       longFormQuestion: data['longFormQuestion'] ?? 0,
       longFormAnswer: data['longFormAnswer'] ?? '',
       personalTraits: Map<String, int>.from(data['personalTraits'] ?? {}),
@@ -171,6 +169,7 @@ class AppUser {
       showSpotifyToOthers: data['showSpotifyToOthers'] ?? true,
       showPhotosToMatch: data['showPhotosToMatch'] ?? true,
       showPhotosToOthers: data['showPhotosToOthers'] ?? true,
+      ratedUsers: List<String>.from(data['ratedUsers'] ?? []),
     );
   }
 
@@ -243,7 +242,6 @@ class AppUser {
       'showSocialMediaToOthers': showSocialMediaToOthers,
       'match': match,
       'nonNegotiables': nonNegotiables,
-      'nonNegotiablesFilter': nonNegotiablesFilter,
       'longFormQuestion': longFormQuestion,
       'longFormAnswer': longFormAnswer,
       'weeksWithoutMatch': weeksWithoutMatch,
@@ -253,6 +251,7 @@ class AppUser {
       'showSpotifyToOthers': showSpotifyToOthers,
       'showPhotosToMatch': showPhotosToMatch,
       'showPhotosToOthers': showPhotosToOthers,
+      'ratedUsers': ratedUsers,
     };
   }
 
@@ -343,7 +342,7 @@ class AppUser {
   String getPreferenceTo(AppUser user2) {
     final List<int> p1 = this.partnerPreferences.values.toList();
     final List<int> p2 = user2.personalTraits.values.toList();
-    List<int> difference = [0, 0, 0, 0, 0];
+    List<int> difference = [0,0,0,0,0];
     difference[0] = (p1[0] + p2[4]).abs();
     difference[1] = (p1[1] - p2[3]).abs();
     difference[2] = (p1[2] - p2[1]).abs();
@@ -360,23 +359,19 @@ class AppUser {
     String message = "${user2.firstName}";
     switch (minIndex) {
       case 1:
-        message +=
-            "'s level of extroversion matches your partner preference.\n";
+        message += "'s level of extroversion matches your partner preference.\n";
         break;
       case 0:
-        message +=
-            "'s views on the importance of family matches your partner preference\n.";
+        message += "'s views on the importance of family matches your partner preference\n.";
         break;
       case 2:
         message += "'s lifestyle matches your partner preference\n.";
         break;
       case 4:
-        message +=
-            "'s emotional expressiveness matches your partner preference\n.";
+        message += "'s emotional expressiveness matches your partner preference\n.";
         break;
       case 3:
-        message +=
-            "'s willingness to try new things and take risks matches your partner preference\n.";
+        message += "'s willingness to try new things and take risks matches your partner preference\n.";
         break;
     }
     return message;
@@ -385,7 +380,7 @@ class AppUser {
   String getPreferenceFrom(AppUser user2) {
     final List<int> p1 = this.personalTraits.values.toList();
     final List<int> p2 = user2.partnerPreferences.values.toList();
-    List<int> difference = [0, 0, 0, 0, 0];
+    List<int> difference = [0,0,0,0,0];
     difference[0] = (p1[0] + p2[4]).abs();
     difference[1] = (p1[1] - p2[3]).abs();
     difference[2] = (p1[2] - p2[1]).abs();
@@ -431,7 +426,7 @@ class AppUser {
 
   bool hasInterests(List<dynamic> list) {
     if (list.isEmpty) return true;
-    bool result = false;
+    bool result = true;
     for (String i in list) {
       if (!this.displayedInterests.contains(i)) {
         return false;
@@ -482,6 +477,15 @@ class AppUser {
     }
     if (list.values.last != null) {
       return this.age <= list.values.last;
+    }
+    return result;
+  }
+
+  bool matchMajor(List<dynamic> list) {
+    if (list.isEmpty) return true;
+    bool result = false;
+    for (var i in list) {
+      if (i["major"] == this.major.toLowerCase()) return true;
     }
     return result;
   }

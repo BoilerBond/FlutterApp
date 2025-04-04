@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-
-import '../../../../data/entity/app_user.dart';
 import '../../../widgets/protected_text.dart';
 import '../../../widgets/confirm_dialog.dart';
 
@@ -364,7 +362,7 @@ class _MoreProfileScreenState extends State<MoreProfileScreen> {
                 width: double.infinity,
                 height: MediaQuery.of(context).size.height * 0.5,
                 child: GridView.count(
-                  crossAxisCount: (photosURL.length == 1) ? 1 : 2,
+                  crossAxisCount: (photosURL.length < 3) ? 1 : 3,
                   mainAxisSpacing: 10,
                   crossAxisSpacing: 10,
                   children: photosURL.map((photoURL) {

@@ -90,7 +90,7 @@ class _MatchIntroScreenState extends State<MatchIntroScreen> {
                           width: double.infinity,
                           height: MediaQuery.of(context).size.height * 0.5,
                           child: GridView.count(
-                            crossAxisCount: (widget.match.photosURL.length == 1) ? 1 : 3,
+                            crossAxisCount: (widget.match.photosURL.length < 3) ? 1 : 3,
                             mainAxisSpacing: 10,
                             crossAxisSpacing: 10,
                             children: widget.match.photosURL.map(
