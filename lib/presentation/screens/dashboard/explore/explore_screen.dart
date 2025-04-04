@@ -26,7 +26,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   AppUser? curUser;
   // perma non-negotiables
   Map<String, dynamic> nonnegotiablesData = {};
-  bool filterOn = false;
+  bool filterOn = true;
   Map<int, String> reportReasons = {
     0: "Profile goes against one of my non-negotiables.",
     1: "Profile appears to be fake or catfishing.",
@@ -85,9 +85,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
       }
       setState(() {
         visibleUsers = fetchedUsers;
-        recommendedUsers = fetchedUsers;
-        isLoading = false;
+        recommendedUsers = [];
       });
+      filterNN();
     } catch (e) {
       print(e);
     }
