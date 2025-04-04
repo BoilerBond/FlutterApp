@@ -7,8 +7,8 @@ import 'more_profile.dart';
 import '../../../../data/entity/app_user.dart';
 import 'package:datingapp/presentation/screens/dashboard/explore/non_negotiables_form_screen.dart';
 import 'package:datingapp/presentation/screens/dashboard/explore/non_negotiables_filter_screen.dart';
-
 class ExploreScreen extends StatefulWidget {
+  static ValueNotifier<bool> shouldReload = ValueNotifier<bool>(false);
   const ExploreScreen({super.key});
 
   @override
@@ -26,14 +26,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Future<void> getProfiles() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     final db = FirebaseFirestore.instance;
-    final userSnapshot =
-        await db.collection("users").doc(currentUser?.uid).get();
+    final userSnapshot = await db.collection("users").doc(currentUser?.uid).get();
     setState(() {
       curUser = AppUser.fromSnapshot(userSnapshot);
     });
 
-    final callable = FirebaseFunctions.instance
-        .httpsCallable('user-recommendation-recommendProfiles');
+    final callable = FirebaseFunctions.instance.httpsCallable('user-recommendation-recommendProfiles');
     final result = await callable.call({
       'limit': 10,
     });
@@ -100,6 +98,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void initState() {
     super.initState();
     getProfiles();
+    ExploreScreen.shouldReload.addListener(() {
+      if (ExploreScreen.shouldReload.value) {
+        if (mounted) {
+          setState(() {
+            profileIndex += 1;
+          });
+          ExploreScreen.shouldReload.value = false;
+        }
+      }
+    });
   }
 
   void _switchToNextProfile() {
@@ -153,8 +161,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   ProtectedText(
                     recommendedUsers[profileIndex].firstName,
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const Text(
                     "'s Profile",
@@ -176,8 +183,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 items: const [
                   DropdownMenuItem(
                     value: 1,
-                    child:
-                        Text("Profile goes against one of my non-negotiables."),
+                    child: Text("Profile goes against one of my non-negotiables."),
                   ),
                   DropdownMenuItem(
                     value: 2,
@@ -185,8 +191,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   DropdownMenuItem(
                     value: 3,
-                    child:
-                        Text("Offensive content against community standards."),
+                    child: Text("Offensive content against community standards."),
                   ),
                 ],
                 onChanged: (value) {},
@@ -228,12 +233,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (currentUserId == null) return;
 
     try {
-      final callable = FirebaseFunctions.instance
-          .httpsCallable('user-profileRating-rateProfile');
-      await callable.call({
-        "targetUid": recommendedUsers[profileIndex].uid,
-        "score": sliderValue
-      });
+      final callable = FirebaseFunctions.instance.httpsCallable('user-profileRating-rateProfile');
+      await callable.call({"targetUid": recommendedUsers[profileIndex].uid, "score": sliderValue});
       setState(() {
         sliderValue = 0;
       });
@@ -302,11 +303,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 IconButton(
                   icon: const Icon(Icons.settings),
                   onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                const NonNegotiablesFormScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const NonNegotiablesFormScreen()));
                   },
                 ),
               ],
@@ -327,17 +324,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           children: [
                             const Text(
                               "Filter by non-negotiables",
-                              style:
-                                  TextStyle(fontSize: 16, color: Colors.black),
+                              style: TextStyle(fontSize: 16, color: Colors.black),
                             ),
                             IconButton(
                               icon: const Icon(Icons.filter_list_alt),
                               onPressed: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const NonNegotiablesFilterScreen()));
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const NonNegotiablesFilterScreen()));
                               },
                             ),
                           ],
@@ -371,53 +363,38 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   child: Column(
                                     children: [
                                       Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
+                                        mainAxisAlignment: MainAxisAlignment.end,
                                         children: [
                                           IconButton(
                                             onPressed: () => showDialog<String>(
                                               context: context,
-                                              builder: (BuildContext context) =>
-                                                  AlertDialog(
-                                                title: const Text(
-                                                    "Why am I seeing this profile?"),
-                                                content: Text(getSimilarity(
-                                                    recommendedUsers[
-                                                        profileIndex])),
+                                              builder: (BuildContext context) => AlertDialog(
+                                                title: const Text("Why am I seeing this profile?"),
+                                                content: Text(getSimilarity(recommendedUsers[profileIndex])),
                                               ),
                                             ),
-                                            icon:
-                                                const Icon(Icons.info_outline),
+                                            icon: const Icon(Icons.info_outline),
                                           ),
                                         ],
                                       ),
                                       GestureDetector(
                                         onTap: _navigateToMoreProfile,
                                         child: CircleAvatar(
-                                          radius: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.2,
+                                          radius: MediaQuery.of(context).size.width * 0.2,
                                           backgroundImage: NetworkImage(
-                                            recommendedUsers[profileIndex]
-                                                    .profilePictureURL
-                                                    .isNotEmpty
-                                                ? recommendedUsers[profileIndex]
-                                                    .profilePictureURL
+                                            recommendedUsers[profileIndex].profilePictureURL.isNotEmpty
+                                                ? recommendedUsers[profileIndex].profilePictureURL
                                                 : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
                                           ),
-                                          backgroundColor:
-                                              const Color(0xFFCDFCFF),
+                                          backgroundColor: const Color(0xFFCDFCFF),
                                         ),
                                       ),
                                       const SizedBox(height: 8),
                                       Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           ProtectedText(
-                                            recommendedUsers[profileIndex]
-                                                .firstName,
+                                            recommendedUsers[profileIndex].firstName,
                                             style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 18,
@@ -427,35 +404,24 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                           const SizedBox(width: 5),
                                           IconButton(
                                             onPressed: _reportProfile,
-                                            icon: const Icon(Icons.more_horiz,
-                                                color: Colors.black54),
+                                            icon: const Icon(Icons.more_horiz, color: Colors.black54),
                                           ),
                                         ],
                                       ),
                                       const SizedBox(height: 5),
                                       Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           Text(
-                                            recommendedUsers[profileIndex]
-                                                .age
-                                                .toString(),
-                                            style: const TextStyle(
-                                                fontStyle: FontStyle.italic,
-                                                color: Color(0xFF5E77DF)),
+                                            recommendedUsers[profileIndex].age.toString(),
+                                            style: const TextStyle(fontStyle: FontStyle.italic, color: Color(0xFF5E77DF)),
                                           ),
                                           const SizedBox(width: 10),
-                                          const Text("|",
-                                              style: TextStyle(
-                                                  color: Color(0xFF2C519C))),
+                                          const Text("|", style: TextStyle(color: Color(0xFF2C519C))),
                                           const SizedBox(width: 10),
                                           ProtectedText(
-                                            recommendedUsers[profileIndex]
-                                                .major,
-                                            style: const TextStyle(
-                                                fontStyle: FontStyle.italic,
-                                                color: Color(0xFF5E77DF)),
+                                            recommendedUsers[profileIndex].major,
+                                            style: const TextStyle(fontStyle: FontStyle.italic, color: Color(0xFF5E77DF)),
                                           ),
                                         ],
                                       ),
@@ -476,9 +442,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   children: [
                                     const Text(
                                       "About:",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF2C519C)),
+                                      style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C519C)),
                                     ),
                                     const SizedBox(height: 5),
                                     ProtectedText(
@@ -501,15 +465,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ? null
             : Container(
                 color: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20.0, vertical: 10.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
                       "Rate this profile:",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     Slider(
                       value: sliderValue,

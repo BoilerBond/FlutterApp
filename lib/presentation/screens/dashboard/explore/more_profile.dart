@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:datingapp/presentation/screens/dashboard/explore/explore_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -115,6 +116,8 @@ class _MoreProfileScreenState extends State<MoreProfileScreen> {
         .update({
       "blockedUserUIDs": FieldValue.arrayUnion([widget.uid])
     });
+    Navigator.of(context).pop();
+    ExploreScreen.shouldReload.value = true;
   }
 
   @override
