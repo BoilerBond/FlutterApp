@@ -4,10 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:datingapp/theme/theme.dart';
 import 'package:datingapp/utils/firebase_emulator_utils.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load .env file
+  await dotenv.load(fileName: ".env");
+  
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
