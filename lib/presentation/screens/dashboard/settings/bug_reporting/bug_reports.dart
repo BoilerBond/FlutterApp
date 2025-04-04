@@ -50,20 +50,17 @@ class _BugReportingScreenState extends State<BugReportingScreen> {
         
         print("DEBUG: User authenticated with ID: ${user.uid}");
         
-        // Create the report data
         final reportData = {
-          'userId': user.uid,
-          'title': _titleController.text.trim(),
+          'type': 'BUG',
+          'target': _stepsController.text.trim(),
           'description': _descriptionController.text.trim(),
-          'stepsToReproduce': _stepsController.text.trim(),
-          'timestamp': FieldValue.serverTimestamp(),
-          'status': 'new'
+          'createdAt': FieldValue.serverTimestamp(),
         };
         
         print("DEBUG: Attempting to write to Firestore with data: $reportData");
         
         // Add to Firestore with explicit error handling
-        final docRef = await FirebaseFirestore.instance.collection('bugReports').add(reportData);
+        final docRef = await FirebaseFirestore.instance.collection('reports').add(reportData);
         
         print("DEBUG: Successfully wrote document with ID: ${docRef.id}");
 
