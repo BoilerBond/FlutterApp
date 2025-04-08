@@ -27,25 +27,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
   // perma non-negotiables
   Map<String, dynamic> nonnegotiablesData = {};
   bool filterOn = true;
-  Map<int, String> reportReasons = {
-    0: "Profile goes against one of my non-negotiables.",
-    1: "Profile appears to be fake or catfishing.",
-    2: "Offensive content against community standards."
-  };
+  Map<int, String> reportReasons = {0: "Profile goes against one of my non-negotiables.", 1: "Profile appears to be fake or catfishing.", 2: "Offensive content against community standards."};
   int selectedReportReasonIdx = 0;
 
   Future<void> getProfiles() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     final db = FirebaseFirestore.instance;
-    final userSnapshot =
-        await db.collection("users").doc(currentUser?.uid).get();
+    final userSnapshot = await db.collection("users").doc(currentUser?.uid).get();
     setState(() {
       curUser = AppUser.fromSnapshot(userSnapshot);
       nonnegotiablesData = curUser!.nonNegotiables;
     });
 
-    final callable = FirebaseFunctions.instance
-        .httpsCallable('user-recommendation-recommendProfiles');
+    final callable = FirebaseFunctions.instance.httpsCallable('user-recommendation-recommendProfiles');
     final result = await callable.call({
       'limit': 10,
     });
@@ -58,8 +52,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         try {
           // Access properties without casting the entire object
           final userId = entry['uid']?.toString();
-          final distance =
-              double.tryParse(entry['distance']?.toString() ?? '0.0') ?? 0.0;
+          final distance = double.tryParse(entry['distance']?.toString() ?? '0.0') ?? 0.0;
 
           if (userId == null) {
             print("Missing uid in recommendation result");
@@ -96,8 +89,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void filterNN() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     final db = FirebaseFirestore.instance;
-    final userSnapshot =
-        await db.collection("users").doc(currentUser?.uid).get();
+    final userSnapshot = await db.collection("users").doc(currentUser?.uid).get();
     curUser = AppUser.fromSnapshot(userSnapshot);
     nonnegotiablesData = curUser!.nonNegotiables;
     print(nonnegotiablesData["majors"]);
@@ -105,8 +97,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     try {
       if (nonnegotiablesData.isNotEmpty) {
         for (AppUser u in visibleUsers) {
-          if (!u.matchGenderPreference(
-                  nonnegotiablesData["genderPreferences"]) ||
+          if (!u.matchGenderPreference(nonnegotiablesData["genderPreferences"]) ||
               !u.matchAgePreference(nonnegotiablesData["ageRange"]) ||
               !u.hasInterests(nonnegotiablesData["mustHaveHobbies"]) ||
               !u.notHaveInterests(nonnegotiablesData["mustNotHaveHobbies"]) ||
@@ -179,9 +170,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           heightUnit: recommendedUsers[profileIndex].heightUnit,
           viewerHeightUnit: curUser!.heightUnit,
           heightValue: recommendedUsers[profileIndex].heightValue,
-          photosURL: recommendedUsers[profileIndex].photoVisible
-              ? recommendedUsers[profileIndex].photosURL
-              : [],
+          photosURL: recommendedUsers[profileIndex].photoVisible ? recommendedUsers[profileIndex].photosURL : [],
           pfpLink: recommendedUsers[profileIndex].profilePictureURL,
           viewerUid: curUser!.uid,
           isMatchViewer: false,
@@ -210,8 +199,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   ProtectedText(
                     recommendedUsers[profileIndex].firstName,
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const Text(
                     "'s Profile",
@@ -254,9 +242,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   const SizedBox(width: 10),
                   ElevatedButton(
                     onPressed: () async {
-                      await FirebaseFirestore.instance
-                          .collection('reports')
-                          .add({
+                      await FirebaseFirestore.instance.collection('reports').add({
                         'type': 'USER',
                         'target': recommendedUsers[profileIndex].uid,
                         'description': reportReasons[selectedReportReasonIdx],
@@ -289,18 +275,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (currentUserId == null) return;
 
     try {
-      final callable = FirebaseFunctions.instance
-          .httpsCallable('user-profileRating-rateProfile');
-      await callable.call({
-        "targetUid": recommendedUsers[profileIndex].uid,
-        "score": sliderValue
-      });
+      final callable = FirebaseFunctions.instance.httpsCallable('user-profileRating-rateProfile');
+      await callable.call({"targetUid": recommendedUsers[profileIndex].uid, "score": sliderValue});
       curUser!.ratedUsers.add(recommendedUsers[profileIndex].uid);
       final newData = {"ratedUsers": curUser!.ratedUsers};
-      await db
-          .collection("users")
-          .doc(curUser!.uid)
-          .set(newData, SetOptions(merge: true));
+      await db.collection("users").doc(curUser!.uid).set(newData, SetOptions(merge: true));
       setState(() {
         sliderValue = 0;
       });
@@ -372,10 +351,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 IconButton(
                   icon: const Icon(Icons.settings),
                   onPressed: () async {
-                    await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => NonNegotiablesFormScreen()));
+                    await Navigator.push(context, MaterialPageRoute(builder: (context) => NonNegotiablesFormScreen()));
                     setState(() {
                       isLoading = true;
                     });
@@ -406,135 +382,102 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   }),
             ]),
             isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator())
                 : recommendedUsers.isEmpty
-                    ? Expanded(
-                        child: Center(child: Text("No profiles available.")))
+                    ? Center(child: Text("No profiles available."))
                     : SingleChildScrollView(
-                        padding: const EdgeInsets.only(bottom: 130),
+                        padding: EdgeInsets.only(bottom: 130),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 20.0),
+                              padding: EdgeInsets.symmetric(horizontal: 20.0),
                               child: Column(
                                 children: [
-                                  const Divider(
+                                  Divider(
                                     height: 20,
                                     thickness: 1,
                                     color: Color(0xFFE7EFEE),
                                   ),
-                                  const SizedBox(height: 10),
+                                  SizedBox(height: 10),
                                   AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 500),
+                                    duration: Duration(milliseconds: 500),
                                     child: Container(
                                       key: ValueKey(profileIndex),
-                                      padding: const EdgeInsets.all(15),
+                                      padding: EdgeInsets.all(15),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFE7EFEE),
+                                        color: Color(0xFFE7EFEE),
                                         borderRadius: BorderRadius.circular(15),
                                         boxShadow: [
                                           BoxShadow(
                                             color: Colors.grey,
                                             blurRadius: 5,
-                                            offset: const Offset(0, 2),
+                                            offset: Offset(0, 2),
                                           ),
                                         ],
                                       ),
                                       child: Column(
                                         children: [
                                           Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
+                                            mainAxisAlignment: MainAxisAlignment.end,
                                             children: [
                                               IconButton(
-                                                onPressed: () =>
-                                                    showDialog<String>(
+                                                onPressed: () => showDialog<String>(
                                                   context: context,
-                                                  builder:
-                                                      (BuildContext context) =>
-                                                          AlertDialog(
-                                                    title: const Text(
-                                                        "Why am I seeing this profile?"),
-                                                    content: Text(getSimilarity(
-                                                        recommendedUsers[
-                                                            profileIndex])),
+                                                  builder: (BuildContext context) => AlertDialog(
+                                                    title: Text("Why am I seeing this profile?"),
+                                                    content: Text(getSimilarity(recommendedUsers[profileIndex])),
                                                   ),
                                                 ),
-                                                icon: const Icon(
-                                                    Icons.info_outline),
+                                                icon: Icon(Icons.info_outline),
                                               ),
                                             ],
                                           ),
                                           GestureDetector(
                                             onTap: _navigateToMoreProfile,
                                             child: CircleAvatar(
-                                              radius: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  0.2,
+                                              radius: MediaQuery.of(context).size.width * 0.2,
                                               backgroundImage: NetworkImage(
-                                                recommendedUsers[profileIndex]
-                                                        .profilePictureURL
-                                                        .isNotEmpty
-                                                    ? recommendedUsers[
-                                                            profileIndex]
-                                                        .profilePictureURL
+                                                recommendedUsers[profileIndex].profilePictureURL.isNotEmpty
+                                                    ? recommendedUsers[profileIndex].profilePictureURL
                                                     : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png",
                                               ),
-                                              backgroundColor:
-                                                  const Color(0xFFCDFCFF),
+                                              backgroundColor: Color(0xFFCDFCFF),
                                             ),
                                           ),
-                                          const SizedBox(height: 8),
+                                          SizedBox(height: 8),
                                           Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
+                                            mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
                                               ProtectedText(
-                                                recommendedUsers[profileIndex]
-                                                    .firstName,
-                                                style: const TextStyle(
+                                                recommendedUsers[profileIndex].firstName,
+                                                style: TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 18,
                                                   color: Color(0xFF2C519C),
                                                 ),
                                               ),
-                                              const SizedBox(width: 5),
+                                              SizedBox(width: 5),
                                               IconButton(
                                                 onPressed: _reportProfile,
-                                                icon: const Icon(
-                                                    Icons.more_horiz,
-                                                    color: Colors.black54),
+                                                icon: const Icon(Icons.more_horiz, color: Colors.black54),
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(height: 5),
+                                          SizedBox(height: 5),
                                           Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
+                                            mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
                                               Text(
-                                                recommendedUsers[profileIndex]
-                                                    .age
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                    fontStyle: FontStyle.italic,
-                                                    color: Color(0xFF5E77DF)),
+                                                recommendedUsers[profileIndex].age.toString(),
+                                                style: TextStyle(fontStyle: FontStyle.italic, color: Color(0xFF5E77DF)),
                                               ),
-                                              const SizedBox(width: 10),
-                                              const Text("|",
-                                                  style: TextStyle(
-                                                      color:
-                                                          Color(0xFF2C519C))),
-                                              const SizedBox(width: 10),
+                                              SizedBox(width: 10),
+                                              Text("|", style: TextStyle(color: Color(0xFF2C519C))),
+                                              SizedBox(width: 10),
                                               ProtectedText(
-                                                recommendedUsers[profileIndex]
-                                                    .major,
-                                                style: const TextStyle(
-                                                    fontStyle: FontStyle.italic,
-                                                    color: Color(0xFF5E77DF)),
+                                                recommendedUsers[profileIndex].major,
+                                                style: TextStyle(fontStyle: FontStyle.italic, color: Color(0xFF5E77DF)),
                                               ),
                                             ],
                                           ),
@@ -542,28 +485,25 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 20),
+                                  SizedBox(height: 20),
                                   Container(
                                     width: double.infinity,
-                                    padding: const EdgeInsets.all(15),
+                                    padding: EdgeInsets.all(15),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFCDFCFF),
+                                      color: Color(0xFFCDFCFF),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
                                       children: [
-                                        const Text(
+                                        Text(
                                           "About:",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF2C519C)),
+                                          style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2C519C)),
                                         ),
-                                        const SizedBox(height: 5),
+                                        SizedBox(height: 5),
                                         ProtectedText(
                                           recommendedUsers[profileIndex].bio,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontStyle: FontStyle.italic,
                                             color: Color(0xFF454746),
                                           ),
@@ -576,22 +516,20 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             ),
                           ],
                         ),
-                      ),
+                      )
           ]),
         ),
         bottomNavigationBar: recommendedUsers.isEmpty
             ? null
             : Container(
                 color: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20.0, vertical: 10.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
                       "Rate this profile:",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     Slider(
                       value: sliderValue,
