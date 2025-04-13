@@ -548,8 +548,8 @@ class _BondScreenState extends State<BondScreen> {
                                       _buildActionButton(
                                         Icons.local_activity,
                                         "Generate Date Idea",
-                                        () => _showDatePreferencesDialog(
-                                            context), 
+                                        () =>
+                                            _showDatePreferencesDialog(context),
                                       ),
                                       _buildActionButton(
                                           Icons.info, "View Match Introduction",
@@ -1218,9 +1218,56 @@ class _BondScreenState extends State<BondScreen> {
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: const Text("Date Idea"),
-                      content: Text(
-                          idea?['description'] ?? "No matching idea found."),
+                      title: const Text("Your Date Idea"),
+                      content: idea == null
+                          ? const Text("No matching idea found.")
+                          : Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.location_on,
+                                        color: Colors.blueAccent),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        idea['location'] ?? '',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.calendar_today,
+                                        color: Colors.green),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        idea['activity'] ?? '',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.access_time,
+                                        color: Colors.deepPurple),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        idea['time'] ?? '',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),
