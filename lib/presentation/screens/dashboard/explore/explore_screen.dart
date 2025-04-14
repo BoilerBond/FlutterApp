@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'more_profile.dart';
 import '../../../../data/entity/app_user.dart';
 import 'package:datingapp/presentation/screens/dashboard/explore/non_negotiables_form_screen.dart';
+import "events.dart";
 
 class ExploreScreen extends StatefulWidget {
   static ValueNotifier<bool> shouldReload = ValueNotifier<bool>(false);
@@ -29,6 +30,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool filterOn = true;
   Map<int, String> reportReasons = {0: "Profile goes against one of my non-negotiables.", 1: "Profile appears to be fake or catfishing.", 2: "Offensive content against community standards."};
   int selectedReportReasonIdx = 0;
+  bool showEventRoom = false; // default
+
 
   Future<void> getProfiles() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -322,24 +325,47 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return message;
   }
 
+
   @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            "Explore",
-            style: TextStyle(
-              fontStyle: FontStyle.italic,
-              fontWeight: FontWeight.w100,
-              fontSize: 22,
-              color: Color(0xFF454746),
-            ),
+ @override
+Widget build(BuildContext context) {
+  return SafeArea(
+    child: Scaffold(
+      appBar: AppBar(
+        title: Text(
+          showEventRoom ? "Event Room" : "Explore",
+          style: const TextStyle(
+            fontStyle: FontStyle.italic,
+            fontWeight: FontWeight.w100,
+            fontSize: 22,
+            color: Color(0xFF454746),
           ),
-          automaticallyImplyLeading: false,
-          toolbarHeight: 40,
         ),
-        body: SingleChildScrollView(
+        automaticallyImplyLeading: false,
+        toolbarHeight: 40,
+        actions: [
+          IconButton(
+            icon: Icon(
+              showEventRoom ? Icons.explore : Icons.celebration,
+              color: Colors.black54,
+            ),
+            tooltip: showEventRoom ? 'Switch to Explore' : 'Switch to Event Room',
+            onPressed: () {
+              setState(() {
+                showEventRoom = !showEventRoom;
+              });
+            },
+          )
+        ],
+      ),
+      body: showEventRoom ? const EventRoomScreen() : _buildExploreBody(),
+    ),
+  );
+}
+
+
+  Widget _buildExploreBody() {
+    return SingleChildScrollView(
           child: Column(children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -518,44 +544,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         ),
                       )
           ]),
-        ),
-        bottomNavigationBar: recommendedUsers.isEmpty
-            ? null
-            : Container(
-                color: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      "Rate this profile:",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    Slider(
-                      value: sliderValue,
-                      min: -2,
-                      max: 2,
-                      divisions: 4,
-                      label: sliderValue.toString(),
-                      activeColor: const Color(0xFF5E77DF),
-                      onChanged: (value) {
-                        setState(() {
-                          sliderValue = value;
-                        });
-                      },
-                    ),
-                    ElevatedButton(
-                      onPressed: _submitRating,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2C519C),
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text("Submit Rating"),
-                    ),
-                  ],
-                ),
-              ),
-      ),
-    );
+        );
   }
+
 }
