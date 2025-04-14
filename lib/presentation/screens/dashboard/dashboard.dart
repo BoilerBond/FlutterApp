@@ -10,6 +10,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 enum NotificationType {
+  SYSTEM("SYSTEM"),
   MATCH_RESULT("MATCH_RESULT"),
   MESSAGING("MESSAGING"),
   EVENT("EVENT");
@@ -84,28 +85,30 @@ class _DashboardState extends State<Dashboard> {
     }
     // Display dialog for displaying messages when user is on the app
     onMessageSubscription = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (message.data['type'] != NotificationType.SYSTEM.value && message.data['type'] != NotificationType.MATCH_RESULT.value) {
+        return;
+      }
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
           return PopScope(
             child: AlertDialog(
-              title: Text(message.notification!.title!),
-              content: Text(message.notification!.body!),
+              title: Text(message.notification?.title ?? ''),
+              content: Text(message.notification?.body ?? ''),
               actions: [
-                TextButton(
-                  onPressed: () {
-                    if (message.data.containsKey('type') && message.data['type'] == NotificationType.MATCH_RESULT.value) {
+                if (message.data['type'] == NotificationType.MATCH_RESULT.value)
+                  TextButton(
+                    onPressed: () {
                       Navigator.of(context).pop();
                       if (mounted) {
                         setState(() {
                           _currentIndex = 1;
                         });
                       }
-                    }
-                  },
-                  child: const Text('View'),
-                ),
+                    },
+                    child: const Text('View'),
+                  ),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: const Text('Dismiss'),
