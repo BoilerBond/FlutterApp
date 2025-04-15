@@ -98,7 +98,11 @@ class AppUser {
     this.showSocialMediaToMatch = true,
     this.showSocialMediaToOthers = true,
     this.match = "",
-    this.nonNegotiables = const {},
+    this.nonNegotiables = const {"ageRange" : {"max": null, "min": null}, 
+                                "genderPreferences": [], 
+                                "majors": [], 
+                                "mustHaveHobbies": [], 
+                                "mustNotHaveHobbies": []},
     this.longFormQuestion = 0,
     this.longFormAnswer = '',
     this.personalTraits = const {},
@@ -473,7 +477,7 @@ class AppUser {
   bool matchAgePreference(Map<String, dynamic> list) {
     bool result = true;
     if (list.values.first != null) {
-      result && this.age >= list.values.first;
+      result = result && this.age >= list.values.first;
     }
     if (list.values.last != null) {
       return this.age <= list.values.last;
