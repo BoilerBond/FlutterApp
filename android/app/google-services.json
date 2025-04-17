@@ -1,0 +1,131 @@
+{
+  "project_info": {
+    "project_number": "434594544336",
+    "firebase_url": "https://purduedatingapp-default-rtdb.firebaseio.com",
+    "project_id": "purduedatingapp",
+    "storage_bucket": "purduedatingapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:434594544336:android:b682121d353adecc0bfcd5",
+        "android_client_info": {
+          "package_name": "com.boilerbond"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "434594544336-18slvsle23if31l167ff9kmt4k0285b5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.boilerbond",
+            "certificate_hash": "67497e23f983fbbdfe66080aedb9f4922feda053"
+          }
+        },
+        {
+          "client_id": "434594544336-b0ci69erdne53b0rrlsuutdn651530ut.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.boilerbond",
+            "certificate_hash": "f7c3f9904a526bf28c2c424e6a3e6cd071af4683"
+          }
+        },
+        {
+          "client_id": "434594544336-bk3cc0b0891jkcuimsvsvpag58upp1kb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.boilerbond",
+            "certificate_hash": "1c6fde1a06359eba2fa72e2961cbc85d5596f276"
+          }
+        },
+        {
+          "client_id": "434594544336-gicrotveb0vda6r09vl8b4m0q5sdafcs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.boilerbond",
+            "certificate_hash": "49762d38ee83e1b3ce23aff06876751ee31146dd"
+          }
+        },
+        {
+          "client_id": "434594544336-orbvbg2a9ra9io0n3c4325gjj8h9c2pl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.boilerbond",
+            "certificate_hash": "3717a6a02a37109527064ebf420feded8f490e68"
+          }
+        },
+        {
+          "client_id": "434594544336-47ch8tc8frvlqlqibhl11s36rudh9cho.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAP71oMhXhvIPqpO5wD4-5UAWtbkaXA0s0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "434594544336-47ch8tc8frvlqlqibhl11s36rudh9cho.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "434594544336-fj4ejrdcass7aipb66h2v3tndsg8h5ku.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.datingapp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:434594544336:android:bdbc8ad3b5dee5820bfcd5",
+        "android_client_info": {
+          "package_name": "com.example.datingapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "434594544336-5bke2p0362ndlbt1v5valjar6s9crvsv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.datingapp",
+            "certificate_hash": "3717a6a02a37109527064ebf420feded8f490e68"
+          }
+        },
+        {
+          "client_id": "434594544336-47ch8tc8frvlqlqibhl11s36rudh9cho.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAP71oMhXhvIPqpO5wD4-5UAWtbkaXA0s0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "434594544336-47ch8tc8frvlqlqibhl11s36rudh9cho.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "434594544336-fj4ejrdcass7aipb66h2v3tndsg8h5ku.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.datingapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
