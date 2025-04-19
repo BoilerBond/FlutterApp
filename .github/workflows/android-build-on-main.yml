@@ -30,30 +30,3 @@ jobs:
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
-
-  release:
-    name: Create GitHub Release
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: release-apk
-          path: .
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v1.${{ github.run_number }}
-          name: Release v1.${{ github.run_number }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload APK to Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: app-release.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
