@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import '../../../../data/entity/app_user.dart';
+import 'chat.dart';
 import 'match_intro_screen.dart';
 import 'relationship_advice_screen.dart';
 
@@ -434,7 +435,14 @@ class _BondScreenState extends State<BondScreen> {
                                     ),
                                   ),
 
-                                  _buildActionButton(Icons.chat_bubble, "Go to our messages", () {}),
+                                  _buildActionButton(Icons.chat_bubble, "Go to our messages", () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ChatScreen(user: curUser!, match: match!),
+                                      )
+                                    );
+                                  }),
                                   _buildActionButton(Icons.favorite, "Relationship suggestions", () {
                                     Navigator.push(
                                       context,
