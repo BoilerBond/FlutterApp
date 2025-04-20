@@ -27,12 +27,15 @@ class _BondScreenState extends State<BondScreen> {
   bool isMatchUnbonded = false;
   bool keepMatchToggle = true;
   bool loading = true;
-  bool isAwaitingMatch = false; // Add this new state variable
+  bool isAwaitingMatch = false;
 
   // Countdown timer variables
   Timer? _countdownTimer;
   Duration _timeUntilNextBond = Duration.zero;
   DateTime? _nextBondDate;
+
+  List<Map<String, dynamic>> _upcomingDates = [];
+  bool _loadingDates = true;
 
   Future<void> getUserProfiles() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -50,6 +53,7 @@ class _BondScreenState extends State<BondScreen> {
         isMatchBlocked = user.blockedUserUIDs.contains(matchUser.uid);
         isMatchUnbonded = !user.keepMatch;
       });
+      _loadUpcomingDates();
 
       final hasSeenIntro = curUserSnapshot.data()?['hasSeenMatchIntro'] ?? false;
       if (!hasSeenIntro) {
@@ -67,6 +71,431 @@ class _BondScreenState extends State<BondScreen> {
       setState(() {
         isAwaitingMatch = true;
       });
+    }
+  }
+
+  Future<void> _loadUpcomingDates() async {
+    if (curUser == null || match == null) return;
+    
+    setState(() {
+      _loadingDates = true;
+    });
+    
+    try {
+      // hardcoded for now
+      final now = DateTime.now();
+      _upcomingDates = [
+        {
+          'id': 'sample-date-1',
+          'activity': 'Coffee at Starbucks',
+          'location': 'Chauncey Hill Mall, West Lafayette',
+          'dateTime': now.add(const Duration(days: 2, hours: 3)),
+          'senderId': match!.uid,
+          'notes': 'Looking forward to our coffee date!',
+        }
+      ];
+      print("Finished loading dates: $_upcomingDates");
+    } catch (e) {
+      print('Error loading upcoming dates: $e');
+    } finally {
+      setState(() {
+        _loadingDates = false;
+      });
+    }
+  }
+
+  Widget _buildUpcomingDateSection() {
+    if (_upcomingDates.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    final upcomingDate = _upcomingDates.first;
+    final DateTime dateTime = upcomingDate['dateTime'];
+    final Duration timeUntil = dateTime.difference(DateTime.now());
+    
+    // Skip if the date is in the past
+    if (timeUntil.isNegative) {
+      return const SizedBox.shrink();
+    }
+    
+    // Format time remaining
+    String timeRemainingText;
+    if (timeUntil.inDays > 0) {
+      timeRemainingText = '${timeUntil.inDays} days, ${timeUntil.inHours % 24} hours';
+    } else if (timeUntil.inHours > 0) {
+      timeRemainingText = '${timeUntil.inHours} hours, ${timeUntil.inMinutes % 60} minutes';
+    } else {
+      timeRemainingText = '${timeUntil.inMinutes} minutes';
+    }
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F9FF),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF5E77DF), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            decoration: const BoxDecoration(
+              color: Color(0xFF5E77DF),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(11),
+                topRight: Radius.circular(11),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_today, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'Upcoming Date',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'In $timeRemainingText',
+                    style: const TextStyle(
+                      color: Color(0xFF5E77DF),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.event,
+                      size: 20,
+                      color: Color(0xFF5E77DF),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        upcomingDate['activity'],
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.location_on,
+                      size: 20,
+                      color: Color(0xFF5E77DF),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        upcomingDate['location'],
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.access_time,
+                      size: 20,
+                      color: Color(0xFF5E77DF),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      DateFormat('EEEE, MMM d • h:mm a').format(dateTime),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+                if (upcomingDate['notes'] != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.chat_bubble_outline,
+                          size: 18,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            upcomingDate['notes'],
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontStyle: FontStyle.italic,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => _showCancelDateDialog(upcomingDate['id']),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text('Cancel Date'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => _showPostponeDateDialog(upcomingDate['id']),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5E77DF),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text('Postpone'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCancelDateDialog(String dateId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel Date'),
+        content: const Text(
+          'Are you sure you want to cancel this date? This action cannot be undone and will notify your match.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('NO'),
+          ),
+          TextButton(
+            onPressed: () {
+              _cancelDate(dateId);
+              Navigator.of(context).pop();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('YES, CANCEL'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _cancelDate(String dateId) async {
+    // Immediately update UI by removing the canceled date
+    setState(() {
+      _upcomingDates.removeWhere((date) => date['id'] == dateId);
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Date canceled successfully')),
+    );
+  
+    // TODO: Implement Firestore update
+    // try {
+    //   await FirebaseFirestore.instance
+    //       .collection('dateInvitations')
+    //       .doc(dateId)
+    //       .update({
+    //     'status': 'canceled',
+    //     'updatedAt': FieldValue.serverTimestamp(),
+    //   });
+    // } catch (e) {
+    //   print('Error canceling date in database: $e');
+    // }
+  }
+
+  void _showPostponeDateDialog(String dateId) {
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
+    TimeOfDay selectedTime = TimeOfDay.now();
+    
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Postpone Date'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Select a new date and time:'),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () async {
+                      final pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 90)),
+                      );
+                      if (pickedDate != null) {
+                        setState(() {
+                          selectedDate = pickedDate;
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today),
+                          const SizedBox(width: 8),
+                          Text(DateFormat('EEE, MMM d, yyyy').format(selectedDate)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: () async {
+                      final pickedTime = await showTimePicker(
+                        context: context,
+                        initialTime: selectedTime,
+                      );
+                      if (pickedTime != null) {
+                        setState(() {
+                          selectedTime = pickedTime;
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.access_time),
+                          const SizedBox(width: 8),
+                          Text(selectedTime.format(context)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('CANCEL'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  // Combine date and time
+                  final newDateTime = DateTime(
+                    selectedDate.year,
+                    selectedDate.month,
+                    selectedDate.day,
+                    selectedTime.hour,
+                    selectedTime.minute,
+                  );
+                  _postponeDate(dateId, newDateTime);
+                  Navigator.of(context).pop();
+                },
+                child: const Text('CONFIRM'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _postponeDate(String dateId, DateTime newDateTime) async {
+    try {
+      // TODO: fix for Firestore
+      // await FirebaseFirestore.instance
+      //     .collection('dateInvitations')
+      //     .doc(dateId)
+      //     .update({
+      //   'status': 'postponed',
+      //   'dateTime': Timestamp.fromDate(newDateTime),
+      //   'postponedTo': Timestamp.fromDate(newDateTime),
+      //   'updatedAt': FieldValue.serverTimestamp(),
+      // });
+      
+      setState(() {
+        final index = _upcomingDates.indexWhere((date) => date['id'] == dateId);
+        if (index != -1) {
+          _upcomingDates[index]['dateTime'] = newDateTime;
+          _upcomingDates[index]['postponedTo'] = newDateTime;
+          _upcomingDates[index]['status'] = 'postponed';
+        }
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Date postponed successfully')),
+      );
+    } catch (e) {
+      print('Error postponing date: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to postpone date')),
+      );
     }
   }
 
@@ -462,6 +891,8 @@ class _BondScreenState extends State<BondScreen> {
                                       ),
                                     );
                                   }),
+                                  const SizedBox(height: 15),
+                                  _buildUpcomingDateSection(),
 
                                   const SizedBox(height: 15),
                                   const Divider(),
