@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class EventRoomScreen extends StatefulWidget {
   const EventRoomScreen({super.key});
@@ -8,115 +10,195 @@ class EventRoomScreen extends StatefulWidget {
 }
 
 class _EventRoomScreenState extends State<EventRoomScreen> {
-  bool hasJoinedEvent = false;
-  String? selectedQuestion;
+  String? matchId;
+  String? question;
+  String? userAnswer;
+  String? matchAnswer;
+  String? guess;
+  String? matchName = "Your match";
+  bool isAnswering = false;
+  bool isGuessing = false;
+  bool isCompleted = false;
+  bool hasSubmittedAnswer = false;
+  bool hasSubmittedGuess = false;
 
-  final List<String> funQuestions = [
-    "If you could travel anywhere in the world, where would you go and why?",
-    "What's a hobby you've always wanted to try but never did?",
-    "What movie could you watch over and over again?",
-    "Describe your perfect weekend.",
-    "If you were an ice cream flavor, what would you be?"
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadEventData();
+  }
 
-  void _startEvent() {
+  Future<void> _loadEventData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final uid = user?.uid;
+    final userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    matchId = userDoc.data()?['match'];
+    if (matchId == null || matchId!.isEmpty) return;
+
+    final eventSnapshot = await FirebaseFirestore.instance
+        .collection("events")
+        .doc("active_events")
+        .collection(matchId!)
+        .doc("current")
+        .get();
+
+    if (!eventSnapshot.exists) return;
+
+    final data = eventSnapshot.data()!;
+    question = data['question'];
+    isAnswering = data['answeringPhase'] ?? false;
+    isGuessing = data['guessingPhase'] ?? false;
+    isCompleted = data['completed'] ?? false;
+    userAnswer = data[uid];
+    guess = data["${uid}_guess"];
+
+    final matchUID = await _getMatchUid(uid!);
+    matchAnswer = data[matchUID];
+
     setState(() {
-      hasJoinedEvent = true;
-      funQuestions.shuffle();
-      selectedQuestion = funQuestions.first;
+      hasSubmittedAnswer = userAnswer != null;
+      hasSubmittedGuess = guess != null;
     });
+
+    if (isAnswering && !hasSubmittedAnswer) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showAnswerPopup();
+      });
+    } else if (isGuessing && !hasSubmittedGuess) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showGuessPopup();
+      });
+    }
+  }
+
+  Future<String> _getMatchUid(String uid) async {
+    final snapshot =
+        await FirebaseFirestore.instance.collection("users").doc(uid).get();
+    final match = snapshot.data()?['match'];
+    return match ?? "";
+  }
+
+  Future<void> _showAnswerPopup() async {
+    String answer = "";
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Your Answer"),
+        content: TextField(
+          onChanged: (value) => answer = value,
+          decoration: InputDecoration(hintText: question),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final uid = FirebaseAuth.instance.currentUser!.uid;
+              await FirebaseFirestore.instance
+                  .collection("events")
+                  .doc("active_events")
+                  .collection(matchId!)
+                  .doc("current")
+                  .update({uid: answer});
+              Navigator.of(context).pop();
+              setState(() => hasSubmittedAnswer = true);
+            },
+            child: Text("Submit"),
+          )
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showGuessPopup() async {
+    String userGuess = "";
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Guess $matchName's Answer"),
+        content: TextField(
+          onChanged: (value) => userGuess = value,
+          decoration: InputDecoration(hintText: question),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final uid = FirebaseAuth.instance.currentUser!.uid;
+              await FirebaseFirestore.instance
+                  .collection("events")
+                  .doc("active_events")
+                  .collection(matchId!)
+                  .doc("current")
+                  .update({"${uid}_guess": userGuess});
+              Navigator.of(context).pop();
+              setState(() => hasSubmittedGuess = true);
+            },
+            child: Text("Submit Guess"),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEventContent() {
+    if (question == null) return Center(child: Text("No current event."));
+
+    if (isCompleted) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("Event Complete!",
+                style: Theme.of(context).textTheme.headlineSmall),
+            SizedBox(height: 12),
+            Text("Your answer: $userAnswer"),
+            Text("Your guess: $guess"),
+            Text("Actual answer from match: $matchAnswer"),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadEventData,
+              child: Text("Refresh"),
+            )
+          ],
+        ),
+      );
+    }
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text("Event Ongoing!",
+              style: Theme.of(context).textTheme.headlineSmall),
+          SizedBox(height: 10),
+          Text("Question: $question"),
+          SizedBox(height: 20),
+          if (isAnswering)
+            hasSubmittedAnswer
+                ? Text("You've answered! Waiting for your match...")
+                : ElevatedButton(
+                    onPressed: _showAnswerPopup,
+                    child: Text("Answer Now"),
+                  )
+          else if (isGuessing)
+            hasSubmittedGuess
+                ? Text("You've guessed! Waiting for results...")
+                : ElevatedButton(
+                    onPressed: _showGuessPopup,
+                    child: Text("Guess Now"),
+                  )
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 20),
-              if (!hasJoinedEvent) ...[
-                const Text(
-                  "Welcome to your Digital Event Room!",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2C519C),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  "Here, you and your match can answer fun bonding questions during the week!",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Colors.black87),
-                ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: _startEvent,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2C519C),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text("Start Event"),
-                )
-              ] else if (selectedQuestion != null) ...[
-                const Text(
-                  "Today’s Question:",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2C519C),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEEF2FA),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF5E77DF), width: 1),
-                  ),
-                  child: Text(
-                    selectedQuestion!,
-                    style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
-                  ),
-                ),
-                const SizedBox(height: 30),
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: "Enter your answer...",
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  maxLines: 4,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Answer submitted!")),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2C519C),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text("Submit Answer"),
-                )
-              ]
-            ],
-          ),
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Digital Event Room"),
       ),
+      body: _buildEventContent(),
     );
   }
 }
