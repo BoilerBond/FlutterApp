@@ -11,6 +11,7 @@ import '../../../../data/entity/app_user.dart';
 import 'chat.dart';
 import 'match_intro_screen.dart';
 import 'relationship_advice_screen.dart';
+import '../../../widgets/streak_indicator.dart';
 
 class BondScreen extends StatefulWidget {
   const BondScreen({super.key});
@@ -507,6 +508,7 @@ class _BondScreenState extends State<BondScreen> {
     if (match != null) {
       _calculateNextBondDate();
       _startCountdownTimer();
+      //_loadStreakData();
     }
 
     setState(() {
@@ -517,6 +519,7 @@ class _BondScreenState extends State<BondScreen> {
   @override
   void dispose() {
     _countdownTimer?.cancel();
+    //_streakExpirationTimer?.cancel();
     super.dispose();
   }
 
@@ -721,6 +724,250 @@ class _BondScreenState extends State<BondScreen> {
     );
   }
 
+  int _currentStreak = 0;
+  DateTime? _lastInteractionDate;
+  bool _isStreakAboutToExpire = false;
+  Timer? _streakExpirationTimer;
+  
+  // void _loadStreakData() async {
+  //   if (curUser == null || match == null) return;
+    
+  //   try {
+  //     // Fetch streak data from user's document
+  //     final userDoc = await FirebaseFirestore.instance
+  //       .collection('users')
+  //       .doc(curUser!.uid)
+  //       .get();
+        
+  //     if (userDoc.exists) {
+  //       final userData = userDoc.data() as Map<String, dynamic>;
+  //       // Check if there's a streaks map in the user data
+  //       if (userData.containsKey('streaks')) {
+  //         final streaks = userData['streaks'] as Map<String, dynamic>? ?? {};
+  //         final matchStreakData = streaks[match!.uid] as Map<String, dynamic>?;
+          
+  //         if (matchStreakData != null) {
+  //           setState(() {
+  //             _currentStreak = matchStreakData['currentStreak'] ?? 0;
+  //             _lastInteractionDate = matchStreakData['lastInteractionDate'] != null 
+  //                 ? (matchStreakData['lastInteractionDate'] as Timestamp).toDate() 
+  //                 : null;
+              
+  //             // Check if streak is about to expire
+  //             if (_lastInteractionDate != null) {
+  //               final expiryTime = _lastInteractionDate!.add(const Duration(hours: 24));
+  //               final remaining = expiryTime.difference(DateTime.now());
+  //               _isStreakAboutToExpire = remaining.inHours <= 1 && remaining.isNegative == false;
+  //             }
+  //           });
+            
+  //           // Start streak expiration timer
+  //           _startStreakExpirationTimer();
+  //         }
+  //       } else {
+  //         // If no streaks field exists yet, initialize it
+  //         await FirebaseFirestore.instance
+  //           .collection('users')
+  //           .doc(curUser!.uid)
+  //           .update({
+  //             'streaks': {
+  //               match!.uid: {
+  //                 'currentStreak': 0,
+  //                 'streakBroken': false,
+  //                 'updatedAt': FieldValue.serverTimestamp(),
+  //               }
+  //             }
+  //           });
+          
+  //         // Also initialize for match
+  //         await FirebaseFirestore.instance
+  //           .collection('users')
+  //           .doc(match!.uid)
+  //           .update({
+  //             'streaks': {
+  //               curUser!.uid: {
+  //                 'currentStreak': 0,
+  //                 'streakBroken': false,
+  //                 'updatedAt': FieldValue.serverTimestamp(),
+  //               }
+  //             }
+  //           });
+  //       }
+  //     }
+  //   } catch (e) {
+  //     print('Error loading streak data: $e');
+  //   }
+  // }
+  
+  // void _startStreakExpirationTimer() {
+  //   if (_lastInteractionDate == null) return;
+    
+  //   // Calculate time until streak expires
+  //   final expiryTime = _lastInteractionDate!.add(const Duration(hours: 24));
+  //   final remaining = expiryTime.difference(DateTime.now());
+    
+  //   if (remaining.isNegative) {
+  //     // Streak has already expired
+  //     _checkAndResetStreak();
+  //     return;
+  //   }
+    
+  //   // Check every minute if we're close to expiration
+  //   _streakExpirationTimer?.cancel();
+  //   _streakExpirationTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+  //     final timeRemaining = expiryTime.difference(DateTime.now());
+      
+  //     if (timeRemaining.isNegative) {
+  //       // Streak expired
+  //       _checkAndResetStreak();
+  //       timer.cancel();
+  //     } else if (timeRemaining.inHours <= 1 && !_isStreakAboutToExpire) {
+  //       // About to expire, notify user
+  //       setState(() {
+  //         _isStreakAboutToExpire = true;
+  //       });
+        
+  //       _showStreakExpirationWarning();
+  //     }
+  //   });
+  // }
+  
+  // void _checkAndResetStreak() async {
+  //   if (_lastInteractionDate == null || curUser == null || match == null) return;
+    
+  //   // Check if the streak has expired (no interaction in past 24 hours)
+  //   final now = DateTime.now();
+  //   final expiryTime = _lastInteractionDate!.add(const Duration(hours: 24));
+    
+  //   if (now.isAfter(expiryTime)) {
+  //     // Reset streak
+  //     try {
+  //       await FirebaseFirestore.instance
+  //         .collection('users')
+  //         .doc(curUser!.uid)
+  //         .update({
+  //           'streaks.${match!.uid}.currentStreak': 0,
+  //           'streaks.${match!.uid}.streakBroken': true,
+  //           'streaks.${match!.uid}.updatedAt': FieldValue.serverTimestamp(),
+  //         });
+        
+  //       // Also update match's streak data
+  //       await FirebaseFirestore.instance
+  //         .collection('users')
+  //         .doc(match!.uid)
+  //         .update({
+  //           'streaks.${curUser!.uid}.currentStreak': 0,
+  //           'streaks.${curUser!.uid}.streakBroken': true,
+  //           'streaks.${curUser!.uid}.updatedAt': FieldValue.serverTimestamp(),
+  //         });
+        
+  //       setState(() {
+  //         _currentStreak = 0;
+  //       });
+        
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text('Your streak has ended! Start a new interaction to rebuild your streak.'),
+  //           duration: Duration(seconds: 5),
+  //         ),
+  //       );
+  //     } catch (e) {
+  //       print('Error resetting streak: $e');
+  //     }
+  //   }
+  // }
+  
+  // void _showStreakExpirationWarning() {
+  //   if (!mounted) return;
+    
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: const Text('Your streak is about to expire! Interact with your match to keep it going.'),
+  //       action: SnackBarAction(
+  //         label: 'MESSAGE',
+  //         onPressed: () {
+  //           Navigator.push(
+  //             context,
+  //             MaterialPageRoute(
+  //               builder: (context) => ChatScreen(user: curUser!, match: match!),
+  //             )
+  //           );
+  //         },
+  //       ),
+  //       duration: const Duration(seconds: 8),
+  //     ),
+  //   );
+  // }
+  
+  // Future<void> _updateStreak() async {
+  //   if (curUser == null || match == null) return;
+    
+  //   try {
+  //     final userRef = FirebaseFirestore.instance.collection('users').doc(curUser!.uid);
+  //     final userDoc = await userRef.get();
+  //     final userData = userDoc.data() as Map<String, dynamic>? ?? {};
+      
+  //     final streaks = userData['streaks'] as Map<String, dynamic>? ?? {};
+  //     final matchStreakData = streaks[match!.uid] as Map<String, dynamic>? ?? {};
+      
+  //     final now = DateTime.now();
+  //     final int currentStreak = matchStreakData['currentStreak'] ?? 0;
+  //     final lastInteraction = matchStreakData['lastInteractionDate'] != null 
+  //         ? (matchStreakData['lastInteractionDate'] as Timestamp).toDate() 
+  //         : null;
+      
+  //     int newStreak = 1; // Default to 1 for new streaks
+      
+  //     if (lastInteraction != null) {
+  //       final today = DateTime(now.year, now.month, now.day);
+  //       final lastInteractionDay = DateTime(
+  //         lastInteraction.year,
+  //         lastInteraction.month,
+  //         lastInteraction.day,
+  //       );
+        
+  //       // If last interaction was yesterday or earlier today, continue streak
+  //       if (today.difference(lastInteractionDay).inDays <= 1) {
+  //         // Only increment if it's a new day
+  //         newStreak = today.isAfter(lastInteractionDay) 
+  //             ? currentStreak + 1
+  //             : currentStreak;
+  //       }
+  //     }
+      
+  //     // Update user's streak data
+  //     await userRef.update({
+  //       'streaks.${match!.uid}.currentStreak': newStreak,
+  //       'streaks.${match!.uid}.lastInteractionDate': Timestamp.fromDate(now),
+  //       'streaks.${match!.uid}.streakBroken': false,
+  //       'streaks.${match!.uid}.updatedAt': FieldValue.serverTimestamp(),
+  //     });
+      
+  //     // Also update match's streak data
+  //     await FirebaseFirestore.instance
+  //       .collection('users')
+  //       .doc(match!.uid)
+  //       .update({
+  //         'streaks.${curUser!.uid}.currentStreak': newStreak,
+  //         'streaks.${curUser!.uid}.lastInteractionDate': Timestamp.fromDate(now),
+  //         'streaks.${curUser!.uid}.streakBroken': false,
+  //         'streaks.${curUser!.uid}.updatedAt': FieldValue.serverTimestamp(),
+  //       });
+      
+  //     setState(() {
+  //       _currentStreak = newStreak;
+  //       _lastInteractionDate = now;
+  //       _isStreakAboutToExpire = false;
+  //     });
+      
+  //     // Restart the timer for streak expiration
+  //     _startStreakExpirationTimer();
+      
+  //   } catch (e) {
+  //     print('Error updating streak: $e');
+  //   }
+  // }
+  
   @override
   Widget build(BuildContext context) {
     if (loading) {
@@ -839,6 +1086,12 @@ class _BondScreenState extends State<BondScreen> {
                                       if (sharedTraits.isEmpty) const Text("No traits in common yet.") else ...sharedTraits.map((trait) => Text("• $trait")).toList(),
                                     ],
                                   ),
+                                  // const SizedBox(height: 12),
+                                  // StreakIndicator(
+                                  //   currentStreak: _currentStreak,
+                                  //   lastInteractionDate: _lastInteractionDate,
+                                  //   isStreakAboutToExpire: _isStreakAboutToExpire,
+                                  // ),
                                   const SizedBox(height: 8),
                                   // Spotify Button
                                   Padding(
@@ -864,7 +1117,8 @@ class _BondScreenState extends State<BondScreen> {
                                     ),
                                   ),
 
-                                  _buildActionButton(Icons.chat_bubble, "Go to our messages", () {
+                                  _buildActionButton(Icons.chat_bubble, "Go to our messages", () async {
+                                    //await _updateStreak();
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
