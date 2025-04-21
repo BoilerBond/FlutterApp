@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../data/entity/app_user.dart';
 
 class EventRoomScreen extends StatefulWidget {
   const EventRoomScreen({super.key});
@@ -10,73 +11,82 @@ class EventRoomScreen extends StatefulWidget {
 }
 
 class _EventRoomScreenState extends State<EventRoomScreen> {
-  String? matchId;
-  String? question;
-  String? userAnswer;
-  String? matchAnswer;
-  String? guess;
-  String? matchName = "Your match";
-  bool isAnswering = false;
-  bool isGuessing = false;
-  bool isCompleted = false;
+  AppUser? curUser;
+  AppUser? matchUser;
   bool hasSubmittedAnswer = false;
   bool hasSubmittedGuess = false;
 
   @override
   void initState() {
     super.initState();
-    _loadEventData();
+    _loadUserData();
   }
 
-  Future<void> _loadEventData() async {
-    final user = FirebaseAuth.instance.currentUser;
-    final uid = user?.uid;
-    final userDoc =
-        await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    matchId = userDoc.data()?['match'];
-    if (matchId == null || matchId!.isEmpty) return;
+  Future<void> _loadUserData() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
 
-    final eventSnapshot = await FirebaseFirestore.instance
-        .collection("events")
-        .doc("active_events")
-        .collection(matchId!)
-        .doc("current")
-        .get();
+    final db = FirebaseFirestore.instance;
+    final userSnap = await db.collection("users").doc(uid).get();
+    final user = AppUser.fromSnapshot(userSnap);
 
-    if (!eventSnapshot.exists) return;
-
-    final data = eventSnapshot.data()!;
-    question = data['question'];
-    isAnswering = data['answeringPhase'] ?? false;
-    isGuessing = data['guessingPhase'] ?? false;
-    isCompleted = data['completed'] ?? false;
-    userAnswer = data[uid];
-    guess = data["${uid}_guess"];
-
-    final matchUID = await _getMatchUid(uid!);
-    matchAnswer = data[matchUID];
+    AppUser? match;
+    if (user.match.isNotEmpty) {
+      final matchSnap = await db.collection("users").doc(user.match).get();
+      match = AppUser.fromSnapshot(matchSnap);
+    }
 
     setState(() {
-      hasSubmittedAnswer = userAnswer != null;
-      hasSubmittedGuess = guess != null;
+      curUser = user;
+      matchUser = match;
+      hasSubmittedAnswer = curUser!.currentEventAnswer != null;
+      hasSubmittedGuess = curUser!.currentEventGuess != null;
     });
 
-    if (isAnswering && !hasSubmittedAnswer) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _showAnswerPopup();
-      });
-    } else if (isGuessing && !hasSubmittedGuess) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _showGuessPopup();
-      });
+    if (curUser!.currentEventPhase == "answering" && !hasSubmittedAnswer) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showAnswerPopup());
+    } else if (curUser!.currentEventPhase == "guessing" && !hasSubmittedGuess) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showGuessPopup());
     }
   }
 
-  Future<String> _getMatchUid(String uid) async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection("users").doc(uid).get();
-    final match = snapshot.data()?['match'];
-    return match ?? "";
+  Future<void> _initiateEvent() async {
+    if (curUser == null || matchUser == null) return;
+
+    final questions = [
+      "What’s your go-to comfort food?",
+      "If you could travel anywhere right now, where would it be?",
+      "What’s a movie you could watch over and over?",
+      "What's your dream vacation?",
+      "What's something people often misunderstand about you?",
+    ];
+    final selectedQuestion = (questions..shuffle()).first;
+
+
+try {
+  await FirebaseFirestore.instance.collection('users').doc(curUser!.uid).update({
+    'currentEventQuestion': selectedQuestion,
+    'currentEventPhase': 'answering',
+    'currentEventAnswer': null,
+    'currentEventGuess': null
+  });
+  print("Updated current user: ${curUser!.uid}");
+} catch (e) {
+  print("Failed to update current user: $e");
+}
+
+try {
+  await FirebaseFirestore.instance.collection('users').doc(matchUser!.uid).update({
+    'currentEventQuestion': selectedQuestion,
+    'currentEventPhase': 'answering',
+    'currentEventAnswer': null,
+    'currentEventGuess': null
+  });
+  print("Updated match user: ${matchUser!.uid}");
+} catch (e) {
+  print("Failed to update match user: $e");
+}
+    _loadUserData();
   }
 
   Future<void> _showAnswerPopup() async {
@@ -87,18 +97,14 @@ class _EventRoomScreenState extends State<EventRoomScreen> {
         title: Text("Your Answer"),
         content: TextField(
           onChanged: (value) => answer = value,
-          decoration: InputDecoration(hintText: question),
+          decoration: InputDecoration(hintText: curUser!.currentEventQuestion),
         ),
         actions: [
           TextButton(
             onPressed: () async {
-              final uid = FirebaseAuth.instance.currentUser!.uid;
-              await FirebaseFirestore.instance
-                  .collection("events")
-                  .doc("active_events")
-                  .collection(matchId!)
-                  .doc("current")
-                  .update({uid: answer});
+              await FirebaseFirestore.instance.collection("users").doc(curUser!.uid).update({
+                'currentEventAnswer': answer
+              });
               Navigator.of(context).pop();
               setState(() => hasSubmittedAnswer = true);
             },
@@ -114,21 +120,17 @@ class _EventRoomScreenState extends State<EventRoomScreen> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Guess $matchName's Answer"),
+        title: Text("Guess your match's answer"),
         content: TextField(
           onChanged: (value) => userGuess = value,
-          decoration: InputDecoration(hintText: question),
+          decoration: InputDecoration(hintText: curUser!.currentEventQuestion),
         ),
         actions: [
           TextButton(
             onPressed: () async {
-              final uid = FirebaseAuth.instance.currentUser!.uid;
-              await FirebaseFirestore.instance
-                  .collection("events")
-                  .doc("active_events")
-                  .collection(matchId!)
-                  .doc("current")
-                  .update({"${uid}_guess": userGuess});
+              await FirebaseFirestore.instance.collection("users").doc(curUser!.uid).update({
+                'currentEventGuess': userGuess
+              });
               Navigator.of(context).pop();
               setState(() => hasSubmittedGuess = true);
             },
@@ -140,23 +142,36 @@ class _EventRoomScreenState extends State<EventRoomScreen> {
   }
 
   Widget _buildEventContent() {
-    if (question == null) return Center(child: Text("No current event."));
+    if (curUser == null || matchUser == null || curUser!.currentEventQuestion == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("No current event."),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _initiateEvent,
+              child: Text("Start a New Event"),
+            ),
+          ],
+        ),
+      );
+    }
 
-    if (isCompleted) {
+    if (curUser!.currentEventPhase == "completed") {
       return Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("Event Complete!",
-                style: Theme.of(context).textTheme.headlineSmall),
+            Text("Event Complete!", style: Theme.of(context).textTheme.headlineSmall),
             SizedBox(height: 12),
-            Text("Your answer: $userAnswer"),
-            Text("Your guess: $guess"),
-            Text("Actual answer from match: $matchAnswer"),
+            Text("Your answer: ${curUser!.currentEventAnswer}"),
+            Text("Your guess: ${curUser!.currentEventGuess}"),
+            Text("Match answer: ${matchUser!.currentEventAnswer}"),
             SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _loadEventData,
+              onPressed: _loadUserData,
               child: Text("Refresh"),
             )
           ],
@@ -168,19 +183,18 @@ class _EventRoomScreenState extends State<EventRoomScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text("Event Ongoing!",
-              style: Theme.of(context).textTheme.headlineSmall),
+          Text("Event Ongoing!", style: Theme.of(context).textTheme.headlineSmall),
           SizedBox(height: 10),
-          Text("Question: $question"),
+          Text("Question: ${curUser!.currentEventQuestion}"),
           SizedBox(height: 20),
-          if (isAnswering)
+          if (curUser!.currentEventPhase == 'answering')
             hasSubmittedAnswer
                 ? Text("You've answered! Waiting for your match...")
                 : ElevatedButton(
                     onPressed: _showAnswerPopup,
                     child: Text("Answer Now"),
                   )
-          else if (isGuessing)
+          else if (curUser!.currentEventPhase == 'guessing')
             hasSubmittedGuess
                 ? Text("You've guessed! Waiting for results...")
                 : ElevatedButton(

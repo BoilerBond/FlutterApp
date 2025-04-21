@@ -56,6 +56,10 @@ class AppUser {
   bool showPhotosToMatch;
   bool showPhotosToOthers;
   List<String> ratedUsers;
+  final String? currentEventQuestion;
+  final String? currentEventAnswer;
+  final String? currentEventGuess;
+  final String? currentEventPhase;
 
   AppUser({
     required this.uid,
@@ -110,6 +114,10 @@ class AppUser {
     this.showPhotosToMatch = true,
     this.showPhotosToOthers = true,
     this.ratedUsers = const [],
+    this.currentEventQuestion,
+    this.currentEventAnswer,
+    this.currentEventGuess,
+    this.currentEventPhase,
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -170,6 +178,10 @@ class AppUser {
       showPhotosToMatch: data['showPhotosToMatch'] ?? true,
       showPhotosToOthers: data['showPhotosToOthers'] ?? true,
       ratedUsers: List<String>.from(data['ratedUsers'] ?? []),
+      currentEventQuestion: data['currentEventQuestion'],
+      currentEventAnswer: data['currentEventAnswer'],
+      currentEventGuess: data['currentEventGuess'],
+      currentEventPhase: data['currentEventPhase'],
     );
   }
 
@@ -252,6 +264,10 @@ class AppUser {
       'showPhotosToMatch': showPhotosToMatch,
       'showPhotosToOthers': showPhotosToOthers,
       'ratedUsers': ratedUsers,
+      'currentEventQuestion': currentEventQuestion,
+      'currentEventAnswer': currentEventAnswer,
+      'currentEventGuess': currentEventGuess,
+      'currentEventPhase': currentEventPhase,
     };
   }
 
