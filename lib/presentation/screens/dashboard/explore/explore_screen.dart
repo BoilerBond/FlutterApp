@@ -134,7 +134,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void initState() {
     super.initState();
-    getProfiles();
+    // TODO: commented out to not use up function calls during testing
+    // getProfiles();
     ExploreScreen.shouldReload.addListener(() {
       if (ExploreScreen.shouldReload.value) {
         if (mounted) {

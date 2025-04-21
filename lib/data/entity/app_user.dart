@@ -57,6 +57,7 @@ class AppUser {
   bool showPhotosToOthers;
   List<String> ratedUsers;
   int lastDailyPromptTime;
+  String roomID;
 
   AppUser({
     required this.uid,
@@ -116,6 +117,7 @@ class AppUser {
     this.showPhotosToOthers = true,
     this.ratedUsers = const [],
     this.lastDailyPromptTime = 0,
+    this.roomID = '',
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -177,6 +179,7 @@ class AppUser {
       showPhotosToOthers: data['showPhotosToOthers'] ?? true,
       ratedUsers: List<String>.from(data['ratedUsers'] ?? []),
       lastDailyPromptTime: int.tryParse(data['lastDailyPromptTime'].toString()) ?? 0,
+      roomID: data['room'] ?? ''
     );
   }
 
@@ -260,6 +263,7 @@ class AppUser {
       'showPhotosToOthers': showPhotosToOthers,
       'ratedUsers': ratedUsers,
       'lastDailyPromptTime': lastDailyPromptTime,
+      'roomID': roomID
     };
   }
 

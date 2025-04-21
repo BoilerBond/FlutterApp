@@ -1,7 +1,8 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
@@ -9,52 +10,29 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:http/http.dart' as http;
+import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:datingapp/services/gemini_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:datingapp/data/constants/dates.dart';
 
 import '../../../../data/entity/app_user.dart';
-
-// For the testing purposes, you should probably use https://pub.dev/packages/uuid.
-String randomString() {
-  final random = Random.secure();
-  final values = List<int>.generate(16, (i) => random.nextInt(255));
-  return base64UrlEncode(values);
-}
+import '../../../../data/entity/room.dart';
 
 class ChatScreen extends StatefulWidget {
   final AppUser user;
   final AppUser match;
-  const ChatScreen({super.key, required this.user, required this.match});
+  final String roomID;
+  ChatScreen({super.key, required this.user, required this.match, required this.roomID});
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final _user = const types.User(id: '82091008-a484-4a89-ae75-a22bf8d6f3ac');
-  final List<types.Message> _messages = [
-    types.TextMessage(
-      author: types.User(id: '82091008-a484-4a89-ae75-a22bf8d6f3ac'),
-      id: '1',
-      text: 'ajdfklasjflksadfklsda test string1',
-    ),
-    types.TextMessage(
-      author: types.User(id: '8adfadsfasdfsade2232312'),
-      id: '2',
-      text: 'test string2',
-    ),
-    types.TextMessage(
-      author: types.User(id: '82091008-a484-4a89-ae75-a22bf8d6f3ac'),
-      id: '3',
-      text: 'test string3',
-    ),
-  ];
-
   String? _currentPrompt;
   String? _matchAnswer;
   String? _userAnswer;
   bool _hasAnswered = false;
+  bool _isAttachmentUploading = false;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -83,24 +61,29 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
         Expanded(
-          child: Chat(
-            messages: _messages,
-            user: _user,
-            onSendPressed: _handleSendPressed,
-            onMessageTap: _handleMessageTap,
-            onAttachmentPressed: _handleAttachmentPressed,
-            onPreviewDataFetched: _handlePreviewDataFetched,
-          ),
+          child: StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance.collection("rooms").doc(widget.roomID).snapshots(),
+              builder: (context, snapshot) {
+                List<Map<String, dynamic>> msgsMap = List<Map<String, dynamic>>.from(
+                    snapshot.data?['messages'] ?? []);
+                List<types.Message> messages = parseMsgs(msgsMap);
+                return Chat(
+                  isAttachmentUploading: _isAttachmentUploading,
+                  messages: messages,
+                  onAttachmentPressed: _handleAttachmentPressed,
+                  onMessageTap: _handleMessageTap,
+                  //onPreviewDataFetched: _handlePreviewDataFetched,
+                  onSendPressed: _handleSendPressed,
+                  user: types.User(
+                    id: widget.user.uid,
+                  ),
+                );
+              }
+          )
         ),
       ],
     ),
   );
-
-  void _addMessage(types.Message message) {
-    setState(() {
-      _messages.insert(0, message);
-    });
-  }
 
   void _handleAttachmentPressed() {
     showModalBottomSheet<void>(
@@ -214,10 +197,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
     final selected = filtered[Random().nextInt(filtered.length)];
 
+    String mid = widget.user.uid + DateTime.now().millisecondsSinceEpoch.toString() + "dp";
     final dateMsg = types.TextMessage(
-      author: _user,
+      author: types.User(id: widget.user.uid),
       createdAt: DateTime.now().millisecondsSinceEpoch,
-      id: randomString(),
+      id: mid,
       text: "Date Idea: ${selected.key}\n${selected.value}",
     );
 
@@ -245,10 +229,11 @@ class _ChatScreenState extends State<ChatScreen> {
       'users': [widget.user.uid, widget.match.uid],
     });
 
+    String mid = widget.user.uid + now.toString() + "dp";
     final promptMessage = types.TextMessage(
-      author: _user,
+      author: types.User(id: widget.user.uid),
       createdAt: now,
-      id: randomString(),
+      id: mid,
       text: "Daily Prompt: $_currentPrompt",
     );
 
@@ -296,16 +281,28 @@ class _ChatScreenState extends State<ChatScreen> {
     );
 
     if (result != null && result.files.single.path != null) {
-      final message = types.FileMessage(
-        author: _user,
-        createdAt: DateTime.now().millisecondsSinceEpoch,
-        id: randomString(),
-        name: result.files.single.name,
-        size: result.files.single.size,
-        uri: result.files.single.path!,
-      );
+      _setAttachmentUploading(true);
+      final name = result.files.single.name;
+      final filePath = result.files.single.path!;
+      final file = File(filePath);
 
-      _addMessage(message);
+      try {
+        final reference = FirebaseStorage.instance.ref(name);
+        await reference.putFile(file);
+        final uri = await reference.getDownloadURL();
+
+        final message = types.PartialFile(
+          mimeType: lookupMimeType(filePath),
+          name: name,
+          size: result.files.single.size,
+          uri: uri,
+        );
+        // TODO: add support for files
+        // _addMessage(message);
+        _setAttachmentUploading(false);
+      } finally {
+        _setAttachmentUploading(false);
+      }
     }
   }
 
@@ -317,21 +314,32 @@ class _ChatScreenState extends State<ChatScreen> {
     );
 
     if (result != null) {
+      _setAttachmentUploading(true);
+      final file = File(result.path);
+      final size = file.lengthSync();
       final bytes = await result.readAsBytes();
       final image = await decodeImageFromList(bytes);
+      final name = result.name;
 
-      final message = types.ImageMessage(
-        author: _user,
-        createdAt: DateTime.now().millisecondsSinceEpoch,
-        height: image.height.toDouble(),
-        id: randomString(),
-        name: result.name,
-        size: bytes.length,
-        uri: result.path,
-        width: image.width.toDouble(),
-      );
+      try {
+        final reference = FirebaseStorage.instance.ref(name);
+        await reference.putFile(file);
+        final uri = await reference.getDownloadURL();
 
-      _addMessage(message);
+        final message = types.PartialImage(
+          height: image.height.toDouble(),
+          name: name,
+          size: size,
+          uri: uri,
+          width: image.width.toDouble(),
+        );
+
+        // TODO: add ability send images
+        // widget.room.sendMessage(message);
+        _setAttachmentUploading(false);
+      } finally {
+        _setAttachmentUploading(false);
+      }
     }
   }
 
@@ -341,17 +349,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (message.uri.startsWith('http')) {
         try {
-          final index =
-          _messages.indexWhere((element) => element.id == message.id);
-          final updatedMessage =
-          (_messages[index] as types.FileMessage).copyWith(
-            isLoading: true,
-          );
-
-          setState(() {
-            _messages[index] = updatedMessage;
-          });
-
+          final updatedMessage = message.copyWith(isLoading: true);
+          // TODO: update the message
           final client = http.Client();
           final request = await client.get(Uri.parse(message.uri));
           final bytes = request.bodyBytes;
@@ -363,16 +362,8 @@ class _ChatScreenState extends State<ChatScreen> {
             await file.writeAsBytes(bytes);
           }
         } finally {
-          final index =
-          _messages.indexWhere((element) => element.id == message.id);
-          final updatedMessage =
-          (_messages[index] as types.FileMessage).copyWith(
-            isLoading: null,
-          );
-
-          setState(() {
-            _messages[index] = updatedMessage;
-          });
+          final updatedMessage = message.copyWith(isLoading: false);
+          // TODO: update the message
         }
       }
 
@@ -380,29 +371,58 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _handlePreviewDataFetched(
-      types.TextMessage message,
-      types.PreviewData previewData,
-      ) {
-    final index = _messages.indexWhere((element) => element.id == message.id);
-    final updatedMessage = (_messages[index] as types.TextMessage).copyWith(
-      previewData: previewData,
-    );
+  // void _handlePreviewDataFetched(
+  //     types.TextMessage message,
+  //     types.PreviewData previewData,
+  //     ) {
+  //   final updatedMessage = message.copyWith(previewData: previewData);
+  //
+  //   FirebaseChatCore.instance.updateMessage(updatedMessage, widget.room.id);
+  // }
 
+  Future<void> _handleSendPressed(types.PartialText message) async {
+      String msgid = DateTime.now().millisecondsSinceEpoch.toString();
+      msgid += widget.user.uid;
+      final textMessage = types.TextMessage(
+        author: types.User(id: widget.user.uid),
+        createdAt: DateTime.now().millisecondsSinceEpoch,
+        id: msgid,
+        text: message.text,
+      );
+      Room room = await Room.getById(widget.roomID);
+      room.sendMessage(textMessage);
+  }
+
+  void _setAttachmentUploading(bool uploading) {
     setState(() {
-      _messages[index] = updatedMessage;
+      _isAttachmentUploading = uploading;
     });
   }
 
-  void _handleSendPressed(types.PartialText message) {
-    final textMessage = types.TextMessage(
-      author: _user,
-      createdAt: DateTime.now().millisecondsSinceEpoch,
-      id: randomString(),
-      text: message.text,
-    );
-
-    _addMessage(textMessage);
+  void _addMessage(types.Message msg) async {
+    Room room = await Room.getById(widget.roomID);
+    room.sendMessage(msg);
   }
 
+  List<types.Message> parseMsgs(List<Map<String, dynamic>> maps) {
+      List<types.Message> result = [];
+      for (Map<String, dynamic> e in maps) {
+        switch (e['type']) {
+          case 'audio':
+            break;
+          case 'image':
+            break;
+          default:
+            types.TextMessage msg = types.TextMessage(
+              author: types.User(id: e['author']),
+              createdAt: e['createdAt'],
+              id: e['id'],
+              text: e['text']
+            );
+            result.add(msg);
+            break;
+        }
+      }
+      return result;
+  }
 }
