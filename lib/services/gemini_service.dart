@@ -88,4 +88,43 @@ Return only the numerical value (just the number) without any explanation.""";
     
     return results;
   }
+
+  Future<String> generateDailyPrompt() async {
+    final prompt = """You are a conversation starter assistant for a dating app.
+Generate a single meaningful, thought-provoking question that can help two people get to know each other better.
+
+Only return the question. Do not include any additional text or commentary.
+Examples:
+- What's a memory that shaped who you are today?
+- If you could relive one day in your life, which would it be and why?
+- What does a fulfilling life look like to you?
+
+Only return the question on one line.""";
+
+    try {
+      final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$_apiKey');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [{
+            'parts': [{'text': prompt}]
+          }]
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        final responseText = jsonResponse['candidates'][0]['content']['parts'][0]['text'] ?? '';
+        return responseText.trim();
+      } else {
+        print('Failed to generate daily prompt: ${response.statusCode}');
+        print('Response body: ${response.body}');
+      }
+    } catch (e) {
+      print('Error generating daily prompt: $e');
+    }
+
+    return "What's something interesting you've learned recently?";
+  }
 }

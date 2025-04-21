@@ -56,6 +56,7 @@ class AppUser {
   bool showPhotosToMatch;
   bool showPhotosToOthers;
   List<String> ratedUsers;
+  int lastDailyPromptTime;
 
   AppUser({
     required this.uid,
@@ -114,6 +115,7 @@ class AppUser {
     this.showPhotosToMatch = true,
     this.showPhotosToOthers = true,
     this.ratedUsers = const [],
+    this.lastDailyPromptTime = 0,
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -174,6 +176,7 @@ class AppUser {
       showPhotosToMatch: data['showPhotosToMatch'] ?? true,
       showPhotosToOthers: data['showPhotosToOthers'] ?? true,
       ratedUsers: List<String>.from(data['ratedUsers'] ?? []),
+      lastDailyPromptTime: int.tryParse(data['lastDailyPromptTime'].toString()) ?? 0,
     );
   }
 
@@ -256,6 +259,7 @@ class AppUser {
       'showPhotosToMatch': showPhotosToMatch,
       'showPhotosToOthers': showPhotosToOthers,
       'ratedUsers': ratedUsers,
+      'lastDailyPromptTime': lastDailyPromptTime,
     };
   }
 

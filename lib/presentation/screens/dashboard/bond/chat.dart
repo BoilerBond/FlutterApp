@@ -9,8 +9,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:http/http.dart' as http;
-
 import 'package:path_provider/path_provider.dart';
+import 'package:datingapp/services/gemini_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../data/entity/app_user.dart';
 
@@ -49,19 +50,48 @@ class _ChatScreenState extends State<ChatScreen> {
     ),
   ];
 
+  String? _currentPrompt;
+  String? _matchAnswer;
+  String? _userAnswer;
+  bool _hasAnswered = false;
 
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: Text(widget.match.firstName),
     ),
-    body: Chat(
-      messages: _messages,
-      user: _user,
-      onSendPressed: _handleSendPressed,
-      onMessageTap: _handleMessageTap,
-      onAttachmentPressed: _handleAttachmentPressed,
-      onPreviewDataFetched: _handlePreviewDataFetched,
+    body: Column(
+      children: [
+        if (_currentPrompt != null)
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Prompt: $_currentPrompt"),
+                if (!_hasAnswered)
+                  TextField(onChanged: (val) => _userAnswer = val),
+                if (!_hasAnswered)
+                  ElevatedButton(
+                    onPressed: () => _submitDailyPromptAnswer(_userAnswer ?? '', "${widget.user.uid}_${widget.match.uid}_${DateTime.now().millisecondsSinceEpoch}"),
+                    child: Text("Submit Answer"),
+                  ),
+                if (_hasAnswered && _matchAnswer != null)
+                  Text("Match's Answer: $_matchAnswer"),
+              ],
+            ),
+          ),
+        Expanded(
+          child: Chat(
+            messages: _messages,
+            user: _user,
+            onSendPressed: _handleSendPressed,
+            onMessageTap: _handleMessageTap,
+            onAttachmentPressed: _handleAttachmentPressed,
+            onPreviewDataFetched: _handlePreviewDataFetched,
+          ),
+        ),
+      ],
     ),
   );
 
@@ -76,7 +106,7 @@ class _ChatScreenState extends State<ChatScreen> {
       context: context,
       builder: (BuildContext context) => SafeArea(
         child: SizedBox(
-          height: 144,
+          height: 192,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
@@ -101,6 +131,16 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
               TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _sendDailyPrompt();
+                },
+                child: const Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text('Daily Prompt'),
+                ),
+              ),
+              TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Align(
                   alignment: AlignmentDirectional.centerStart,
@@ -112,6 +152,72 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       ),
     );
+  }
+
+  void _sendDailyPrompt() async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (widget.user.lastDailyPromptTime == null) {
+      widget.user.lastDailyPromptTime = 0;
+    }
+    if (now - widget.user.lastDailyPromptTime < 86400000) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Daily prompt already sent today.")),
+      );
+      return;
+    }
+
+    _currentPrompt = await GeminiService().generateDailyPrompt();
+    final promptId = "${widget.user.uid}_${widget.match.uid}_${now}";
+
+    await FirebaseFirestore.instance.collection('daily_prompts').doc(promptId).set({
+      'prompt': _currentPrompt,
+      'timestamp': now,
+      'users': [widget.user.uid, widget.match.uid],
+    });
+
+    final promptMessage = types.TextMessage(
+      author: _user,
+      createdAt: now,
+      id: randomString(),
+      text: "Daily Prompt: $_currentPrompt",
+    );
+
+    _addMessage(promptMessage);
+
+    // update user's Firestore record
+    final userRef = FirebaseFirestore.instance.collection('users').doc(widget.user.uid);
+    await userRef.update({'lastDailyPromptTime': now});
+
+    setState(() {
+      widget.user.lastDailyPromptTime = now;
+    });
+  }
+
+  Future<void> _submitDailyPromptAnswer(String answer, String promptId) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final promptRef = FirebaseFirestore.instance.collection('daily_prompts').doc(promptId);
+    await promptRef.set({
+      'promptId': promptId,
+      'timestamp': now,
+      'prompt': _currentPrompt,
+      'answers': {
+        widget.user.uid: {
+          'answer': answer,
+          'answeredAt': now,
+        }
+      }
+    }, SetOptions(merge: true));
+
+    setState(() {
+      _userAnswer = answer;
+      _hasAnswered = true;
+    });
+
+    final promptDoc = await promptRef.get();
+    final data = promptDoc.data();
+    if (data != null && data['answers']?[widget.match.uid] != null) {
+      _matchAnswer = data['answers'][widget.match.uid]['answer'];
+    }
   }
 
   void _handleFileSelection() async {
