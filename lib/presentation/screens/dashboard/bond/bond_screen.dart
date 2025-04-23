@@ -1119,24 +1119,37 @@ class _BondScreenState extends State<BondScreen> {
                                     ),
                                   ),
 
-                                  _buildActionButton(Icons.chat_bubble, "Go to our messages", () {
-                                    if (curUser!.roomID.isEmpty) {
-                                      // no chat room has been created, create one now
-                                      String rid = curUser!.uid + match!.uid;
-                                      curUser!.roomID = rid;
-                                      match!.roomID = rid;
-                                      FirebaseFirestore.instance.collection("users").doc(curUser!.uid).update({"roomID": rid});
-                                      FirebaseFirestore.instance.collection("users").doc(match!.uid).update({"roomID": rid});
-                                      final q = FirebaseFirestore.instance.collection("rooms").doc(rid);
-                                      List<String> users = [curUser!.uid, match!.uid];
-                                      q.set({"messages": [], "roomID": rid, "users": users});
+                                  _buildActionButton(Icons.chat_bubble, "Go to our messages", () async {
+                                    String rid = curUser!.roomID;
+
+                                    if (rid.isEmpty) {
+                                      rid = curUser!.uid + match!.uid;
+                                      final roomRef = FirebaseFirestore.instance.collection("rooms").doc(rid);
+
+                                      // Only write an empty room if it doesn’t exist
+                                      final snap = await roomRef.get();
+                                      if (!snap.exists) {
+                                        await roomRef.set({
+                                          "messages": [],
+                                          "roomID": rid,
+                                          "users": [curUser!.uid, match!.uid],
+                                        });
+                                      }
+
+                                      // Persist room ID to user document
+                                      await FirebaseFirestore.instance.collection("users").doc(curUser!.uid).update({"roomID": rid});
+                                      // await FirebaseFirestore.instance.collection("users").doc(match!.uid).update({"roomID": rid});
+
+                                      setState(() {
+                                        curUser!.roomID = rid;
+                                      });
                                     }
                                     Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ChatScreen(user: curUser!, match: match!, roomID: curUser!.roomID),
-                                        )
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ChatScreen(user: curUser!, match: match!, roomID: rid),
+                                      ),
                                     );
                                   }),
                                   _buildActionButton(Icons.favorite, "Relationship suggestions", () {

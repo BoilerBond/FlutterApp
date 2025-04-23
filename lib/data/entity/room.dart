@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:uuid/uuid.dart';
 
 class Room {
   String roomID;
@@ -67,6 +68,19 @@ class Room {
           'image': "WIP"
         };
         break;
+      case types.MessageType.custom:
+        final cust = msg as types.CustomMessage;
+        final meta = cust.metadata != null
+            ? Map<String, dynamic>.from(cust.metadata!)
+            : <String, dynamic>{};
+        newmsg = {
+          'type': meta['customType'] ?? 'custom',
+          'author': cust.author.id,
+          'createdAt': cust.createdAt,
+          'id': cust.id,
+        };
+        newmsg.addAll(meta);
+        break;
       default:
         newmsg = {
           'type': "text",
@@ -81,5 +95,44 @@ class Room {
     print(messages);
     // save to firebase
     await FirebaseFirestore.instance.collection("rooms").doc(roomID).update({"messages": messages});
+  }
+
+  Future<void> sendDateIdea(Map<String, dynamic> idea, types.User author) async {
+    final msg = types.CustomMessage(
+      id: const Uuid().v4(),
+      author: author,
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+      metadata: {
+        'customType': 'dateIdea',
+        'status': 'pending',
+        'acceptedBy': <String>[],
+        'deniedBy': <String>[],
+        'dateIdea': idea,
+      },
+    );
+    sendMessage(msg);
+  }
+
+  Future<void> sendDailyPrompt(String promptText, types.User author) async {
+    final msg = types.CustomMessage(
+      id: const Uuid().v4(),
+      author: author,
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+      metadata: {
+        'customType': 'dailyPrompt',
+        'prompt': promptText,
+      },
+    );
+    sendMessage(msg);
+  }
+
+  Future<void> updateMessage(String messageId, Map<String, dynamic> updates) async {
+    final idx = messages.indexWhere((m) => m['id'] == messageId);
+    if (idx == -1) return;
+    messages[idx].addAll(updates);
+    await FirebaseFirestore.instance
+        .collection("rooms")
+        .doc(roomID)
+        .update({'messages': messages});
   }
 }

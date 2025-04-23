@@ -14,6 +14,8 @@ import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:datingapp/services/gemini_service.dart';
 import 'package:datingapp/data/constants/dates.dart';
+import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../data/entity/app_user.dart';
 import '../../../../data/entity/room.dart';
@@ -74,6 +76,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   onMessageTap: _handleMessageTap,
                   //onPreviewDataFetched: _handlePreviewDataFetched,
                   onSendPressed: _handleSendPressed,
+                  customMessageBuilder: _customMessageBuilder,
                   user: types.User(
                     id: widget.user.uid,
                   ),
@@ -185,11 +188,15 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  void _generateAndSendDateIdea(String budgetLevel) {
+  void _generateAndSendDateIdea(String budgetLevel) async {
     final filtered = dateIdeas.entries.where((entry) {
       final desc = entry.value.toLowerCase();
-      if (budgetLevel == 'low') return desc.contains('\$0') || desc.contains('\$1') || desc.contains('\$5') || desc.contains('\$10');
-      if (budgetLevel == 'medium') return desc.contains('\$20') || desc.contains('\$25') || desc.contains('\$30') || desc.contains('\$35');
+      if (budgetLevel == 'low') {
+        return desc.contains('\$0') || desc.contains('\$1') || desc.contains('\$5') || desc.contains('\$10');
+      }
+      if (budgetLevel == 'medium') {
+        return desc.contains('\$20') || desc.contains('\$25') || desc.contains('\$30') || desc.contains('\$35');
+      }
       return desc.contains('\$45') || desc.contains('\$60') || desc.contains('\$75');
     }).toList();
 
@@ -197,15 +204,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
     final selected = filtered[Random().nextInt(filtered.length)];
 
-    String mid = widget.user.uid + DateTime.now().millisecondsSinceEpoch.toString() + "dp";
-    final dateMsg = types.TextMessage(
-      author: types.User(id: widget.user.uid),
-      createdAt: DateTime.now().millisecondsSinceEpoch,
-      id: mid,
-      text: "Date Idea: ${selected.key}\n${selected.value}",
-    );
+    // Build the idea payload expected by Room.sendDateIdea
+    final idea = <String, dynamic>{
+      'activity'   : selected.key,
+      'description': selected.value,
+      'createdAt'  : DateTime.now().toIso8601String(),
+    };
 
-    _addMessage(dateMsg);
+    final room = await Room.getById(widget.roomID);
+    await room.sendDateIdea(idea, types.User(id: widget.user.uid));
   }
 
   void _sendDailyPrompt() async {
@@ -404,6 +411,96 @@ class _ChatScreenState extends State<ChatScreen> {
     room.sendMessage(msg);
   }
 
+  Widget _customMessageBuilder(types.CustomMessage msg, {int messageWidth = 250}) {
+    final meta = msg.metadata ?? {};
+    if (meta['customType'] == 'dateIdea') {
+      return _buildDateIdea(msg, meta, messageWidth);
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildDateIdea(
+      types.CustomMessage msg, Map meta, int width) {
+    final idea      = meta['dateIdea'] as Map?;
+    final accepted  = List<String>.from(meta['acceptedBy'] ?? []);
+    final denied    = List<String>.from(meta['deniedBy']   ?? []);
+    final hasVoted  = accepted.contains(widget.user.uid) || denied.contains(widget.user.uid);
+
+    return Container(
+      width: width.toDouble(),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.pink.shade50,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Date Idea: ${idea?['activity']}'),
+          if (idea?['location'] != null) Text('Location: ${idea?['location']}'),
+          if (idea?['description'] != null)
+            Text(idea?['description']),
+          if (idea?['dateTime'] != null)
+            Text(DateFormat('EEE, MMM d • h:mm a')
+                .format(DateTime.parse(idea!['dateTime']))),
+          const SizedBox(height: 6),
+          if (!hasVoted)
+            Row(
+              children: [
+                TextButton(
+                  onPressed: () => _respondToDateIdea(msg, true),
+                  child: const Text('Accept'),
+                ),
+                TextButton(
+                  onPressed: () => _respondToDateIdea(msg, false),
+                  child: const Text('Deny'),
+                ),
+              ],
+            )
+          else
+            Text(
+              accepted.contains(widget.user.uid) ? 'You accepted' : 'You denied',
+              style: const TextStyle(fontStyle: FontStyle.italic),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _respondToDateIdea(types.CustomMessage message, bool accept) async {
+    final room = await Room.getById(widget.roomID);
+    final meta       = Map<String, dynamic>.from(message.metadata ?? {});
+    final acceptedBy = List<String>.from(meta['acceptedBy'] ?? []);
+    final deniedBy   = List<String>.from(meta['deniedBy']   ?? []);
+
+    if (accept) {
+      if (!acceptedBy.contains(widget.user.uid)) acceptedBy.add(widget.user.uid);
+      meta['acceptedBy'] = acceptedBy;
+      meta['status']     = 'accepted';
+    } else {
+      if (!deniedBy.contains(widget.user.uid)) deniedBy.add(widget.user.uid);
+      meta['deniedBy']   = deniedBy;
+      meta['status']     = 'denied';
+    }
+
+    await room.updateMessage(message.id, {
+      'acceptedBy': meta['acceptedBy'],
+      'deniedBy'  : meta['deniedBy'],
+      'status'    : meta['status'],
+    });
+
+    // summary text
+    final summary = types.TextMessage(
+      id        : const Uuid().v4(),
+      author    : types.User(id: widget.user.uid),
+      createdAt : DateTime.now().millisecondsSinceEpoch,
+      text      : accept
+          ? '${widget.user.firstName} accepted the date idea.'
+          : '${widget.user.firstName} denied the date idea.',
+    );
+    room.sendMessage(summary);
+  }
+
   List<types.Message> parseMsgs(List<Map<String, dynamic>> maps) {
       List<types.Message> result = [];
       for (Map<String, dynamic> e in maps) {
@@ -411,6 +508,21 @@ class _ChatScreenState extends State<ChatScreen> {
           case 'audio':
             break;
           case 'image':
+            break;
+          case 'dateIdea':
+            types.CustomMessage msg = types.CustomMessage(
+              author: types.User(id: e['author']),
+              createdAt: e['createdAt'],
+              id: e['id'],
+              metadata: {
+                'customType': 'dateIdea',
+                'dateIdea'   : e['dateIdea'],
+                'acceptedBy' : e['acceptedBy'] ?? <String>[],
+                'deniedBy'   : e['deniedBy']   ?? <String>[],
+                'status'     : e['status'] ?? 'pending',
+              },
+            );
+            result.add(msg);
             break;
           default:
             types.TextMessage msg = types.TextMessage(

@@ -58,6 +58,7 @@ dependencies:
   open_filex: ^4.7.0
   flutter_link_previewer: ^3.2.2
   file_picker: ^10.1.2
+  uuid: ^3.0.6
   
 dev_dependencies:
   flutter_test:
