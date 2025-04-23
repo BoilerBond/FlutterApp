@@ -24,7 +24,11 @@ class ChatScreen extends StatefulWidget {
   final AppUser user;
   final AppUser match;
   final String roomID;
-  ChatScreen({super.key, required this.user, required this.match, required this.roomID});
+  ChatScreen(
+      {super.key,
+      required this.user,
+      required this.match,
+      required this.roomID});
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
@@ -38,55 +42,59 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(widget.match.firstName),
-    ),
-    body: Column(
-      children: [
-        if (_currentPrompt != null)
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Prompt: $_currentPrompt"),
-                if (!_hasAnswered)
-                  TextField(onChanged: (val) => _userAnswer = val),
-                if (!_hasAnswered)
-                  ElevatedButton(
-                    onPressed: () => _submitDailyPromptAnswer(_userAnswer ?? '', "${widget.user.uid}_${widget.match.uid}_${DateTime.now().millisecondsSinceEpoch}"),
-                    child: Text("Submit Answer"),
-                  ),
-                if (_hasAnswered && _matchAnswer != null)
-                  Text("Match's Answer: $_matchAnswer"),
-              ],
-            ),
-          ),
-        Expanded(
-          child: StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance.collection("rooms").doc(widget.roomID).snapshots(),
-              builder: (context, snapshot) {
-                List<Map<String, dynamic>> msgsMap = List<Map<String, dynamic>>.from(
-                    snapshot.data?['messages'] ?? []);
-                List<types.Message> messages = parseMsgs(msgsMap);
-                return Chat(
-                  isAttachmentUploading: _isAttachmentUploading,
-                  messages: messages,
-                  onAttachmentPressed: _handleAttachmentPressed,
-                  onMessageTap: _handleMessageTap,
-                  //onPreviewDataFetched: _handlePreviewDataFetched,
-                  onSendPressed: _handleSendPressed,
-                  customMessageBuilder: _customMessageBuilder,
-                  user: types.User(
-                    id: widget.user.uid,
-                  ),
-                );
-              }
-          )
+        appBar: AppBar(
+          title: Text(widget.match.firstName),
         ),
-      ],
-    ),
-  );
+        body: Column(
+          children: [
+            if (_currentPrompt != null)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Prompt: $_currentPrompt"),
+                    if (!_hasAnswered)
+                      TextField(onChanged: (val) => _userAnswer = val),
+                    if (!_hasAnswered)
+                      ElevatedButton(
+                        onPressed: () => _submitDailyPromptAnswer(
+                            _userAnswer ?? '',
+                            "${widget.user.uid}_${widget.match.uid}_${DateTime.now().millisecondsSinceEpoch}"),
+                        child: Text("Submit Answer"),
+                      ),
+                    if (_hasAnswered && _matchAnswer != null)
+                      Text("Match's Answer: $_matchAnswer"),
+                  ],
+                ),
+              ),
+            Expanded(
+                child: StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection("rooms")
+                        .doc(widget.roomID)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      List<Map<String, dynamic>> msgsMap =
+                          List<Map<String, dynamic>>.from(
+                              snapshot.data?['messages'] ?? []);
+                      List<types.Message> messages = parseMsgs(msgsMap);
+                      return Chat(
+                        isAttachmentUploading: _isAttachmentUploading,
+                        messages: messages,
+                        onAttachmentPressed: _handleAttachmentPressed,
+                        onMessageTap: _handleMessageTap,
+                        //onPreviewDataFetched: _handlePreviewDataFetched,
+                        onSendPressed: _handleSendPressed,
+                        customMessageBuilder: _customMessageBuilder,
+                        user: types.User(
+                          id: widget.user.uid,
+                        ),
+                      );
+                    })),
+          ],
+        ),
+      );
 
   void _handleAttachmentPressed() {
     showModalBottomSheet<void>(
@@ -94,7 +102,8 @@ class _ChatScreenState extends State<ChatScreen> {
       isScrollControlled: true,
       builder: (BuildContext context) => SafeArea(
         child: Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -192,12 +201,20 @@ class _ChatScreenState extends State<ChatScreen> {
     final filtered = dateIdeas.entries.where((entry) {
       final desc = entry.value.toLowerCase();
       if (budgetLevel == 'low') {
-        return desc.contains('\$0') || desc.contains('\$1') || desc.contains('\$5') || desc.contains('\$10');
+        return desc.contains('\$0') ||
+            desc.contains('\$1') ||
+            desc.contains('\$5') ||
+            desc.contains('\$10');
       }
       if (budgetLevel == 'medium') {
-        return desc.contains('\$20') || desc.contains('\$25') || desc.contains('\$30') || desc.contains('\$35');
+        return desc.contains('\$20') ||
+            desc.contains('\$25') ||
+            desc.contains('\$30') ||
+            desc.contains('\$35');
       }
-      return desc.contains('\$45') || desc.contains('\$60') || desc.contains('\$75');
+      return desc.contains('\$45') ||
+          desc.contains('\$60') ||
+          desc.contains('\$75');
     }).toList();
 
     if (filtered.isEmpty) return;
@@ -206,9 +223,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     // Build the idea payload expected by Room.sendDateIdea
     final idea = <String, dynamic>{
-      'activity'   : selected.key,
+      'activity': selected.key,
       'description': selected.value,
-      'createdAt'  : DateTime.now().toIso8601String(),
+      'createdAt': DateTime.now().toIso8601String(),
     };
 
     final room = await Room.getById(widget.roomID);
@@ -230,7 +247,10 @@ class _ChatScreenState extends State<ChatScreen> {
     _currentPrompt = await GeminiService().generateDailyPrompt();
     final promptId = "${widget.user.uid}_${widget.match.uid}_${now}";
 
-    await FirebaseFirestore.instance.collection('daily_prompts').doc(promptId).set({
+    await FirebaseFirestore.instance
+        .collection('daily_prompts')
+        .doc(promptId)
+        .set({
       'prompt': _currentPrompt,
       'timestamp': now,
       'users': [widget.user.uid, widget.match.uid],
@@ -247,7 +267,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _addMessage(promptMessage);
 
     // update user's Firestore record
-    final userRef = FirebaseFirestore.instance.collection('users').doc(widget.user.uid);
+    final userRef =
+        FirebaseFirestore.instance.collection('users').doc(widget.user.uid);
     await userRef.update({'lastDailyPromptTime': now});
 
     setState(() {
@@ -257,7 +278,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _submitDailyPromptAnswer(String answer, String promptId) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    final promptRef = FirebaseFirestore.instance.collection('daily_prompts').doc(promptId);
+    final promptRef =
+        FirebaseFirestore.instance.collection('daily_prompts').doc(promptId);
     await promptRef.set({
       'promptId': promptId,
       'timestamp': now,
@@ -280,6 +302,20 @@ class _ChatScreenState extends State<ChatScreen> {
     if (data != null && data['answers']?[widget.match.uid] != null) {
       _matchAnswer = data['answers'][widget.match.uid]['answer'];
     }
+
+    final room = await Room.getById(widget.roomID);
+    final answerMsg = types.CustomMessage(
+      id: const Uuid().v4(),
+      author: types.User(id: widget.user.uid),
+      createdAt: now,
+      metadata: {
+        'customType': 'promptAnswer',
+        'promptId': promptId,
+        'answeredBy': widget.user.uid,
+        'answer': answer,
+      },
+    );
+    room.sendMessage(answerMsg);
   }
 
   void _handleFileSelection() async {
@@ -388,16 +424,16 @@ class _ChatScreenState extends State<ChatScreen> {
   // }
 
   Future<void> _handleSendPressed(types.PartialText message) async {
-      String msgid = DateTime.now().millisecondsSinceEpoch.toString();
-      msgid += widget.user.uid;
-      final textMessage = types.TextMessage(
-        author: types.User(id: widget.user.uid),
-        createdAt: DateTime.now().millisecondsSinceEpoch,
-        id: msgid,
-        text: message.text,
-      );
-      Room room = await Room.getById(widget.roomID);
-      room.sendMessage(textMessage);
+    String msgid = DateTime.now().millisecondsSinceEpoch.toString();
+    msgid += widget.user.uid;
+    final textMessage = types.TextMessage(
+      author: types.User(id: widget.user.uid),
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+      id: msgid,
+      text: message.text,
+    );
+    Room room = await Room.getById(widget.roomID);
+    room.sendMessage(textMessage);
   }
 
   void _setAttachmentUploading(bool uploading) {
@@ -411,20 +447,46 @@ class _ChatScreenState extends State<ChatScreen> {
     room.sendMessage(msg);
   }
 
-  Widget _customMessageBuilder(types.CustomMessage msg, {int messageWidth = 250}) {
+  Widget _customMessageBuilder(types.CustomMessage msg,
+      {int messageWidth = 250}) {
     final meta = msg.metadata ?? {};
-    if (meta['customType'] == 'dateIdea') {
-      return _buildDateIdea(msg, meta, messageWidth);
+    switch (meta['customType']) {
+      case 'dateIdea':
+        return _buildDateIdea(msg, meta, messageWidth);
+      case 'promptAnswer':
+        return _buildPromptAnswer(meta, messageWidth);
+      default:
+        return const SizedBox.shrink();
     }
-    return const SizedBox.shrink();
   }
 
-  Widget _buildDateIdea(
-      types.CustomMessage msg, Map meta, int width) {
-    final idea      = meta['dateIdea'] as Map?;
-    final accepted  = List<String>.from(meta['acceptedBy'] ?? []);
-    final denied    = List<String>.from(meta['deniedBy']   ?? []);
-    final hasVoted  = accepted.contains(widget.user.uid) || denied.contains(widget.user.uid);
+  Widget _buildPromptAnswer(Map meta, int width) {
+    final answer = meta['answer'] ?? '';
+    final answeredBy = meta['answeredBy'];
+
+    // Show partner’s answer only after I answered
+    final shouldShow = answeredBy == widget.user.uid || _hasAnswered;
+
+    if (!shouldShow) return const SizedBox.shrink();
+
+    final isMine = answeredBy == widget.user.uid;
+    return Container(
+      width: width.toDouble(),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isMine ? Colors.blue.shade50 : Colors.green.shade50,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text('${isMine ? "Your" : "Partner"} answer: $answer'),
+    );
+  }
+
+  Widget _buildDateIdea(types.CustomMessage msg, Map meta, int width) {
+    final idea = meta['dateIdea'] as Map?;
+    final accepted = List<String>.from(meta['acceptedBy'] ?? []);
+    final denied = List<String>.from(meta['deniedBy'] ?? []);
+    final hasVoted =
+        accepted.contains(widget.user.uid) || denied.contains(widget.user.uid);
 
     return Container(
       width: width.toDouble(),
@@ -438,8 +500,7 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Text('Date Idea: ${idea?['activity']}'),
           if (idea?['location'] != null) Text('Location: ${idea?['location']}'),
-          if (idea?['description'] != null)
-            Text(idea?['description']),
+          if (idea?['description'] != null) Text(idea?['description']),
           if (idea?['dateTime'] != null)
             Text(DateFormat('EEE, MMM d • h:mm a')
                 .format(DateTime.parse(idea!['dateTime']))),
@@ -459,7 +520,9 @@ class _ChatScreenState extends State<ChatScreen> {
             )
           else
             Text(
-              accepted.contains(widget.user.uid) ? 'You accepted' : 'You denied',
+              accepted.contains(widget.user.uid)
+                  ? 'You accepted'
+                  : 'You denied',
               style: const TextStyle(fontStyle: FontStyle.italic),
             ),
         ],
@@ -467,34 +530,36 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Future<void> _respondToDateIdea(types.CustomMessage message, bool accept) async {
+  Future<void> _respondToDateIdea(
+      types.CustomMessage message, bool accept) async {
     final room = await Room.getById(widget.roomID);
-    final meta       = Map<String, dynamic>.from(message.metadata ?? {});
+    final meta = Map<String, dynamic>.from(message.metadata ?? {});
     final acceptedBy = List<String>.from(meta['acceptedBy'] ?? []);
-    final deniedBy   = List<String>.from(meta['deniedBy']   ?? []);
+    final deniedBy = List<String>.from(meta['deniedBy'] ?? []);
 
     if (accept) {
-      if (!acceptedBy.contains(widget.user.uid)) acceptedBy.add(widget.user.uid);
+      if (!acceptedBy.contains(widget.user.uid))
+        acceptedBy.add(widget.user.uid);
       meta['acceptedBy'] = acceptedBy;
-      meta['status']     = 'accepted';
+      meta['status'] = 'accepted';
     } else {
       if (!deniedBy.contains(widget.user.uid)) deniedBy.add(widget.user.uid);
-      meta['deniedBy']   = deniedBy;
-      meta['status']     = 'denied';
+      meta['deniedBy'] = deniedBy;
+      meta['status'] = 'denied';
     }
 
     await room.updateMessage(message.id, {
       'acceptedBy': meta['acceptedBy'],
-      'deniedBy'  : meta['deniedBy'],
-      'status'    : meta['status'],
+      'deniedBy': meta['deniedBy'],
+      'status': meta['status'],
     });
 
     // summary text
     final summary = types.TextMessage(
-      id        : const Uuid().v4(),
-      author    : types.User(id: widget.user.uid),
-      createdAt : DateTime.now().millisecondsSinceEpoch,
-      text      : accept
+      id: const Uuid().v4(),
+      author: types.User(id: widget.user.uid),
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+      text: accept
           ? '${widget.user.firstName} accepted the date idea.'
           : '${widget.user.firstName} denied the date idea.',
     );
@@ -502,39 +567,52 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   List<types.Message> parseMsgs(List<Map<String, dynamic>> maps) {
-      List<types.Message> result = [];
-      for (Map<String, dynamic> e in maps) {
-        switch (e['type']) {
-          case 'audio':
-            break;
-          case 'image':
-            break;
-          case 'dateIdea':
-            types.CustomMessage msg = types.CustomMessage(
+    List<types.Message> result = [];
+    for (Map<String, dynamic> e in maps) {
+      switch (e['type']) {
+        case 'audio':
+          break;
+        case 'image':
+          break;
+        case 'dateIdea':
+          types.CustomMessage msg = types.CustomMessage(
+            author: types.User(id: e['author']),
+            createdAt: e['createdAt'],
+            id: e['id'],
+            metadata: {
+              'customType': 'dateIdea',
+              'dateIdea': e['dateIdea'],
+              'acceptedBy': e['acceptedBy'] ?? <String>[],
+              'deniedBy': e['deniedBy'] ?? <String>[],
+              'status': e['status'] ?? 'pending',
+            },
+          );
+          result.add(msg);
+          break;
+        case 'promptAnswer':
+          types.CustomMessage pmsg = types.CustomMessage(
+            author: types.User(id: e['author']),
+            createdAt: e['createdAt'],
+            id: e['id'],
+            metadata: {
+              'customType': 'promptAnswer',
+              'promptId': e['promptId'],
+              'answeredBy': e['answeredBy'],
+              'answer': e['answer'],
+            },
+          );
+          result.add(pmsg);
+          break;
+        default:
+          types.TextMessage msg = types.TextMessage(
               author: types.User(id: e['author']),
               createdAt: e['createdAt'],
               id: e['id'],
-              metadata: {
-                'customType': 'dateIdea',
-                'dateIdea'   : e['dateIdea'],
-                'acceptedBy' : e['acceptedBy'] ?? <String>[],
-                'deniedBy'   : e['deniedBy']   ?? <String>[],
-                'status'     : e['status'] ?? 'pending',
-              },
-            );
-            result.add(msg);
-            break;
-          default:
-            types.TextMessage msg = types.TextMessage(
-              author: types.User(id: e['author']),
-              createdAt: e['createdAt'],
-              id: e['id'],
-              text: e['text']
-            );
-            result.add(msg);
-            break;
-        }
+              text: e['text']);
+          result.add(msg);
+          break;
       }
-      return result;
+    }
+    return result;
   }
 }
