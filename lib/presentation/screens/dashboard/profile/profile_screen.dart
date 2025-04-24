@@ -136,128 +136,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
   
-  // Widget to display current mood
-  Widget _buildCurrentMood() {
-    if (currentMoodId == null || moodTimestamp == null) {
-      return _buildMoodSelector(showPrompt: true);
-    }
-    
-    final mood = MoodData.getMoodById(currentMoodId!);
-    final timestamp = moodTimestamp!.toDate();
-    final now = DateTime.now();
-    final difference = now.difference(timestamp);
-    
-    String timeAgo;
-    bool isStale = false;
-    
-    if (difference.inMinutes < 60) {
-      timeAgo = '${difference.inMinutes} min ago';
-    } else if (difference.inHours < 24) {
-      timeAgo = '${difference.inHours} hrs ago';
-    } else {
-      timeAgo = DateFormat('MMM dd, h:mm a').format(timestamp);
-      isStale = difference.inHours > 48; // Consider stale if over 48 hours
-    }
-    
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: mood.color.withOpacity(0.3),
-        border: Border.all(color: mood.color, width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Current Mood',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      showMoodToMatches ? 'Visible to matches' : 'Private',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        showMoodToMatches ? Icons.visibility : Icons.visibility_off,
-                        size: 18,
-                      ),
-                      onPressed: toggleMoodVisibility,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(
-                  mood.emoji,
-                  style: TextStyle(fontSize: 40),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "I'm feeling ${mood.name.toLowerCase()}",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            'Updated $timeAgo',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isStale ? Colors.red.shade300 : Colors.black54,
-                            ),
-                          ),
-                          if (isStale)
-                            Icon(
-                              Icons.update,
-                              size: 12,
-                              color: Colors.red.shade300,
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () => _showMoodPicker(context),
-              child: const Text('Update Mood'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: Size(double.infinity, 40),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  
+
   // Widget for initial mood selector
   Widget _buildMoodSelector({bool showPrompt = false}) {
     return Container(
@@ -309,82 +188,134 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       isScrollControlled: true,
       builder: (BuildContext context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.6,
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'How are you feeling today?',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Select your current mood to share with matches',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Expanded(
-                child: GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    childAspectRatio: 1,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
+        bool localShowMoodToMatches = showMoodToMatches;
+        
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.6,
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'How are you feeling today?',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  itemCount: MoodData.moods.length,
-                  itemBuilder: (context, index) {
-                    final mood = MoodData.moods[index];
-                    return InkWell(
-                      onTap: () {
-                        updateMood(mood.id);
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: mood.color.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: mood.color,
-                            width: 1,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              mood.emoji,
-                              style: TextStyle(fontSize: 30),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Select your current mood to share with matches',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        childAspectRatio: 1,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                      ),
+                      itemCount: MoodData.moods.length,
+                      itemBuilder: (context, index) {
+                        final mood = MoodData.moods[index];
+                        return InkWell(
+                          onTap: () {
+                            // Update mood with the current visibility setting
+                            updateMood(mood.id);
+                            Navigator.pop(context);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: mood.color.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: mood.color,
+                                width: 1,
+                              ),
                             ),
-                            const SizedBox(height: 4),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  mood.emoji,
+                                  style: TextStyle(fontSize: 30),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  mood.name,
+                                  style: TextStyle(fontSize: 12),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  // Add visibility toggle
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border(top: BorderSide(color: Colors.grey.shade300, width: 1)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              localShowMoodToMatches ? Icons.visibility : Icons.visibility_off,
+                              color: Colors.grey[600],
+                              size: 22,
+                            ),
+                            const SizedBox(width: 8),
                             Text(
-                              mood.name,
-                              style: TextStyle(fontSize: 12),
-                              textAlign: TextAlign.center,
+                              'Show mood to matches',
+                              style: TextStyle(
+                                fontSize: 16,
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                    );
-                  },
-                ),
+                        Switch(
+                          value: localShowMoodToMatches,
+                          onChanged: (value) {
+                            setModalState(() {
+                              localShowMoodToMatches = value;
+                            });
+                            // Update the actual state variable
+                            setState(() {
+                              showMoodToMatches = value;
+                            });
+                            // Save the new visibility setting to Firestore
+                            db.collection("users").doc(currentUser!.uid).update({
+                              'showMoodToMatches': value,
+                            });
+                          },
+                          activeColor: const Color(0xFF5E77DF),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Cancel'),
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('Cancel'),
-                ),
-              ),
-            ],
-          ),
+            );
+          }
         );
       },
     );
@@ -433,15 +364,122 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
-              CircleAvatar(
-                radius: MediaQuery.of(context).size.width * 0.2,
-                backgroundImage: NetworkImage(
-                  (_imageURL != null && _imageURL!.isNotEmpty)
-                      ? _imageURL!
-                      : Constants.defaultProfilePictureURL,
-                ),
-                backgroundColor: Colors.grey[200],
+
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: MediaQuery.of(context).size.width * 0.2,
+                    backgroundImage: NetworkImage(
+                      (_imageURL != null && _imageURL!.isNotEmpty)
+                          ? _imageURL!
+                          : Constants.defaultProfilePictureURL,
+                    ),
+                    backgroundColor: Colors.grey[200],
+                  ),
+                  if (currentMoodId != null && currentMoodId!.isNotEmpty)
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GestureDetector(
+                            onTap: () => _showMoodPicker(context),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                                border: Border.all(
+                                  color: const Color(0xFF5E77DF),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    MoodData.getMoodById(currentMoodId!).emoji,
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    MoodData.getMoodById(currentMoodId!).name,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  if (moodTimestamp != null &&
+                                      DateTime.now().difference(moodTimestamp!.toDate()).inHours > 48)
+                                    const SizedBox(width: 4),
+                                  if (moodTimestamp != null &&
+                                      DateTime.now().difference(moodTimestamp!.toDate()).inHours > 48)
+                                    Tooltip(
+                                      message: 'Last updated: ${DateFormat('MMM d').format(moodTimestamp!.toDate())}',
+                                      child: Icon(
+                                        Icons.update,
+                                        size: 14,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (currentMoodId == null || currentMoodId!.isEmpty)
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Tooltip(
+                        message: 'Set your mood',
+                        child: GestureDetector(
+                          onTap: () => _showMoodPicker(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.emoji_emotions,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
+              
               const SizedBox(height: 16),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -455,12 +493,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Text(bio ?? ""),
                 ),
               ),
-              const SizedBox(height: 16),
-              
-              // Add mood UI component here
-              _buildCurrentMood(),
-              const SizedBox(height: 16),
-              
+              const SizedBox(height: 16),              
               Wrap(
                 alignment: WrapAlignment.center,
                 spacing: 12,
