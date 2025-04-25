@@ -27,35 +27,126 @@ class _AuthMiddlewareState extends State<AuthMiddleware> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasData) {
-            final user = snapshot.data!;
-            return StreamBuilder<bool>(
-              stream: checkProfileExists(user.uid),
-              builder: (context, profileSnapshot) {
-                if (profileSnapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                }
+    try {
+      return StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            // Handle connection errors
+            if (snapshot.hasError) {
+              print('Auth state stream error: ${snapshot.error}');
+              return Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Authentication error occurred'),
+                      SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(context, '/');
+                        },
+                        child: Text('Retry'),
+                      )
+                    ],
+                  ),
+                ),
+              );
+            }
+            
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Scaffold(
+                body: Center(child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Loading BoilerBond...'),
+                  ],
+                )),
+              );
+            }
+            
+            if (snapshot.hasData) {
+              final user = snapshot.data!;
+              print('User authenticated: ${user.uid}');
+              
+              return StreamBuilder<bool>(
+                stream: checkProfileExists(user.uid),
+                builder: (context, profileSnapshot) {
+                  // Handle profile stream errors
+                  if (profileSnapshot.hasError) {
+                    print('Profile check error: ${profileSnapshot.error}');
+                    return Scaffold(
+                      body: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text('Error checking profile'),
+                            SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.pushReplacementNamed(context, '/');
+                              },
+                              child: Text('Retry'),
+                            )
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  
+                  if (profileSnapshot.connectionState == ConnectionState.waiting) {
+                    return Scaffold(
+                      body: Center(child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Loading profile...'),
+                        ],
+                      )),
+                    );
+                  }
 
-                if (profileSnapshot.hasData && profileSnapshot.data!) {
-                  return widget.child;
-                } else {
-                  // return widget.child;
-                  return AppDescriptionScreen(arguments: {
-                    "navigatePath": "/purdue_verification",
-                    "navigateToTos": true
-                  });
-                }
-              },
-            );
-          } else {
-            return StartScreen();
-          }
-        });
+                  if (profileSnapshot.hasData && profileSnapshot.data!) {
+                    print('User profile exists, showing main content');
+                    return widget.child;
+                  } else {
+                    print('User profile does not exist, showing onboarding');
+                    // return widget.child;
+                    return AppDescriptionScreen(arguments: {
+                      "navigatePath": "/purdue_verification",
+                      "navigateToTos": true
+                    });
+                  }
+                },
+              );
+            } else {
+              print('No authenticated user, showing start screen');
+              return StartScreen();
+            }
+          });
+    } catch (e) {
+      print('Unexpected error in AuthMiddleware: $e');
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('BoilerBond'),
+              SizedBox(height: 20),
+              Text('An unexpected error occurred'),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pushReplacementNamed(context, '/');
+                },
+                child: Text('Retry'),
+              )
+            ],
+          ),
+        ),
+      );
+    }
   }
 }
