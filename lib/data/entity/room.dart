@@ -51,21 +51,42 @@ class Room {
     Map<String, dynamic> newmsg = {};
     switch (msg.type) {
       case types.MessageType.audio:
+        types.AudioMessage vmsg = types.AudioMessage.fromJson(msg.toJson());
         newmsg = {
         'type': "audio",
         'author': msg.author.id,
         'createdAt': msg.createdAt,
         'id': msg.id,
-        'audio': "WIP"
+        'duration': vmsg.duration,
+        'name': vmsg.name,
+        'size': vmsg.size,
+        'uri': vmsg.uri
       };
         break;
       case types.MessageType.image:
+        types.ImageMessage imsg = types.ImageMessage.fromJson(msg.toJson());
         newmsg = {
           'type': "image",
           'author': msg.author.id,
           'createdAt': msg.createdAt,
+          'height': imsg.height,
+          'width': imsg.width,
+          'size': imsg.size,
+          'name': imsg.name,
           'id': msg.id,
-          'image': "WIP"
+          'uri': imsg.uri,
+        };
+        break;
+      case types.MessageType.file:
+        types.FileMessage fmsg = types.FileMessage.fromJson(msg.toJson());
+        newmsg = {
+          'type': "file",
+          'author': msg.author.id,
+          'createdAt': msg.createdAt,
+          'size': fmsg.size,
+          'name': fmsg.name,
+          'id': msg.id,
+          'uri': fmsg.uri,
         };
         break;
       case types.MessageType.custom:

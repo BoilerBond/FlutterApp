@@ -99,65 +99,61 @@ class _ChatScreenState extends State<ChatScreen> {
   void _handleAttachmentPressed() {
     showModalBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) => SafeArea(
-        child: Padding(
-          padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+      isScrollControlled: false,
+      builder: (BuildContext context) => Container(
+        height: MediaQuery.of(context).size.height / 6,
+          child: GridView.count(
+              crossAxisCount: 4,
               children: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _handleImageSelection();
-                  },
-                  child: const Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Text('Photo'),
-                  ),
+                Column(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _handleImageSelection();
+                      },
+                      icon: Icon(Icons.photo),
+                    ),
+                    Text("Photo")
+                  ]
                 ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _handleFileSelection();
-                  },
-                  child: const Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Text('File'),
-                  ),
+                Column(
+                  children: [
+                    IconButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _handleFileSelection();
+                        },
+                        icon: Icon(Icons.file_copy)
+                    ),
+                    Text("File")
+                  ]
                 ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _sendDailyPrompt();
-                  },
-                  child: const Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Text('Daily Prompt'),
-                  ),
+                Column(
+                  children: [
+                    IconButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _sendDailyPrompt();
+                        },
+                        icon: Icon(Icons.date_range)
+                    ),
+                    Text("Daily Prompt"),
+                  ]
                 ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _openDateFilterDialog();
-                  },
-                  child: const Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Text('Generate Date Idea'),
+                Column(
+                  children: [
+                  IconButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _openDateFilterDialog();
+                    },
+                    icon: Icon(Icons.lightbulb)
                   ),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Text('Cancel'),
-                  ),
-                ),
-              ],
-            ),
-          ),
+                  Text("Date Idea")
+                  ]
+                )
+              ]
         ),
       ),
     );
@@ -334,14 +330,16 @@ class _ChatScreenState extends State<ChatScreen> {
         await reference.putFile(file);
         final uri = await reference.getDownloadURL();
 
-        final message = types.PartialFile(
+        final message = types.FileMessage(
+          author: types.User(id: widget.user.uid),
+          id: const Uuid().v4(),
           mimeType: lookupMimeType(filePath),
           name: name,
           size: result.files.single.size,
           uri: uri,
         );
-        // TODO: add support for files
-        // _addMessage(message);
+        Room room = await Room.getById(widget.roomID);
+        room.sendMessage(message);
         _setAttachmentUploading(false);
       } finally {
         _setAttachmentUploading(false);
@@ -369,16 +367,18 @@ class _ChatScreenState extends State<ChatScreen> {
         await reference.putFile(file);
         final uri = await reference.getDownloadURL();
 
-        final message = types.PartialImage(
+        final message = types.ImageMessage(
+          author: types.User(id: widget.user.uid),
+          createdAt: DateTime.now().millisecondsSinceEpoch,
           height: image.height.toDouble(),
+          id: const Uuid().v4(),
           name: name,
           size: size,
           uri: uri,
           width: image.width.toDouble(),
         );
-
-        // TODO: add ability send images
-        // widget.room.sendMessage(message);
+        Room room = await Room.getById(widget.roomID);
+        room.sendMessage(message);
         _setAttachmentUploading(false);
       } finally {
         _setAttachmentUploading(false);
@@ -571,8 +571,38 @@ class _ChatScreenState extends State<ChatScreen> {
     for (Map<String, dynamic> e in maps) {
       switch (e['type']) {
         case 'audio':
+          types.AudioMessage vmsg = types.AudioMessage(
+              author: types.User(id: e['author']),
+              createdAt: e['createdAt'],
+              id: e['id'],
+              duration: e['duration'],
+              name: e['name'],
+              size: e['size'],
+              uri: e['uri']
+          );
+          result.add(vmsg);
           break;
         case 'image':
+          types.ImageMessage imsg = types.ImageMessage(
+            author: types.User(id: e['author']),
+            createdAt: e['createdAt'],
+            id: e['id'],
+            name: e['name'],
+            size: e['size'],
+            uri: e['uri']
+          );
+          result.add(imsg);
+          break;
+        case 'file':
+          types.FileMessage fmsg = types.FileMessage(
+              author: types.User(id: e['author']),
+              createdAt: e['createdAt'],
+              id: e['id'],
+              name: e['name'],
+              size: e['size'],
+              uri: e['uri']
+          );
+          result.add(fmsg);
           break;
         case 'dateIdea':
           types.CustomMessage msg = types.CustomMessage(
