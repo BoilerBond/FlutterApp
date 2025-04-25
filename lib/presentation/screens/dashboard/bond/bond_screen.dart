@@ -22,7 +22,6 @@ class BondScreen extends StatefulWidget {
 }
 
 class _BondScreenState extends State<BondScreen> {
-  final placeholder_match = "BP25avUQfZUVYNVLZ2Eoiw5jYlf1";
   AppUser? curUser;
   AppUser? match;
   bool isMatchBlocked = false;
@@ -38,6 +37,9 @@ class _BondScreenState extends State<BondScreen> {
 
   List<Map<String, dynamic>> _upcomingDates = [];
   bool _loadingDates = true;
+
+  List<Map<String, dynamic>> _pendingInvitations = [];
+  bool _loadingInvitations = true;
 
   Future<void> getUserProfiles() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -57,6 +59,7 @@ class _BondScreenState extends State<BondScreen> {
         isMatchUnbonded = !user.keepMatch;
       });
       _loadUpcomingDates();
+      _loadDateInvitations();
 
       final hasSeenIntro =
           curUserSnapshot.data()?['hasSeenMatchIntro'] ?? false;
@@ -108,219 +111,119 @@ class _BondScreenState extends State<BondScreen> {
     }
   }
 
-  Widget _buildUpcomingDateSection() {
-    if (_upcomingDates.isEmpty) {
-      return const SizedBox.shrink();
+  Future<void> _loadDateInvitations() async {
+    if (curUser == null || match == null) return;
+  
+    setState(() {
+      _loadingInvitations = true;
+    });
+  
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(curUser!.uid)
+          .get();
+      
+      if (!userDoc.exists) {
+        setState(() {
+          _pendingInvitations = [];
+          _loadingInvitations = false;
+        });
+        return;
+      }
+      
+      final userData = userDoc.data();
+      final datesData = userData?['dates'] as Map<String, dynamic>? ?? {};
+      final matchDates = datesData[match!.uid] as Map<String, dynamic>? ?? {};
+      
+      final List<Map<String, dynamic>> invitations = [];
+      
+      // Process all dates with this match
+      matchDates.forEach((dateId, dateData) {
+        final data = dateData as Map<String, dynamic>;
+        if (data['status'] == 'pending') {
+          invitations.add({
+            'id': dateId,
+            'activity': data['activity'] ?? '',
+            'location': data['location'] ?? '',
+            'dateTime': (data['dateTime'] as Timestamp).toDate(),
+            'notes': data['notes'] ?? '',
+            'senderId': data['senderId'] ?? '',
+            'receiverId': data['receiverId'] ?? '',
+            'status': data['status'] ?? '',
+            'sentByMe': data['senderId'] == curUser!.uid,
+          });
+        }
+      });
+      
+      setState(() {
+        _pendingInvitations = invitations;
+        _pendingInvitations.sort((a, b) => (a['dateTime'] as DateTime).compareTo(b['dateTime'] as DateTime));
+        _loadingInvitations = false;
+      });
+      
+      print("Loaded ${_pendingInvitations.length} pending date invitations");
+    } catch (e) {
+      print('Error loading date invitations: $e');
+      setState(() {
+        _loadingInvitations = false;
+      });
     }
-
-    final upcomingDate = _upcomingDates.first;
-    final DateTime dateTime = upcomingDate['dateTime'];
-    final Duration timeUntil = dateTime.difference(DateTime.now());
-
-    // Skip if the date is in the past
-    if (timeUntil.isNegative) {
-      return const SizedBox.shrink();
-    }
-
-    // Format time remaining
-    String timeRemainingText;
-    if (timeUntil.inDays > 0) {
-      timeRemainingText =
-          '${timeUntil.inDays} days, ${timeUntil.inHours % 24} hours';
-    } else if (timeUntil.inHours > 0) {
-      timeRemainingText =
-          '${timeUntil.inHours} hours, ${timeUntil.inMinutes % 60} minutes';
-    } else {
-      timeRemainingText = '${timeUntil.inMinutes} minutes';
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F9FF),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF5E77DF), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            decoration: const BoxDecoration(
-              color: Color(0xFF5E77DF),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(11),
-                topRight: Radius.circular(11),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.calendar_today, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
-                const Text(
-                  'Upcoming Date',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'In $timeRemainingText',
-                    style: const TextStyle(
-                      color: Color(0xFF5E77DF),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.event,
-                      size: 20,
-                      color: Color(0xFF5E77DF),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        upcomingDate['activity'],
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.location_on,
-                      size: 20,
-                      color: Color(0xFF5E77DF),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        upcomingDate['location'],
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.access_time,
-                      size: 20,
-                      color: Color(0xFF5E77DF),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      DateFormat('EEEE, MMM d • h:mm a').format(dateTime),
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ],
-                ),
-                if (upcomingDate['notes'] != null) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.chat_bubble_outline,
-                          size: 18,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            upcomingDate['notes'],
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontStyle: FontStyle.italic,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () =>
-                            _showCancelDateDialog(upcomingDate['id']),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Colors.red),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text('Cancel Date'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () =>
-                            _showPostponeDateDialog(upcomingDate['id']),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF5E77DF),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text('Postpone'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
-
+  
+  Future<void> _proposeDateInvitation(
+      String activity, String location, DateTime dateTime, String notes) async {
+    if (curUser == null || match == null) return;
+  
+    try {
+      // Generate a unique ID for this date invitation
+      final dateId = FirebaseFirestore.instance.collection('temp').doc().id;
+      
+      final dateInvitation = {
+        'dateId': dateId,
+        'activity': activity,
+        'location': location,
+        'dateTime': Timestamp.fromDate(dateTime),
+        'notes': notes,
+        'status': 'pending',
+        'senderId': curUser!.uid,
+        'senderName': curUser!.firstName,
+        'receiverId': match!.uid,
+        'receiverName': match!.firstName,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+  
+      // Store in current user's document
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(curUser!.uid)
+          .update({
+        'dates.${match!.uid}.$dateId': dateInvitation
+      });
+  
+      // Store in match's document
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(match!.uid)
+          .update({
+        'dates.${curUser!.uid}.$dateId': dateInvitation
+      });
+  
+      // Reload pending invitations
+      _loadDateInvitations();
+      _loadUpcomingDates();
+  
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Date invitation sent!')),
+      );
+    } catch (e) {
+      print('Error creating date invitation: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to send date invitation')),
+      );
+    }
+  }
+  
   void _showCancelDateDialog(String dateId) {
     showDialog(
       context: context,
@@ -370,6 +273,119 @@ class _BondScreenState extends State<BondScreen> {
     //   print('Error canceling date in database: $e');
     // }
   }
+
+  void _handleCalendarTap() {
+    if (_upcomingDates.isEmpty) {
+      _showCreateDateDialog();
+    } else {
+      _showDateDetails(context);
+    }
+  }
+
+  void _showCreateDateDialog() {
+    final _activityCtrl  = TextEditingController();
+    final _locationCtrl  = TextEditingController();
+    final _notesCtrl     = TextEditingController();
+    DateTime? _pickedDate;
+    TimeOfDay? _pickedTime;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Create a Date'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _activityCtrl,
+                    decoration: const InputDecoration(labelText: 'Activity'),
+                  ),
+                  TextField(
+                    controller: _locationCtrl,
+                    decoration: const InputDecoration(labelText: 'Location'),
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    leading: const Icon(Icons.calendar_today),
+                    title: Text(_pickedDate == null
+                        ? 'Pick a date'
+                        : DateFormat('EEE, MMM d, yyyy').format(_pickedDate!)),
+                    onTap: () async {
+                      final d = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now().add(const Duration(days: 1)),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 90)),
+                      );
+                      if (d != null) setState(() => _pickedDate = d);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.access_time),
+                    title: Text(_pickedTime == null
+                        ? 'Pick a time'
+                        : _pickedTime!.format(context)),
+                    onTap: () async {
+                      final t = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                      );
+                      if (t != null) setState(() => _pickedTime = t);
+                    },
+                  ),
+                  TextField(
+                    controller: _notesCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Notes (optional)',
+                    ),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                child: const Text('CANCEL'),
+                onPressed: () => Navigator.pop(context),
+              ),
+              ElevatedButton(
+                child: const Text('SEND'),
+                onPressed: () {
+                  if (_activityCtrl.text.trim().isEmpty ||
+                      _locationCtrl.text.trim().isEmpty ||
+                      _pickedDate == null ||
+                      _pickedTime == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please fill all fields')),
+                    );
+                    return;
+                  }
+                  final combined = DateTime(
+                    _pickedDate!.year,
+                    _pickedDate!.month,
+                    _pickedDate!.day,
+                    _pickedTime!.hour,
+                    _pickedTime!.minute,
+                  );
+                  _proposeDateInvitation(
+                    _activityCtrl.text.trim(),
+                    _locationCtrl.text.trim(),
+                    combined,
+                    _notesCtrl.text.trim(),
+                  );
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
 
   void _showPostponeDateDialog(String dateId) {
     DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
@@ -840,7 +856,7 @@ class _BondScreenState extends State<BondScreen> {
     if (match != null) {
       _calculateNextBondDate();
       _startCountdownTimer();
-      //_loadStreakData();
+      _loadStreakData();
       getUserMood();
     }
 
@@ -1059,249 +1075,244 @@ class _BondScreenState extends State<BondScreen> {
     );
   }
 
-  // int _currentStreak = 0;
-  // DateTime? _lastInteractionDate;
-  // bool _isStreakAboutToExpire = false;
-  // Timer? _streakExpirationTimer;
+  int _currentStreak = 0;
+  DateTime? _lastInteractionDate;
+  bool _isStreakAboutToExpire = false;
+  Timer? _streakExpirationTimer;
 
-  // void _loadStreakData() async {
-  //   if (curUser == null || match == null) return;
+  void _loadStreakData() async {
+    if (curUser == null || match == null) return;
 
-  //   try {
-  //     // Fetch streak data from user's document
-  //     final userDoc = await FirebaseFirestore.instance
-  //       .collection('users')
-  //       .doc(curUser!.uid)
-  //       .get();
+    try {
+      // Fetch streak data from user's document
+      final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(curUser!.uid)
+        .get();
 
-  //     if (userDoc.exists) {
-  //       final userData = userDoc.data() as Map<String, dynamic>;
-  //       // Check if there's a streaks map in the user data
-  //       if (userData.containsKey('streaks')) {
-  //         final streaks = userData['streaks'] as Map<String, dynamic>? ?? {};
-  //         final matchStreakData = streaks[match!.uid] as Map<String, dynamic>?;
+      if (userDoc.exists) {
+        final userData = userDoc.data() as Map<String, dynamic>;
+        // Check if there's a streaks map in the user data
+        if (userData.containsKey('streaks')) {
+          final streaks = userData['streaks'] as Map<String, dynamic>? ?? {};
+          final matchStreakData = streaks[match!.uid] as Map<String, dynamic>?;
 
-  //         if (matchStreakData != null) {
-  //           setState(() {
-  //             _currentStreak = matchStreakData['currentStreak'] ?? 0;
-  //             _lastInteractionDate = matchStreakData['lastInteractionDate'] != null
-  //                 ? (matchStreakData['lastInteractionDate'] as Timestamp).toDate()
-  //                 : null;
+          if (matchStreakData != null) {
+            setState(() {
+              _currentStreak = matchStreakData['currentStreak'] ?? 0;
+              _lastInteractionDate = matchStreakData['lastInteractionDate'] != null
+                  ? (matchStreakData['lastInteractionDate'] as Timestamp).toDate()
+                  : null;
 
-  //             // Check if streak is about to expire
-  //             if (_lastInteractionDate != null) {
-  //               final expiryTime = _lastInteractionDate!.add(const Duration(hours: 24));
-  //               final remaining = expiryTime.difference(DateTime.now());
-  //               _isStreakAboutToExpire = remaining.inHours <= 1 && remaining.isNegative == false;
-  //             }
-  //           });
+              // Check if streak is about to expire
+              if (_lastInteractionDate != null) {
+                final expiryTime = _lastInteractionDate!.add(const Duration(hours: 24));
+                final remaining = expiryTime.difference(DateTime.now());
+                _isStreakAboutToExpire = remaining.inHours <= 1 && remaining.isNegative == false;
+              }
+            });
 
-  //           // Start streak expiration timer
-  //           _startStreakExpirationTimer();
-  //         }
-  //       } else {
-  //         // If no streaks field exists yet, initialize it
-  //         await FirebaseFirestore.instance
-  //           .collection('users')
-  //           .doc(curUser!.uid)
-  //           .update({
-  //             'streaks': {
-  //               match!.uid: {
-  //                 'currentStreak': 0,
-  //                 'streakBroken': false,
-  //                 'updatedAt': FieldValue.serverTimestamp(),
-  //               }
-  //             }
-  //           });
+            // Start streak expiration timer
+            _startStreakExpirationTimer();
+          }
+        } else {
+          // If no streaks field exists yet, initialize it
+          await FirebaseFirestore.instance
+            .collection('users')
+            .doc(curUser!.uid)
+            .update({
+              'streaks': {
+                match!.uid: {
+                  'currentStreak': 0,
+                  'streakBroken': false,
+                  'updatedAt': FieldValue.serverTimestamp(),
+                }
+              }
+            });
 
-  //         // Also initialize for match
-  //         await FirebaseFirestore.instance
-  //           .collection('users')
-  //           .doc(match!.uid)
-  //           .update({
-  //             'streaks': {
-  //               curUser!.uid: {
-  //                 'currentStreak': 0,
-  //                 'streakBroken': false,
-  //                 'updatedAt': FieldValue.serverTimestamp(),
-  //               }
-  //             }
-  //           });
-  //       }
-  //     }
-  //   } catch (e) {
-  //     print('Error loading streak data: $e');
-  //   }
-  // }
+          // Also initialize for match
+          await FirebaseFirestore.instance
+            .collection('users')
+            .doc(match!.uid)
+            .update({
+              'streaks': {
+                curUser!.uid: {
+                  'currentStreak': 0,
+                  'streakBroken': false,
+                  'updatedAt': FieldValue.serverTimestamp(),
+                }
+              }
+            });
+        }
+      }
+    } catch (e) {
+      print('Error loading streak data: $e');
+    }
+  }
 
-  // void _startStreakExpirationTimer() {
-  //   if (_lastInteractionDate == null) return;
+  void _startStreakExpirationTimer() {
+    if (_lastInteractionDate == null) return;
 
-  //   // Calculate time until streak expires
-  //   final expiryTime = _lastInteractionDate!.add(const Duration(hours: 24));
-  //   final remaining = expiryTime.difference(DateTime.now());
+    // Calculate time until streak expires
+    final expiryTime = _lastInteractionDate!.add(const Duration(hours: 24));
+    final remaining = expiryTime.difference(DateTime.now());
 
-  //   if (remaining.isNegative) {
-  //     // Streak has already expired
-  //     _checkAndResetStreak();
-  //     return;
-  //   }
+    if (remaining.isNegative) {
+      // Streak has already expired
+      _checkAndResetStreak();
+      return;
+    }
 
-  //   // Check every minute if we're close to expiration
-  //   _streakExpirationTimer?.cancel();
-  //   _streakExpirationTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
-  //     final timeRemaining = expiryTime.difference(DateTime.now());
+    // Check every minute if we're close to expiration
+    _streakExpirationTimer?.cancel();
+    _streakExpirationTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      final timeRemaining = expiryTime.difference(DateTime.now());
 
-  //     if (timeRemaining.isNegative) {
-  //       // Streak expired
-  //       _checkAndResetStreak();
-  //       timer.cancel();
-  //     } else if (timeRemaining.inHours <= 1 && !_isStreakAboutToExpire) {
-  //       // About to expire, notify user
-  //       setState(() {
-  //         _isStreakAboutToExpire = true;
-  //       });
+      if (timeRemaining.isNegative) {
+        // Streak expired
+        _checkAndResetStreak();
+        timer.cancel();
+      } else if (timeRemaining.inHours <= 1 && !_isStreakAboutToExpire) {
+        // About to expire, notify user
+        setState(() {
+          _isStreakAboutToExpire = true;
+        });
 
-  //       _showStreakExpirationWarning();
-  //     }
-  //   });
-  // }
+        _showStreakExpirationWarning();
+      }
+    });
+  }
 
-  // void _checkAndResetStreak() async {
-  //   if (_lastInteractionDate == null || curUser == null || match == null) return;
+  void _checkAndResetStreak() async {
+    if (_lastInteractionDate == null || curUser == null || match == null) return;
 
-  //   // Check if the streak has expired (no interaction in past 24 hours)
-  //   final now = DateTime.now();
-  //   final expiryTime = _lastInteractionDate!.add(const Duration(hours: 24));
+    // Check if the streak has expired (no interaction in past 24 hours)
+    final now = DateTime.now();
+    final expiryTime = _lastInteractionDate!.add(const Duration(hours: 24));
 
-  //   if (now.isAfter(expiryTime)) {
-  //     // Reset streak
-  //     try {
-  //       await FirebaseFirestore.instance
-  //         .collection('users')
-  //         .doc(curUser!.uid)
-  //         .update({
-  //           'streaks.${match!.uid}.currentStreak': 0,
-  //           'streaks.${match!.uid}.streakBroken': true,
-  //           'streaks.${match!.uid}.updatedAt': FieldValue.serverTimestamp(),
-  //         });
+    if (now.isAfter(expiryTime)) {
+      // Reset streak
+      try {
+        await FirebaseFirestore.instance
+          .collection('users')
+          .doc(curUser!.uid)
+          .update({
+            'streaks.${match!.uid}.currentStreak': 0,
+            'streaks.${match!.uid}.streakBroken': true,
+            'streaks.${match!.uid}.updatedAt': FieldValue.serverTimestamp(),
+          });
 
-  //       // Also update match's streak data
-  //       await FirebaseFirestore.instance
-  //         .collection('users')
-  //         .doc(match!.uid)
-  //         .update({
-  //           'streaks.${curUser!.uid}.currentStreak': 0,
-  //           'streaks.${curUser!.uid}.streakBroken': true,
-  //           'streaks.${curUser!.uid}.updatedAt': FieldValue.serverTimestamp(),
-  //         });
+        // Also update match's streak data
+        await FirebaseFirestore.instance
+          .collection('users')
+          .doc(match!.uid)
+          .update({
+            'streaks.${curUser!.uid}.currentStreak': 0,
+            'streaks.${curUser!.uid}.streakBroken': true,
+            'streaks.${curUser!.uid}.updatedAt': FieldValue.serverTimestamp(),
+          });
 
-  //       setState(() {
-  //         _currentStreak = 0;
-  //       });
+        setState(() {
+          _currentStreak = 0;
+        });
 
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(
-  //           content: Text('Your streak has ended! Start a new interaction to rebuild your streak.'),
-  //           duration: Duration(seconds: 5),
-  //         ),
-  //       );
-  //     } catch (e) {
-  //       print('Error resetting streak: $e');
-  //     }
-  //   }
-  // }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Your streak has ended! Start a new interaction to rebuild your streak.'),
+            duration: Duration(seconds: 5),
+          ),
+        );
+      } catch (e) {
+        print('Error resetting streak: $e');
+      }
+    }
+  }
 
-  // void _showStreakExpirationWarning() {
-  //   if (!mounted) return;
+  void _showStreakExpirationWarning() {
+    if (!mounted) return;
 
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     SnackBar(
-  //       content: const Text('Your streak is about to expire! Interact with your match to keep it going.'),
-  //       action: SnackBarAction(
-  //         label: 'MESSAGE',
-  //         onPressed: () {
-  //           Navigator.push(
-  //             context,
-  //             MaterialPageRoute(
-  //               builder: (context) => ChatScreen(user: curUser!, match: match!),
-  //             )
-  //           );
-  //         },
-  //       ),
-  //       duration: const Duration(seconds: 8),
-  //     ),
-  //   );
-  // }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Your streak is about to expire! Interact with your match to keep it going.'),
+        action: SnackBarAction(
+          label: 'MESSAGE',
+          onPressed: () {
 
-  // Future<void> _updateStreak() async {
-  //   if (curUser == null || match == null) return;
+          },
+        ),
+        duration: const Duration(seconds: 8),
+      ),
+    );
+  }
 
-  //   try {
-  //     final userRef = FirebaseFirestore.instance.collection('users').doc(curUser!.uid);
-  //     final userDoc = await userRef.get();
-  //     final userData = userDoc.data() as Map<String, dynamic>? ?? {};
+  Future<void> _updateStreak() async {
+    if (curUser == null || match == null) return;
 
-  //     final streaks = userData['streaks'] as Map<String, dynamic>? ?? {};
-  //     final matchStreakData = streaks[match!.uid] as Map<String, dynamic>? ?? {};
+    try {
+      final userRef = FirebaseFirestore.instance.collection('users').doc(curUser!.uid);
+      final userDoc = await userRef.get();
+      final userData = userDoc.data() as Map<String, dynamic>? ?? {};
 
-  //     final now = DateTime.now();
-  //     final int currentStreak = matchStreakData['currentStreak'] ?? 0;
-  //     final lastInteraction = matchStreakData['lastInteractionDate'] != null
-  //         ? (matchStreakData['lastInteractionDate'] as Timestamp).toDate()
-  //         : null;
+      final streaks = userData['streaks'] as Map<String, dynamic>? ?? {};
+      final matchStreakData = streaks[match!.uid] as Map<String, dynamic>? ?? {};
 
-  //     int newStreak = 1; // Default to 1 for new streaks
+      final now = DateTime.now();
+      final int currentStreak = matchStreakData['currentStreak'] ?? 0;
+      final lastInteraction = matchStreakData['lastInteractionDate'] != null
+          ? (matchStreakData['lastInteractionDate'] as Timestamp).toDate()
+          : null;
 
-  //     if (lastInteraction != null) {
-  //       final today = DateTime(now.year, now.month, now.day);
-  //       final lastInteractionDay = DateTime(
-  //         lastInteraction.year,
-  //         lastInteraction.month,
-  //         lastInteraction.day,
-  //       );
+      int newStreak = 1; // Default to 1 for new streaks
 
-  //       // If last interaction was yesterday or earlier today, continue streak
-  //       if (today.difference(lastInteractionDay).inDays <= 1) {
-  //         // Only increment if it's a new day
-  //         newStreak = today.isAfter(lastInteractionDay)
-  //             ? currentStreak + 1
-  //             : currentStreak;
-  //       }
-  //     }
+      if (lastInteraction != null) {
+        final today = DateTime(now.year, now.month, now.day);
+        final lastInteractionDay = DateTime(
+          lastInteraction.year,
+          lastInteraction.month,
+          lastInteraction.day,
+        );
 
-  //     // Update user's streak data
-  //     await userRef.update({
-  //       'streaks.${match!.uid}.currentStreak': newStreak,
-  //       'streaks.${match!.uid}.lastInteractionDate': Timestamp.fromDate(now),
-  //       'streaks.${match!.uid}.streakBroken': false,
-  //       'streaks.${match!.uid}.updatedAt': FieldValue.serverTimestamp(),
-  //     });
+        // If last interaction was yesterday or earlier today, continue streak
+        if (today.difference(lastInteractionDay).inDays <= 1) {
+          // Only increment if it's a new day
+          newStreak = today.isAfter(lastInteractionDay)
+              ? currentStreak + 1
+              : currentStreak;
+        }
+      }
 
-  //     // Also update match's streak data
-  //     await FirebaseFirestore.instance
-  //       .collection('users')
-  //       .doc(match!.uid)
-  //       .update({
-  //         'streaks.${curUser!.uid}.currentStreak': newStreak,
-  //         'streaks.${curUser!.uid}.lastInteractionDate': Timestamp.fromDate(now),
-  //         'streaks.${curUser!.uid}.streakBroken': false,
-  //         'streaks.${curUser!.uid}.updatedAt': FieldValue.serverTimestamp(),
-  //       });
+      // Update user's streak data
+      await userRef.update({
+        'streaks.${match!.uid}.currentStreak': newStreak,
+        'streaks.${match!.uid}.lastInteractionDate': Timestamp.fromDate(now),
+        'streaks.${match!.uid}.streakBroken': false,
+        'streaks.${match!.uid}.updatedAt': FieldValue.serverTimestamp(),
+      });
 
-  //     setState(() {
-  //       _currentStreak = newStreak;
-  //       _lastInteractionDate = now;
-  //       _isStreakAboutToExpire = false;
-  //     });
+      // Also update match's streak data
+      await FirebaseFirestore.instance
+        .collection('users')
+        .doc(match!.uid)
+        .update({
+          'streaks.${curUser!.uid}.currentStreak': newStreak,
+          'streaks.${curUser!.uid}.lastInteractionDate': Timestamp.fromDate(now),
+          'streaks.${curUser!.uid}.streakBroken': false,
+          'streaks.${curUser!.uid}.updatedAt': FieldValue.serverTimestamp(),
+        });
 
-  //     // Restart the timer for streak expiration
-  //     _startStreakExpirationTimer();
+      setState(() {
+        _currentStreak = newStreak;
+        _lastInteractionDate = now;
+        _isStreakAboutToExpire = false;
+      });
 
-  //   } catch (e) {
-  //     print('Error updating streak: $e');
-  //   }
-  // }
+      // Restart the timer for streak expiration
+      _startStreakExpirationTimer();
+
+    } catch (e) {
+      print('Error updating streak: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1340,19 +1351,18 @@ class _BondScreenState extends State<BondScreen> {
           children: [
             IconButton(
               icon: const Icon(Icons.calendar_month, color: Color(0xFF5E77DF)),
-              onPressed: () => _showDateDetails(context),
+              onPressed: _handleCalendarTap,
             ),
             if (_upcomingDates.isNotEmpty)
-              Positioned(
+              const Positioned(
                 top: 10,
                 right: 10,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: const BoxDecoration(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
                     color: Colors.red,
                     shape: BoxShape.circle,
                   ),
+                  child: SizedBox(width: 10, height: 10),
                 ),
               ),
           ],
@@ -1551,13 +1561,12 @@ class _BondScreenState extends State<BondScreen> {
                                         ],
                                       ),
 
-                                      // Rest of your code...
                                       const SizedBox(height: 12),
-                                      // StreakIndicator(
-                                      //   currentStreak: _currentStreak,
-                                      //   lastInteractionDate: _lastInteractionDate,
-                                      //   isStreakAboutToExpire: _isStreakAboutToExpire,
-                                      // ),
+                                      StreakIndicator(
+                                        currentStreak: _currentStreak,
+                                        lastInteractionDate: _lastInteractionDate,
+                                        isStreakAboutToExpire: _isStreakAboutToExpire,
+                                      ),
                                       const SizedBox(height: 8),
                                       // Spotify Button
                                       Padding(
