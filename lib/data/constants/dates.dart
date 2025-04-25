@@ -1,0 +1,28 @@
+
+
+const Map<String, String> dateIdeas = {
+  'Dinner at a Restaurant': 'Enjoying a meal together at a local restaurant. Average cost: \$60.',
+  'Movie Night': 'Watching a film at a movie theater. Average cost: \$30.',
+  'Coffee Date': 'Meeting at a coffee shop for drinks and conversation. Average cost: \$12.',
+  'Outdoor Activities': 'Engaging in activities like hiking or visiting a park. Average cost: \$0.',
+  'Visiting a Museum': 'Exploring art, history, or science exhibits. Average cost: \$17.',
+  'Attending a Sporting Event': 'Watching a live sports game together. Average cost: \$60.',
+  'Cooking a Meal Together': 'Preparing and enjoying a meal at home. Average cost: \$35.',
+  'Visiting a Local Brewery or Winery': 'Sampling craft beers or wines at a local establishment. Average cost: \$35.',
+  'Art Gallery Visit': 'Exploring art exhibitions at a local gallery. Average cost: \$10.',
+  'Mini Golf': 'Enjoying a fun game of mini golf. Average cost: \$12.',
+  'Bowling': 'Playing a few rounds of bowling. Average cost: \$20.',
+  'Ice Skating': 'Skating together at an ice rink. Average cost: \$17.',
+  'Live Music Performance': 'Attending a concert or live music event. Average cost: \$60.',
+  'Comedy Show': 'Enjoying a night of stand-up comedy. Average cost: \$22.',
+  'Scenic Drive': 'Taking a leisurely drive through picturesque areas. Average cost: \$10.',
+  'Stargazing': 'Observing stars and constellations at a local spot. Average cost: \$5.',
+  'DIY Craft Night': 'Creating art or crafts together at home. Average cost: \$20.',
+  'Pottery or Painting Class': 'Taking a beginner\'s art class together. Average cost: \$35.',
+  'Volunteering Together': 'Participating in community service as a couple. Average cost: \$0.',
+  'Visiting a Farmers\' Market': 'Exploring local produce and artisan goods. Average cost: \$10.',
+  'Picnic in the Park': 'Sharing a meal outdoors in a scenic location. Average cost: \$25.',
+  'Trivia Night': 'Participating in a trivia contest at a local bar or café. Average cost: \$0.',
+  'Cooking Class': 'Learning to prepare a new dish together. Average cost: \$75.',
+  'Wine and Paint Night': 'Enjoying wine while creating art. Average cost: \$45.',
+};

@@ -6,10 +6,13 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:intl/intl.dart';
+
 import 'dart:async';
 import '../../../../data/entity/app_user.dart';
+import 'chat.dart';
 import 'match_intro_screen.dart';
 import 'relationship_advice_screen.dart';
+import '../../../widgets/streak_indicator.dart';
 
 class BondScreen extends StatefulWidget {
   const BondScreen({super.key});
@@ -26,17 +29,21 @@ class _BondScreenState extends State<BondScreen> {
   bool isMatchUnbonded = false;
   bool keepMatchToggle = true;
   bool loading = true;
-  bool isAwaitingMatch = false; // Add this new state variable
+  bool isAwaitingMatch = false;
 
   // Countdown timer variables
   Timer? _countdownTimer;
   Duration _timeUntilNextBond = Duration.zero;
   DateTime? _nextBondDate;
 
+  List<Map<String, dynamic>> _upcomingDates = [];
+  bool _loadingDates = true;
+
   Future<void> getUserProfiles() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     final db = FirebaseFirestore.instance;
-    final curUserSnapshot = await db.collection("users").doc(currentUser?.uid).get();
+    final curUserSnapshot =
+        await db.collection("users").doc(currentUser?.uid).get();
     AppUser user = AppUser.fromSnapshot(curUserSnapshot);
     //final matchSnapshot = await db.collection("users").doc(user.match).get();
     if (user.match.isNotEmpty) {
@@ -49,8 +56,10 @@ class _BondScreenState extends State<BondScreen> {
         isMatchBlocked = user.blockedUserUIDs.contains(matchUser.uid);
         isMatchUnbonded = !user.keepMatch;
       });
+      _loadUpcomingDates();
 
-      final hasSeenIntro = curUserSnapshot.data()?['hasSeenMatchIntro'] ?? false;
+      final hasSeenIntro =
+          curUserSnapshot.data()?['hasSeenMatchIntro'] ?? false;
       if (!hasSeenIntro) {
         // Wait for build to finish
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -69,6 +78,760 @@ class _BondScreenState extends State<BondScreen> {
     }
   }
 
+  Future<void> _loadUpcomingDates() async {
+    if (curUser == null || match == null) return;
+
+    setState(() {
+      _loadingDates = true;
+    });
+
+    try {
+      // hardcoded for now
+      final now = DateTime.now();
+      _upcomingDates = [
+        {
+          'id': 'sample-date-1',
+          'activity': 'Coffee at Starbucks',
+          'location': 'Chauncey Hill Mall, West Lafayette',
+          'dateTime': now.add(const Duration(days: 2, hours: 3)),
+          'senderId': match!.uid,
+          'notes': 'Looking forward to our coffee date!',
+        }
+      ];
+      print("Finished loading dates: $_upcomingDates");
+    } catch (e) {
+      print('Error loading upcoming dates: $e');
+    } finally {
+      setState(() {
+        _loadingDates = false;
+      });
+    }
+  }
+
+  Widget _buildUpcomingDateSection() {
+    if (_upcomingDates.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final upcomingDate = _upcomingDates.first;
+    final DateTime dateTime = upcomingDate['dateTime'];
+    final Duration timeUntil = dateTime.difference(DateTime.now());
+
+    // Skip if the date is in the past
+    if (timeUntil.isNegative) {
+      return const SizedBox.shrink();
+    }
+
+    // Format time remaining
+    String timeRemainingText;
+    if (timeUntil.inDays > 0) {
+      timeRemainingText =
+          '${timeUntil.inDays} days, ${timeUntil.inHours % 24} hours';
+    } else if (timeUntil.inHours > 0) {
+      timeRemainingText =
+          '${timeUntil.inHours} hours, ${timeUntil.inMinutes % 60} minutes';
+    } else {
+      timeRemainingText = '${timeUntil.inMinutes} minutes';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F9FF),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF5E77DF), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            decoration: const BoxDecoration(
+              color: Color(0xFF5E77DF),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(11),
+                topRight: Radius.circular(11),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_today, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'Upcoming Date',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'In $timeRemainingText',
+                    style: const TextStyle(
+                      color: Color(0xFF5E77DF),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.event,
+                      size: 20,
+                      color: Color(0xFF5E77DF),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        upcomingDate['activity'],
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.location_on,
+                      size: 20,
+                      color: Color(0xFF5E77DF),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        upcomingDate['location'],
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.access_time,
+                      size: 20,
+                      color: Color(0xFF5E77DF),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      DateFormat('EEEE, MMM d • h:mm a').format(dateTime),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+                if (upcomingDate['notes'] != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.chat_bubble_outline,
+                          size: 18,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            upcomingDate['notes'],
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontStyle: FontStyle.italic,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () =>
+                            _showCancelDateDialog(upcomingDate['id']),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text('Cancel Date'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () =>
+                            _showPostponeDateDialog(upcomingDate['id']),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5E77DF),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text('Postpone'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCancelDateDialog(String dateId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel Date'),
+        content: const Text(
+          'Are you sure you want to cancel this date? This action cannot be undone and will notify your match.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('NO'),
+          ),
+          TextButton(
+            onPressed: () {
+              _cancelDate(dateId);
+              Navigator.of(context).pop();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('YES, CANCEL'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _cancelDate(String dateId) async {
+    // Immediately update UI by removing the canceled date
+    setState(() {
+      _upcomingDates.removeWhere((date) => date['id'] == dateId);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Date canceled successfully')),
+    );
+
+    // TODO: Implement Firestore update
+    // try {
+    //   await FirebaseFirestore.instance
+    //       .collection('dateInvitations')
+    //       .doc(dateId)
+    //       .update({
+    //     'status': 'canceled',
+    //     'updatedAt': FieldValue.serverTimestamp(),
+    //   });
+    // } catch (e) {
+    //   print('Error canceling date in database: $e');
+    // }
+  }
+
+  void _showPostponeDateDialog(String dateId) {
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
+    TimeOfDay selectedTime = TimeOfDay.now();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Postpone Date'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Select a new date and time:'),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () async {
+                      final pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 90)),
+                      );
+                      if (pickedDate != null) {
+                        setState(() {
+                          selectedDate = pickedDate;
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today),
+                          const SizedBox(width: 8),
+                          Text(DateFormat('EEE, MMM d, yyyy')
+                              .format(selectedDate)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: () async {
+                      final pickedTime = await showTimePicker(
+                        context: context,
+                        initialTime: selectedTime,
+                      );
+                      if (pickedTime != null) {
+                        setState(() {
+                          selectedTime = pickedTime;
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.access_time),
+                          const SizedBox(width: 8),
+                          Text(selectedTime.format(context)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('CANCEL'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  // Combine date and time
+                  final newDateTime = DateTime(
+                    selectedDate.year,
+                    selectedDate.month,
+                    selectedDate.day,
+                    selectedTime.hour,
+                    selectedTime.minute,
+                  );
+                  _postponeDate(dateId, newDateTime);
+                  Navigator.of(context).pop();
+                },
+                child: const Text('CONFIRM'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _postponeDate(String dateId, DateTime newDateTime) async {
+    try {
+      // TODO: fix for Firestore
+      // await FirebaseFirestore.instance
+      //     .collection('dateInvitations')
+      //     .doc(dateId)
+      //     .update({
+      //   'status': 'postponed',
+      //   'dateTime': Timestamp.fromDate(newDateTime),
+      //   'postponedTo': Timestamp.fromDate(newDateTime),
+      //   'updatedAt': FieldValue.serverTimestamp(),
+      // });
+
+      setState(() {
+        final index = _upcomingDates.indexWhere((date) => date['id'] == dateId);
+        if (index != -1) {
+          _upcomingDates[index]['dateTime'] = newDateTime;
+          _upcomingDates[index]['postponedTo'] = newDateTime;
+          _upcomingDates[index]['status'] = 'postponed';
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Date postponed successfully')),
+      );
+    } catch (e) {
+      print('Error postponing date: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to postpone date')),
+      );
+    }
+  }
+
+  void _showDateDetails(BuildContext context) {
+    if (_upcomingDates.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No upcoming dates scheduled')),
+      );
+      return;
+    }
+
+    final upcomingDate = _upcomingDates.first;
+    final DateTime dateTime = upcomingDate['dateTime'];
+    final Duration timeUntil = dateTime.difference(DateTime.now());
+
+    // Skip if the date is in the past
+    if (timeUntil.isNegative) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No upcoming dates scheduled')),
+      );
+      return;
+    }
+
+    // Format time remaining
+    String timeRemainingText;
+    if (timeUntil.inDays > 0) {
+      timeRemainingText = '${timeUntil.inDays} days, ${timeUntil.inHours % 24} hours';
+    } else if (timeUntil.inHours > 0) {
+      timeRemainingText = '${timeUntil.inHours} hours, ${timeUntil.inMinutes % 60} minutes';
+    } else {
+      timeRemainingText = '${timeUntil.inMinutes} minutes';
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, color: Color(0xFF5E77DF), size: 24),
+                const SizedBox(width: 10),
+                const Text(
+                  'Upcoming Date',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF2FA),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF5E77DF), width: 1),
+                  ),
+                  child: Text(
+                    'In $timeRemainingText',
+                    style: const TextStyle(
+                      color: Color(0xFF5E77DF),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                const Icon(Icons.event, size: 20, color: Color(0xFF5E77DF)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    upcomingDate['activity'],
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.location_on, size: 20, color: Color(0xFF5E77DF)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    upcomingDate['location'],
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(Icons.access_time, size: 20, color: Color(0xFF5E77DF)),
+                const SizedBox(width: 8),
+                Text(
+                  DateFormat('EEEE, MMM d • h:mm a').format(dateTime),
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ],
+            ),
+            if (upcomingDate['notes'] != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.chat_bubble_outline, size: 18, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        upcomingDate['notes'],
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showCancelDateDialog(upcomingDate['id']);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text('Cancel Date'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showPostponeDateDialog(upcomingDate['id']);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF5E77DF),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text('Postpone'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateTimeIndicator() {
+    if (_upcomingDates.isEmpty) return const SizedBox.shrink();
+    
+    final upcomingDate = _upcomingDates.first;
+    final DateTime dateTime = upcomingDate['dateTime'];
+    final Duration timeUntil = dateTime.difference(DateTime.now());
+    
+    // Skip if the date is in the past
+    if (timeUntil.isNegative) return const SizedBox.shrink();
+    
+    // Format time remaining
+    String timeRemainingText;
+    if (timeUntil.inDays > 0) {
+      timeRemainingText = '${timeUntil.inDays} day${timeUntil.inDays != 1 ? 's' : ''}, ${timeUntil.inHours % 24} hour${(timeUntil.inHours % 24) != 1 ? 's' : ''}';
+    } else if (timeUntil.inHours > 0) {
+      timeRemainingText = '${timeUntil.inHours} hour${timeUntil.inHours != 1 ? 's' : ''}, ${timeUntil.inMinutes % 60} minute${(timeUntil.inMinutes % 60) != 1 ? 's' : ''}';
+    } else {
+      timeRemainingText = '${timeUntil.inMinutes} minute${timeUntil.inMinutes != 1 ? 's' : ''}';
+    }
+    
+    return GestureDetector(
+      onTap: () => _showDateDetails(context),
+      child: Container(
+        margin: const EdgeInsets.only(top: 16),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEEF2FA),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF5E77DF), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.calendar_today,
+              size: 16,
+              color: Color(0xFF5E77DF),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              "Date in $timeRemainingText",
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5E77DF),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _getMoodIcon(String moodId) {
+    switch (moodId.toLowerCase()) {
+      case 'happy':
+        return Icons.sentiment_very_satisfied;
+      case 'romantic':
+        return Icons.favorite;
+      case 'sad':
+        return Icons.sentiment_dissatisfied;
+      case 'excited':
+        return Icons.celebration;
+      case 'tired':
+        return Icons.bedtime;
+      case 'stressed':
+        return Icons.psychology;
+      case 'angry':
+        return Icons.mood_bad;
+      default:
+        return Icons.emoji_emotions;
+    }
+  }
+
+  Color _getMoodColor(String moodId) {
+    switch (moodId.toLowerCase()) {
+      case 'happy':
+        return Colors.amber;
+      case 'romantic':
+        return Colors.pink;
+      case 'sad':
+        return Colors.blueGrey;
+      case 'excited':
+        return Colors.purple;
+      case 'tired':
+        return Colors.indigo;
+      case 'stressed':
+        return Colors.orange;
+      case 'angry':
+        return Colors.red;
+      default:
+        return const Color(0xFF5E77DF);
+    }
+  }
+
+  String _formatMood(String moodId) {
+    if (moodId.isEmpty) return "Unknown";
+    return moodId.substring(0, 1).toUpperCase() +
+        moodId.substring(1).toLowerCase();
+  }
+
+  Future<void> getUserMood() async {
+    if (curUser == null || match == null) return;
+  
+    try {
+      final moodSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(match!.uid)
+          .collection('moods')
+          .orderBy('timestamp', descending: true)
+          .limit(1)
+          .get();
+  
+      if (moodSnapshot.docs.isNotEmpty) {
+        final moodData = moodSnapshot.docs.first.data();
+        setState(() {
+          match!.currentMoodId = moodData['mood'] ?? '';
+          match!.moodTimestamp = moodData['timestamp'] as Timestamp;
+        });
+      }
+    } catch (e) {
+      print('Error fetching user mood: $e');
+    }
+  }
+
+  String _formatMoodAge(Timestamp timestamp) {
+    final now = DateTime.now();
+    final moodTime = timestamp.toDate();
+    final difference = now.difference(moodTime);
+    
+    if (difference.inDays > 0) {
+      return '${difference.inDays} days ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hours ago';
+    } else {
+      return '${difference.inMinutes} minutes ago';
+    }
+  }
+  
   @override
   void initState() {
     super.initState();
@@ -77,6 +840,8 @@ class _BondScreenState extends State<BondScreen> {
     if (match != null) {
       _calculateNextBondDate();
       _startCountdownTimer();
+      //_loadStreakData();
+      getUserMood();
     }
 
     setState(() {
@@ -87,6 +852,7 @@ class _BondScreenState extends State<BondScreen> {
   @override
   void dispose() {
     _countdownTimer?.cancel();
+    //_streakExpirationTimer?.cancel();
     super.dispose();
   }
 
@@ -97,14 +863,16 @@ class _BondScreenState extends State<BondScreen> {
 
     // Calculate days until next Monday (weekday 1)
     int daysUntilNextMonday = (8 - currentWeekday) % 7;
-    if (daysUntilNextMonday == 0) daysUntilNextMonday = 7; // If today is Monday, next bond is next Monday
+    if (daysUntilNextMonday == 0)
+      daysUntilNextMonday = 7; // If today is Monday, next bond is next Monday
 
     // Create next bond date (next Monday at midnight)
     _nextBondDate = DateTime(
       now.year,
       now.month,
       now.day + daysUntilNextMonday,
-    ).subtract(Duration(hours: now.hour, minutes: now.minute, seconds: now.second));
+    ).subtract(
+        Duration(hours: now.hour, minutes: now.minute, seconds: now.second));
 
     // Calculate time remaining
     _updateRemainingTime();
@@ -143,7 +911,7 @@ class _BondScreenState extends State<BondScreen> {
                   color: Colors.black87,
                 ),
                 textAlign: TextAlign.center,
-              ),  
+              ),
               const SizedBox(height: 32),
               
               // Suggestions container
@@ -291,6 +1059,250 @@ class _BondScreenState extends State<BondScreen> {
     );
   }
 
+  // int _currentStreak = 0;
+  // DateTime? _lastInteractionDate;
+  // bool _isStreakAboutToExpire = false;
+  // Timer? _streakExpirationTimer;
+
+  // void _loadStreakData() async {
+  //   if (curUser == null || match == null) return;
+
+  //   try {
+  //     // Fetch streak data from user's document
+  //     final userDoc = await FirebaseFirestore.instance
+  //       .collection('users')
+  //       .doc(curUser!.uid)
+  //       .get();
+
+  //     if (userDoc.exists) {
+  //       final userData = userDoc.data() as Map<String, dynamic>;
+  //       // Check if there's a streaks map in the user data
+  //       if (userData.containsKey('streaks')) {
+  //         final streaks = userData['streaks'] as Map<String, dynamic>? ?? {};
+  //         final matchStreakData = streaks[match!.uid] as Map<String, dynamic>?;
+
+  //         if (matchStreakData != null) {
+  //           setState(() {
+  //             _currentStreak = matchStreakData['currentStreak'] ?? 0;
+  //             _lastInteractionDate = matchStreakData['lastInteractionDate'] != null
+  //                 ? (matchStreakData['lastInteractionDate'] as Timestamp).toDate()
+  //                 : null;
+
+  //             // Check if streak is about to expire
+  //             if (_lastInteractionDate != null) {
+  //               final expiryTime = _lastInteractionDate!.add(const Duration(hours: 24));
+  //               final remaining = expiryTime.difference(DateTime.now());
+  //               _isStreakAboutToExpire = remaining.inHours <= 1 && remaining.isNegative == false;
+  //             }
+  //           });
+
+  //           // Start streak expiration timer
+  //           _startStreakExpirationTimer();
+  //         }
+  //       } else {
+  //         // If no streaks field exists yet, initialize it
+  //         await FirebaseFirestore.instance
+  //           .collection('users')
+  //           .doc(curUser!.uid)
+  //           .update({
+  //             'streaks': {
+  //               match!.uid: {
+  //                 'currentStreak': 0,
+  //                 'streakBroken': false,
+  //                 'updatedAt': FieldValue.serverTimestamp(),
+  //               }
+  //             }
+  //           });
+
+  //         // Also initialize for match
+  //         await FirebaseFirestore.instance
+  //           .collection('users')
+  //           .doc(match!.uid)
+  //           .update({
+  //             'streaks': {
+  //               curUser!.uid: {
+  //                 'currentStreak': 0,
+  //                 'streakBroken': false,
+  //                 'updatedAt': FieldValue.serverTimestamp(),
+  //               }
+  //             }
+  //           });
+  //       }
+  //     }
+  //   } catch (e) {
+  //     print('Error loading streak data: $e');
+  //   }
+  // }
+
+  // void _startStreakExpirationTimer() {
+  //   if (_lastInteractionDate == null) return;
+
+  //   // Calculate time until streak expires
+  //   final expiryTime = _lastInteractionDate!.add(const Duration(hours: 24));
+  //   final remaining = expiryTime.difference(DateTime.now());
+
+  //   if (remaining.isNegative) {
+  //     // Streak has already expired
+  //     _checkAndResetStreak();
+  //     return;
+  //   }
+
+  //   // Check every minute if we're close to expiration
+  //   _streakExpirationTimer?.cancel();
+  //   _streakExpirationTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+  //     final timeRemaining = expiryTime.difference(DateTime.now());
+
+  //     if (timeRemaining.isNegative) {
+  //       // Streak expired
+  //       _checkAndResetStreak();
+  //       timer.cancel();
+  //     } else if (timeRemaining.inHours <= 1 && !_isStreakAboutToExpire) {
+  //       // About to expire, notify user
+  //       setState(() {
+  //         _isStreakAboutToExpire = true;
+  //       });
+
+  //       _showStreakExpirationWarning();
+  //     }
+  //   });
+  // }
+
+  // void _checkAndResetStreak() async {
+  //   if (_lastInteractionDate == null || curUser == null || match == null) return;
+
+  //   // Check if the streak has expired (no interaction in past 24 hours)
+  //   final now = DateTime.now();
+  //   final expiryTime = _lastInteractionDate!.add(const Duration(hours: 24));
+
+  //   if (now.isAfter(expiryTime)) {
+  //     // Reset streak
+  //     try {
+  //       await FirebaseFirestore.instance
+  //         .collection('users')
+  //         .doc(curUser!.uid)
+  //         .update({
+  //           'streaks.${match!.uid}.currentStreak': 0,
+  //           'streaks.${match!.uid}.streakBroken': true,
+  //           'streaks.${match!.uid}.updatedAt': FieldValue.serverTimestamp(),
+  //         });
+
+  //       // Also update match's streak data
+  //       await FirebaseFirestore.instance
+  //         .collection('users')
+  //         .doc(match!.uid)
+  //         .update({
+  //           'streaks.${curUser!.uid}.currentStreak': 0,
+  //           'streaks.${curUser!.uid}.streakBroken': true,
+  //           'streaks.${curUser!.uid}.updatedAt': FieldValue.serverTimestamp(),
+  //         });
+
+  //       setState(() {
+  //         _currentStreak = 0;
+  //       });
+
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text('Your streak has ended! Start a new interaction to rebuild your streak.'),
+  //           duration: Duration(seconds: 5),
+  //         ),
+  //       );
+  //     } catch (e) {
+  //       print('Error resetting streak: $e');
+  //     }
+  //   }
+  // }
+
+  // void _showStreakExpirationWarning() {
+  //   if (!mounted) return;
+
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: const Text('Your streak is about to expire! Interact with your match to keep it going.'),
+  //       action: SnackBarAction(
+  //         label: 'MESSAGE',
+  //         onPressed: () {
+  //           Navigator.push(
+  //             context,
+  //             MaterialPageRoute(
+  //               builder: (context) => ChatScreen(user: curUser!, match: match!),
+  //             )
+  //           );
+  //         },
+  //       ),
+  //       duration: const Duration(seconds: 8),
+  //     ),
+  //   );
+  // }
+
+  // Future<void> _updateStreak() async {
+  //   if (curUser == null || match == null) return;
+
+  //   try {
+  //     final userRef = FirebaseFirestore.instance.collection('users').doc(curUser!.uid);
+  //     final userDoc = await userRef.get();
+  //     final userData = userDoc.data() as Map<String, dynamic>? ?? {};
+
+  //     final streaks = userData['streaks'] as Map<String, dynamic>? ?? {};
+  //     final matchStreakData = streaks[match!.uid] as Map<String, dynamic>? ?? {};
+
+  //     final now = DateTime.now();
+  //     final int currentStreak = matchStreakData['currentStreak'] ?? 0;
+  //     final lastInteraction = matchStreakData['lastInteractionDate'] != null
+  //         ? (matchStreakData['lastInteractionDate'] as Timestamp).toDate()
+  //         : null;
+
+  //     int newStreak = 1; // Default to 1 for new streaks
+
+  //     if (lastInteraction != null) {
+  //       final today = DateTime(now.year, now.month, now.day);
+  //       final lastInteractionDay = DateTime(
+  //         lastInteraction.year,
+  //         lastInteraction.month,
+  //         lastInteraction.day,
+  //       );
+
+  //       // If last interaction was yesterday or earlier today, continue streak
+  //       if (today.difference(lastInteractionDay).inDays <= 1) {
+  //         // Only increment if it's a new day
+  //         newStreak = today.isAfter(lastInteractionDay)
+  //             ? currentStreak + 1
+  //             : currentStreak;
+  //       }
+  //     }
+
+  //     // Update user's streak data
+  //     await userRef.update({
+  //       'streaks.${match!.uid}.currentStreak': newStreak,
+  //       'streaks.${match!.uid}.lastInteractionDate': Timestamp.fromDate(now),
+  //       'streaks.${match!.uid}.streakBroken': false,
+  //       'streaks.${match!.uid}.updatedAt': FieldValue.serverTimestamp(),
+  //     });
+
+  //     // Also update match's streak data
+  //     await FirebaseFirestore.instance
+  //       .collection('users')
+  //       .doc(match!.uid)
+  //       .update({
+  //         'streaks.${curUser!.uid}.currentStreak': newStreak,
+  //         'streaks.${curUser!.uid}.lastInteractionDate': Timestamp.fromDate(now),
+  //         'streaks.${curUser!.uid}.streakBroken': false,
+  //         'streaks.${curUser!.uid}.updatedAt': FieldValue.serverTimestamp(),
+  //       });
+
+  //     setState(() {
+  //       _currentStreak = newStreak;
+  //       _lastInteractionDate = now;
+  //       _isStreakAboutToExpire = false;
+  //     });
+
+  //     // Restart the timer for streak expiration
+  //     _startStreakExpirationTimer();
+
+  //   } catch (e) {
+  //     print('Error updating streak: $e');
+  //   }
+  // }
+
   @override
   Widget build(BuildContext context) {
     if (loading) {
@@ -323,6 +1335,28 @@ class _BondScreenState extends State<BondScreen> {
           ),
         ),
         automaticallyImplyLeading: false,
+        leading: Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.calendar_month, color: Color(0xFF5E77DF)),
+              onPressed: () => _showDateDetails(context),
+            ),
+            if (_upcomingDates.isNotEmpty)
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.more_horiz, color: Colors.black54),
@@ -337,166 +1371,371 @@ class _BondScreenState extends State<BondScreen> {
           ? _buildBlockedView()
           : isAwaitingMatch
               ? _buildAwaitingMatchView()
-          : isMatchUnbonded
-              ? _buildUnbondedView()
-              : SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16).copyWith(top: 0),
-                    child: Column(
-                      children: [
-                        const Divider(height: 20, thickness: 1, color: Color(0xFFE7EFEE)),
-                        match == null
-                            ? Text(
-                                "No bond available. Please participate in matching to obtain a bond.",
-                                style: TextStyle(fontStyle: FontStyle.italic),
-                              )
-                            : (Column(
-                                children: [
-                                  Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                                    IconButton(
-                                      onPressed: () => showDialog<String>(
-                                        context: context,
-                                        builder: (BuildContext context) => AlertDialog(title: const Text("Why was I matched with this profile?"), content: Text(curUser!.getMatchReason(match!))),
-                                      ),
-                                      icon: Icon(Icons.info_outline),
-                                    )
-                                  ]),
-                                  CircleAvatar(
-                                    radius: MediaQuery.of(context).size.width * 0.2,
-                                    backgroundImage: match!.profilePictureURL.isEmpty
-                                        ? NetworkImage("https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png")
-                                        : NetworkImage(match!.profilePictureURL),
-                                    backgroundColor: const Color(0xFFCDFCFF),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(match!.firstName, style: Theme.of(context).textTheme.headlineMedium),
-                                  const SizedBox(height: 8),
-                                  Text("${match!.age} | ${match!.major}", style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic, color: Color(0xFF5E77DF))),
-                                  const SizedBox(height: 16),
-                                  IntrinsicHeight(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        SizedBox(
-                                          width: MediaQuery.of(context).size.width / 3,
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(16),
-                                            child: TextButton(
-                                              onPressed: _navigateToMoreProfile,
-                                              child: const Text("View More"),
-                                            ),
-                                          ),
-                                        ),
-                                        const VerticalDivider(indent: 16, endIndent: 16),
-                                        SizedBox(
-                                          width: MediaQuery.of(context).size.width / 3,
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(16),
-                                            child: TextButton(
-                                              onPressed: () => _confirmUnbondDialog(context),
-                                              child: const Text("Unbond"),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const Divider(),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+              : isMatchUnbonded
+                  ? _buildUnbondedView()
+                  : SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16).copyWith(top: 0),
+                        child: Column(
+                          children: [
+                            const Divider(
+                                height: 20,
+                                thickness: 1,
+                                color: Color(0xFFE7EFEE)),
+                            match == null
+                                ? Text(
+                                    "No bond available. Please participate in matching to obtain a bond.",
+                                    style:
+                                        TextStyle(fontStyle: FontStyle.italic),
+                                  )
+                                : (Column(
                                     children: [
-                                      const Text("What you have in common:", style: TextStyle(fontSize: 16)),
-                                      if (sharedTraits.isEmpty) const Text("No traits in common yet.") else ...sharedTraits.map((trait) => Text("• $trait")).toList(),
+                                      Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            IconButton(
+                                              onPressed: () =>
+                                                  showDialog<String>(
+                                                context: context,
+                                                builder: (BuildContext
+                                                        context) =>
+                                                    AlertDialog(
+                                                        title: const Text(
+                                                            "Why was I matched with this profile?"),
+                                                        content: Text(curUser!
+                                                            .getMatchReason(
+                                                                match!))),
+                                              ),
+                                              icon: Icon(Icons.info_outline),
+                                            )
+                                          ]),
+                                          Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              CircleAvatar(
+                                                radius: MediaQuery.of(context).size.width * 0.2,
+                                                backgroundImage: match!.profilePictureURL.isEmpty
+                                                    ? NetworkImage(
+                                                        "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png")
+                                                    : NetworkImage(match!.profilePictureURL),
+                                                backgroundColor: const Color(0xFFCDFCFF),
+                                              ),
+                                                                                            if (match!.currentMoodId.isNotEmpty && (match!.showMoodToMatches ?? true))
+                                                Positioned(
+                                                  bottom: 0,
+                                                  right: 0,
+                                                  child: Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      borderRadius: BorderRadius.circular(20),
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: Colors.black.withOpacity(0.1),
+                                                          blurRadius: 4,
+                                                          offset: const Offset(0, 2),
+                                                        ),
+                                                      ],
+                                                      border: Border.all(
+                                                        color: const Color(0xFF5E77DF),
+                                                        width: 1.5,
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          _getMoodIcon(match!.currentMoodId),
+                                                          size: 18,
+                                                          color: _getMoodColor(match!.currentMoodId),
+                                                        ),
+                                                        const SizedBox(width: 4),
+                                                        Text(
+                                                          _formatMood(match!.currentMoodId),
+                                                          style: const TextStyle(
+                                                            fontSize: 14,
+                                                            fontWeight: FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                        if (match!.moodTimestamp != null && 
+                                                            DateTime.now().difference(match!.moodTimestamp!.toDate()).inHours > 48)
+                                                          const SizedBox(width: 4),
+                                                          if (match!.moodTimestamp != null && 
+                                                              DateTime.now().difference(match!.moodTimestamp!.toDate()).inHours > 48)
+                                                            Tooltip(
+                                                              message: 'Mood updated ${_formatMoodAge(match!.moodTimestamp!)}',
+                                                              child: Icon(
+                                                                Icons.update,
+                                                                size: 14,
+                                                                color: Colors.grey,
+                                                              ),
+                                                            ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                      Text(match!.firstName,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headlineMedium),
+                                      const SizedBox(height: 8),
+                                      Text("${match!.age} | ${match!.major}",
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontStyle: FontStyle.italic,
+                                              color: Color(0xFF5E77DF))),
+                                    
+                                      if (!_loadingDates && _upcomingDates.isNotEmpty)
+                                        _buildDateTimeIndicator(),
+                                    
+                                      const SizedBox(height: 16),
+                                      IntrinsicHeight(
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            SizedBox(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width /
+                                                  3,
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(16),
+                                                child: TextButton(
+                                                  onPressed:
+                                                      _navigateToMoreProfile,
+                                                  child:
+                                                      const Text("View More"),
+                                                ),
+                                              ),
+                                            ),
+                                            const VerticalDivider(
+                                                indent: 16, endIndent: 16),
+                                            SizedBox(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width /
+                                                  3,
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(16),
+                                                child: TextButton(
+                                                  onPressed: () =>
+                                                      _confirmUnbondDialog(
+                                                          context),
+                                                  child: const Text("Unbond"),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Divider(),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text("What you have in common:",
+                                              style: TextStyle(fontSize: 16)),
+                                          if (sharedTraits.isEmpty)
+                                            const Text(
+                                                "No traits in common yet.")
+                                          else
+                                            ...sharedTraits
+                                                .map(
+                                                    (trait) => Text("• $trait"))
+                                                .toList(),
+                                        ],
+                                      ),
+
+                                      // Rest of your code...
+                                      const SizedBox(height: 12),
+                                      // StreakIndicator(
+                                      //   currentStreak: _currentStreak,
+                                      //   lastInteractionDate: _lastInteractionDate,
+                                      //   isStreakAboutToExpire: _isStreakAboutToExpire,
+                                      // ),
+                                      const SizedBox(height: 8),
+                                      // Spotify Button
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 16),
+                                        child: OutlinedButton.icon(
+                                          onPressed: () {
+                                            final spotifyUsername =
+                                                match?.spotifyUsername;
+                                            final String url = spotifyUsername !=
+                                                        null &&
+                                                    spotifyUsername.isNotEmpty
+                                                ? "https://open.spotify.com/user/" +
+                                                    spotifyUsername
+                                                : "";
+                                            _launchURL(url);
+                                          },
+                                          icon: Icon(Icons.music_note,
+                                              color: match?.spotifyUsername !=
+                                                          null &&
+                                                      match!.spotifyUsername
+                                                          .isNotEmpty
+                                                  ? Colors.blueAccent
+                                                  : Colors.grey),
+                                          label: Text("Spotify",
+                                              style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: match?.spotifyUsername !=
+                                                              null &&
+                                                          match!.spotifyUsername
+                                                              .isNotEmpty
+                                                      ? Colors.blueAccent
+                                                      : Colors.grey)),
+                                          style: OutlinedButton.styleFrom(
+                                            side: BorderSide(
+                                              width: 1,
+                                              color: match?.spotifyUsername !=
+                                                          null &&
+                                                      match!.spotifyUsername
+                                                          .isNotEmpty
+                                                  ? Colors.blueAccent
+                                                  : Colors.grey,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+
+                                      _buildActionButton(Icons.chat_bubble,
+                                          "Go to our messages", () async {
+                                        String rid = curUser!.roomID;
+
+                                        if (rid.isEmpty) {
+                                          rid = curUser!.uid + match!.uid;
+                                          final roomRef = FirebaseFirestore
+                                              .instance
+                                              .collection("rooms")
+                                              .doc(rid);
+
+                                          // Only write an empty room if it doesn't exist
+                                          final snap = await roomRef.get();
+                                          if (!snap.exists) {
+                                            await roomRef.set({
+                                              "messages": [],
+                                              "roomID": rid,
+                                              "users": [
+                                                curUser!.uid,
+                                                match!.uid
+                                              ],
+                                            });
+                                          }
+
+                                          // Persist room ID to user document
+                                          await FirebaseFirestore.instance
+                                              .collection("users")
+                                              .doc(curUser!.uid)
+                                              .update({"roomID": rid});
+                                          // await FirebaseFirestore.instance.collection("users").doc(match!.uid).update({"roomID": rid});
+
+                                          setState(() {
+                                            curUser!.roomID = rid;
+                                          });
+                                        }
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ChatScreen(
+                                                user: curUser!,
+                                                match: match!,
+                                                roomID: rid),
+                                          ),
+                                        );
+                                      }),
+                                      _buildActionButton(Icons.favorite,
+                                          "Relationship suggestions", () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                RelationshipAdviceScreen(
+                                                    user: curUser!,
+                                                    match: match!),
+                                          ),
+                                        );
+                                      }),
+                                      _buildActionButton(
+                                          Icons.info, "View Match Introduction",
+                                          () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                MatchIntroScreen(
+                                              curUser: curUser!,
+                                              match: match!,
+                                            ),
+                                          ),
+                                        );
+                                      }),
+                                      const SizedBox(height: 15),
+                                      const Divider(),
+                                      const SizedBox(height: 5),
+
+                                      // Keep Match Toggle
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 8.0),
+                                        child: SwitchListTile(
+                                          title: const Text(
+                                              "Keep this match for next week",
+                                              style: TextStyle(fontSize: 16)),
+                                          subtitle: Text(
+                                              keepMatchToggle
+                                                  ? "You'll keep this match"
+                                                  : "You'll get a new match next week",
+                                              style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey)),
+                                          value: keepMatchToggle,
+                                          activeColor: const Color(0xFF5E77DF),
+                                          onChanged: (bool value) {
+                                            _updateKeepMatch(value);
+                                          },
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 16),
+                                      const Divider(),
+                                      const SizedBox(height: 16),
+
+                                      // Block User Button
+                                      ElevatedButton.icon(
+                                        onPressed: _confirmBlockUser,
+                                        icon: const Icon(Icons.block,
+                                            color: Colors.white),
+                                        label: const Text("Block User",
+                                            style:
+                                                TextStyle(color: Colors.white)),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.redAccent,
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 12, horizontal: 16),
+                                        ),
+                                      ),
                                     ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  // Spotify Button
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 16),
-                                    child: OutlinedButton.icon(
-                                      onPressed: () {
-                                        final spotifyUsername = match?.spotifyUsername;
-                                        final String url = spotifyUsername != null && spotifyUsername.isNotEmpty ? "https://open.spotify.com/user/" + spotifyUsername : "";
-                                        _launchURL(url);
-                                      },
-                                      icon: Icon(Icons.music_note, color: match?.spotifyUsername != null && match!.spotifyUsername.isNotEmpty ? Colors.blueAccent : Colors.grey),
-                                      label:
-                                          Text("Spotify", style: TextStyle(fontSize: 16, color: match?.spotifyUsername != null && match!.spotifyUsername.isNotEmpty ? Colors.blueAccent : Colors.grey)),
-                                      style: OutlinedButton.styleFrom(
-                                        side: BorderSide(
-                                          width: 1,
-                                          color: match?.spotifyUsername != null && match!.spotifyUsername.isNotEmpty ? Colors.blueAccent : Colors.grey,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-
-                                  _buildActionButton(Icons.chat_bubble, "Go to our messages", () {}),
-                                  _buildActionButton(Icons.favorite, "Relationship suggestions", () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => RelationshipAdviceScreen(user: curUser!, match: match!),
-                                      ),
-                                    );
-                                  }),
-                                  _buildActionButton(Icons.info, "View Match Introduction", () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => MatchIntroScreen(
-                                          curUser: curUser!,
-                                          match: match!,
-                                        ),
-                                      ),
-                                    );
-                                  }),
-
-                                  const SizedBox(height: 15),
-                                  const Divider(),
-                                  const SizedBox(height: 5),
-
-                                  // Keep Match Toggle
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 8.0),
-                                    child: SwitchListTile(
-                                      title: const Text("Keep this match for next week", style: TextStyle(fontSize: 16)),
-                                      subtitle: Text(keepMatchToggle ? "You'll keep this match" : "You'll get a new match next week", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                      value: keepMatchToggle,
-                                      activeColor: const Color(0xFF5E77DF),
-                                      onChanged: (bool value) {
-                                        _updateKeepMatch(value);
-                                      },
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 16),
-                                  const Divider(),
-                                  const SizedBox(height: 16),
-
-                                  // Block User Button
-                                  ElevatedButton.icon(
-                                    onPressed: _confirmBlockUser,
-                                    icon: const Icon(Icons.block, color: Colors.white),
-                                    label: const Text("Block User", style: TextStyle(color: Colors.white)),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.redAccent,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                    ),
-                                  ),
-                                ],
-                              )),
-                      ],
+                                  )),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
     ));
   }
 
@@ -589,7 +1828,10 @@ class _BondScreenState extends State<BondScreen> {
     if (user == null) return;
 
     // Update Firebase to indicate the user doesn't want to keep the match
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).update({'keepMatch': false});
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .update({'keepMatch': false});
 
     // Update local state
     setState(() {
@@ -600,14 +1842,17 @@ class _BondScreenState extends State<BondScreen> {
       }
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("You've unbonded from this user. You'll receive a new match next week")));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+            "You've unbonded from this user. You'll receive a new match next week")));
   }
 
   void _showIntroduction(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MatchIntroScreen(curUser: curUser!, match: match!),
+        builder: (context) =>
+            MatchIntroScreen(curUser: curUser!, match: match!),
       ),
     );
   }
@@ -621,14 +1866,20 @@ class _BondScreenState extends State<BondScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({'keepMatch': value});
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({'keepMatch': value});
 
       // Update local data model
       if (curUser != null) {
         curUser!.keepMatch = value;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value ? "You'll keep this match for next week" : "You'll receive a new match next week")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(value
+              ? "You'll keep this match for next week"
+              : "You'll receive a new match next week")));
     }
   }
 
@@ -722,17 +1973,26 @@ class _BondScreenState extends State<BondScreen> {
                     children: [
                       _buildCountdownUnit(days.toString(), "Days"),
                       const SizedBox(width: 8),
-                      const Text(":", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      const Text(":",
+                          style: TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold)),
                       const SizedBox(width: 8),
-                      _buildCountdownUnit(hours.toString().padLeft(2, '0'), "Hours"),
+                      _buildCountdownUnit(
+                          hours.toString().padLeft(2, '0'), "Hours"),
                       const SizedBox(width: 8),
-                      const Text(":", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      const Text(":",
+                          style: TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold)),
                       const SizedBox(width: 8),
-                      _buildCountdownUnit(minutes.toString().padLeft(2, '0'), "Mins"),
+                      _buildCountdownUnit(
+                          minutes.toString().padLeft(2, '0'), "Mins"),
                       const SizedBox(width: 8),
-                      const Text(":", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      const Text(":",
+                          style: TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold)),
                       const SizedBox(width: 8),
-                      _buildCountdownUnit(seconds.toString().padLeft(2, '0'), "Secs"),
+                      _buildCountdownUnit(
+                          seconds.toString().padLeft(2, '0'), "Secs"),
                     ],
                   ),
                 ],
@@ -743,12 +2003,15 @@ class _BondScreenState extends State<BondScreen> {
             OutlinedButton.icon(
               onPressed: () {
                 // Navigate to the dashboard with the explore tab (index 0) selected
-                Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false, arguments: {'initialIndex': 0});
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                    '/', (route) => false,
+                    arguments: {'initialIndex': 0});
               },
               icon: const Icon(Icons.explore),
               label: const Text("Explore Profiles"),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],
@@ -794,7 +2057,8 @@ class _BondScreenState extends State<BondScreen> {
             OutlinedButton.icon(
               onPressed: () {
                 // Navigate to the blocked profiles screen and refresh data when returning
-                Navigator.pushNamed(context, '/settings/blocked_profiles').then((_) {
+                Navigator.pushNamed(context, '/settings/blocked_profiles')
+                    .then((_) {
                   // Refresh user data when returning from blocked profiles screen
                   getUserProfiles();
                 });
@@ -802,7 +2066,8 @@ class _BondScreenState extends State<BondScreen> {
               icon: const Icon(Icons.settings),
               label: const Text("Manage Blocked Users"),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],
@@ -831,7 +2096,8 @@ class _BondScreenState extends State<BondScreen> {
       isMatchBlocked = true;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("User has been blocked")));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text("User has been blocked")));
   }
 
   // Show confirmation dialog before blocking
@@ -932,7 +2198,8 @@ class _BondScreenState extends State<BondScreen> {
               children: [
                 Text(
                   "Report $name's Profile",
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 15),
                 SizedBox(
@@ -950,15 +2217,18 @@ class _BondScreenState extends State<BondScreen> {
                     items: const [
                       DropdownMenuItem(
                         value: 1,
-                        child: Text("Profile goes against one of my non-negotiables."),
+                        child: Text(
+                            "Profile goes against one of my non-negotiables."),
                       ),
                       DropdownMenuItem(
                         value: 2,
-                        child: Text("Profile appears to be fake or catfishing."),
+                        child:
+                            Text("Profile appears to be fake or catfishing."),
                       ),
                       DropdownMenuItem(
                         value: 3,
-                        child: Text("Offensive content against community standards."),
+                        child: Text(
+                            "Offensive content against community standards."),
                       ),
                     ],
                     onChanged: (value) {},

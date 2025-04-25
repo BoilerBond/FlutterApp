@@ -1,0 +1,32 @@
+name: Build for each new main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Flutter App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.0'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Run Build
+        run: flutter build apk --release
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
