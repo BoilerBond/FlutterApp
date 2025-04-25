@@ -1,6 +1,9 @@
 # File: .github/workflows/flutter_release.yml
 name: Build & Release Flutter App
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [main]      # fires when main is updated (incl. PR merges)
