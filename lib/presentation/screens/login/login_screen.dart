@@ -8,7 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:datingapp/utils/validators/email_validator.dart';
 import 'package:datingapp/utils/validators/password_validator.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+// import 'package:sign_in_with_apple/sign_in_with_apple.dart'; // Not needed for standin solution
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -63,33 +63,102 @@ class _LoginScreenState extends State<LoginScreen> {
       });
       return;
     }
-    // Apple login implementation would go here
+    
+    // Standin implementation for Apple login that uses Firebase email/password auth
     try {
-      String clientId = "com.boilerbond"; // TODO: register client id in apple developer account
-      String redirectUri = "https://spiced-furry-crow.glitch.me/callbacks/sign_in_with_apple";
-
-      final rawNonce = generateNonce();
-      final nonce = sha256ofString(rawNonce);
-
-      final credential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-        nonce: Platform.isIOS ? nonce : null,
-        webAuthenticationOptions: Platform.isIOS ? null : WebAuthenticationOptions(clientId: clientId, redirectUri: Uri.parse(redirectUri)),
+      print("Using standin Apple authentication");
+      
+      // Show a dialog to collect email for the standin Apple auth
+      final result = await showDialog<Map<String, String>>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          final TextEditingController emailController = TextEditingController();
+          final TextEditingController nameController = TextEditingController();
+          
+          return AlertDialog(
+            title: Text('Sign in with Apple'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Enter your information to simulate Apple Sign-In'),
+                  SizedBox(height: 16),
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(labelText: 'Full Name'),
+                  ),
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(labelText: 'Email'),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop({
+                    'email': emailController.text,
+                    'name': nameController.text,
+                  });
+                },
+                child: Text('Continue'),
+              ),
+            ],
+          );
+        },
       );
-
-      final oauthCredential = OAuthProvider("apple.com").credential(
-        idToken: credential.identityToken,
-        accessToken: credential.authorizationCode,
-      );
-
-      final userCredential = await FirebaseAuth.instance.signInWithCredential(oauthCredential);
+      
+      if (result == null || result['email']?.isEmpty == true) {
+        print("Apple Sign-In canceled");
+        return;
+      }
+      
+      final String email = result['email']!;
+      final String displayName = result['name'] ?? 'Apple User';
+      
+      // Generate a unique password based on email (this is just for simulation)
+      final String password = sha256ofString(email + 'apple_auth_salt');
+      
+      try {
+        // Try to sign in first (for returning users)
+        final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        print("Signed in existing Apple user: ${userCredential.user?.uid}");
+      } catch (signInError) {
+        // If sign in fails, create a new user
+        try {
+          final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
+          
+          // Update the user profile with the display name
+          await userCredential.user?.updateDisplayName(displayName);
+          
+          print("Created new Apple user: ${userCredential.user?.uid}");
+        } catch (createError) {
+          setState(() {
+            _errorMessage = "Failed to create account: ${createError.toString()}";
+          });
+          return;
+        }
+      }
+      
       Navigator.pushReplacementNamed(context, "/");
-      print("User: ${userCredential.user?.uid}");
     } catch (e) {
-      print("Error: $e");
+      setState(() {
+        _errorMessage = "Failed to sign in with Apple: ${e.toString()}";
+      });
+      print("Error with Apple auth: $e");
     }
   }
 
