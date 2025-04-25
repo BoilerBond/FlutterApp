@@ -102,8 +102,16 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     try {
-      final googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) return;
+      print("Starting Google Sign-In process");
+      // Initialize with the client ID from GoogleService-Info.plist
+      final googleUser = await GoogleSignIn(
+        clientId: Platform.isIOS ? "434594544336-fj4ejrdcass7aipb66h2v3tndsg8h5ku.apps.googleusercontent.com" : null,
+      ).signIn();
+      if (googleUser == null) {
+        print("Google Sign-In was canceled");
+        return;
+      }
+      print("Google Sign-In successful: ${googleUser.email}");
 
       final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
