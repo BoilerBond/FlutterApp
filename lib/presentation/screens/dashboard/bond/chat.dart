@@ -1,7 +1,11 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:audio_duration/audio_duration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:datingapp/data/constants/icebreakers.dart';
+import 'package:datingapp/presentation/screens/dashboard/bond/audioPlayer.dart';
+import 'package:datingapp/presentation/screens/dashboard/bond/recorder.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -15,6 +19,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:datingapp/services/gemini_service.dart';
 import 'package:datingapp/data/constants/dates.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:record/record.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../data/entity/app_user.dart';
@@ -39,61 +45,78 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _userAnswer;
   bool _hasAnswered = false;
   bool _isAttachmentUploading = false;
+  bool _isRecording = false;
+  late final AudioRecorder _audioRecorder;
+  String? _audioPath;
+
+  @override
+  void initState() {
+    _audioRecorder = AudioRecorder();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _audioRecorder.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
           title: Text(widget.match.firstName),
         ),
-        body: Column(
-          children: [
-            if (_currentPrompt != null)
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Prompt: $_currentPrompt"),
-                    if (!_hasAnswered)
-                      TextField(onChanged: (val) => _userAnswer = val),
-                    if (!_hasAnswered)
-                      ElevatedButton(
-                        onPressed: () => _submitDailyPromptAnswer(
-                            _userAnswer ?? '',
-                            "${widget.user.uid}_${widget.match.uid}_${DateTime.now().millisecondsSinceEpoch}"),
-                        child: Text("Submit Answer"),
-                      ),
-                    if (_hasAnswered && _matchAnswer != null)
-                      Text("Match's Answer: $_matchAnswer"),
-                  ],
-                ),
-              ),
-            Expanded(
-                child: StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection("rooms")
-                        .doc(widget.roomID)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      List<Map<String, dynamic>> msgsMap =
-                          List<Map<String, dynamic>>.from(
-                              snapshot.data?['messages'] ?? []);
-                      List<types.Message> messages = parseMsgs(msgsMap);
-                      return Chat(
-                        isAttachmentUploading: _isAttachmentUploading,
-                        messages: messages,
-                        onAttachmentPressed: _handleAttachmentPressed,
-                        onMessageTap: _handleMessageTap,
-                        //onPreviewDataFetched: _handlePreviewDataFetched,
-                        onSendPressed: _handleSendPressed,
-                        customMessageBuilder: _customMessageBuilder,
-                        user: types.User(
-                          id: widget.user.uid,
+        body:
+            Column(
+            children: [
+              if (_currentPrompt != null)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Prompt: $_currentPrompt"),
+                      if (!_hasAnswered)
+                        TextField(onChanged: (val) => _userAnswer = val),
+                      if (!_hasAnswered)
+                        ElevatedButton(
+                          onPressed: () => _submitDailyPromptAnswer(
+                              _userAnswer ?? '',
+                              "${widget.user.uid}_${widget.match.uid}_${DateTime.now().millisecondsSinceEpoch}"),
+                          child: Text("Submit Answer"),
                         ),
-                      );
-                    })),
-          ],
-        ),
+                      if (_hasAnswered && _matchAnswer != null)
+                        Text("Match's Answer: $_matchAnswer"),
+                    ],
+                  ),
+                ),
+              Expanded(
+                  child: StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection("rooms")
+                          .doc(widget.roomID)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        List<Map<String, dynamic>> msgsMap =
+                            List<Map<String, dynamic>>.from(
+                                snapshot.data?['messages'] ?? []);
+                        List<types.Message> messages = parseMsgs(msgsMap);
+                        return Chat(
+                          isAttachmentUploading: _isAttachmentUploading,
+                          messages: messages,
+                          onAttachmentPressed: _handleAttachmentPressed,
+                          onMessageTap: _handleMessageTap,
+                          //onPreviewDataFetched: _handlePreviewDataFetched,
+                          onSendPressed: _handleSendPressed,
+                          customMessageBuilder: _customMessageBuilder,
+                          audioMessageBuilder: _buildVoiceMessage,
+                          showUserAvatars: true,
+                          user: types.User(
+                            id: widget.user.uid,
+                          ),
+                        );
+                      })),
+              ],)
       );
 
   void _handleAttachmentPressed() {
@@ -101,10 +124,10 @@ class _ChatScreenState extends State<ChatScreen> {
       context: context,
       isScrollControlled: false,
       builder: (BuildContext context) => Container(
-        height: MediaQuery.of(context).size.height / 6,
+        height: MediaQuery.of(context).size.height / 4,
           child: GridView.count(
-              crossAxisCount: 4,
-              children: <Widget>[
+              crossAxisCount: 3,
+              children: [
                 Column(
                   children: [
                     IconButton(
@@ -130,6 +153,18 @@ class _ChatScreenState extends State<ChatScreen> {
                   ]
                 ),
                 Column(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _handleVoiceRecording();
+                        },
+                        icon: Icon(Icons.mic),
+                      ),
+                      Text("Voice Message")
+                    ]
+                ),
+                Column(
                   children: [
                     IconButton(
                         onPressed: () {
@@ -140,6 +175,18 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     Text("Daily Prompt"),
                   ]
+                ),
+                Column(
+                    children: [
+                      IconButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _iceBreaker();
+                          },
+                          icon: Icon(Icons.chat_bubble_outline)
+                      ),
+                      Text("Icebreaker"),
+                    ]
                 ),
                 Column(
                   children: [
@@ -226,6 +273,17 @@ class _ChatScreenState extends State<ChatScreen> {
 
     final room = await Room.getById(widget.roomID);
     await room.sendDateIdea(idea, types.User(id: widget.user.uid));
+  }
+
+  void _iceBreaker() async {
+    final selected = icebreakers[Random().nextInt(30)];
+    types.TextMessage msg = types.TextMessage(
+      author: types.User(id: widget.user.uid),
+      text: selected,
+      id: const Uuid().v6(),
+    );
+    final room = await Room.getById(widget.roomID);
+    room.sendMessage(msg);
   }
 
   void _sendDailyPrompt() async {
@@ -326,7 +384,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final file = File(filePath);
 
       try {
-        final reference = FirebaseStorage.instance.ref(name);
+        final reference = FirebaseStorage.instance.ref("userFiles/" + name);
         await reference.putFile(file);
         final uri = await reference.getDownloadURL();
 
@@ -363,7 +421,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final name = result.name;
 
       try {
-        final reference = FirebaseStorage.instance.ref(name);
+        final reference = FirebaseStorage.instance.ref("images/"+name);
         await reference.putFile(file);
         final uri = await reference.getDownloadURL();
 
@@ -384,6 +442,130 @@ class _ChatScreenState extends State<ChatScreen> {
         _setAttachmentUploading(false);
       }
     }
+  }
+
+  Future<void> _startRecording() async {
+    try {
+      debugPrint(
+          '=========>>>>>>>>>>> RECORDING!!!!!!!!!!!!!!! <<<<<<===========');
+
+      String filePath = await getApplicationDocumentsDirectory()
+          .then((value) => '${value.path}/${const Uuid().v1()}.wav');
+
+      await _audioRecorder.start(
+        const RecordConfig(
+          // specify the codec to be `.wav`
+          encoder: AudioEncoder.wav,
+        ),
+        path: filePath,
+      );
+    } catch (e) {
+      debugPrint('ERROR WHILE RECORDING: $e');
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    try {
+      String? path = await _audioRecorder.stop();
+
+      setState(() {
+        _audioPath = path!;
+      });
+      debugPrint('=========>>>>>> PATH: $_audioPath <<<<<<===========');
+    } catch (e) {
+      debugPrint('ERROR WHILE STOP RECORDING: $e');
+    }
+  }
+
+  void _record() async {
+    if (_isRecording == false) {
+      final status = await Permission.microphone.request();
+
+      if (status == PermissionStatus.granted) {
+        setState(() {
+          _isRecording = true;
+        });
+        await _startRecording();
+      } else if (status == PermissionStatus.permanentlyDenied) {
+        debugPrint('Permission permanently denied');
+      }
+    } else {
+      await _stopRecording();
+
+      setState(() {
+        _isRecording = false;
+      });
+    }
+  }
+
+  void _sendAudio() async {
+    if (_audioPath != null) {
+      _setAttachmentUploading(true);
+      final name = widget.user.uid + const Uuid().v4();
+      final file = File(_audioPath!);
+      int? durationInMilliSeconds = await AudioDuration.getAudioDuration(_audioPath!);
+
+      try {
+        final reference = FirebaseStorage.instance.ref("voice_messages/" + name);
+        await reference.putFile(file);
+        final uri = await reference.getDownloadURL();
+
+        final message = types.AudioMessage(
+          author: types.User(id: widget.user.uid),
+          id: const Uuid().v4(),
+          mimeType: lookupMimeType(_audioPath!),
+          name: name,
+          size: file.readAsBytesSync().lengthInBytes,
+          duration: Duration(
+              milliseconds: durationInMilliSeconds ?? 0
+          ),
+          uri: uri,
+        );
+        Room room = await Room.getById(widget.roomID);
+        room.sendMessage(message);
+        _setAttachmentUploading(false);
+      } finally {
+        _setAttachmentUploading(false);
+      }
+    }
+  }
+
+  void _handleVoiceRecording() async {
+    var status = await Permission.microphone.request();
+    if (!status.isGranted) return;
+
+    showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: false,
+        builder: (BuildContext context) => Container(
+          height: MediaQuery.of(context).size.height / 4,
+          width: double.infinity,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+            IconButton(
+              onPressed: () async => await _audioRecorder.dispose(),
+              icon: Icon(Icons.cancel),
+              iconSize: 30,
+            ),
+            Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  if (_isRecording) const CustomRecordingWaveWidget(),
+                  const SizedBox(height: 16),
+                  CustomRecordingButton(
+                    isRecording: _isRecording,
+                    onPressed: () => _record(),
+                  ),
+            ]),
+            IconButton(
+              onPressed: _sendAudio,
+              icon: Icon(Icons.send),
+              iconSize: 30,
+            ),
+          ])
+        )
+    );
   }
 
   void _handleMessageTap(BuildContext _, types.Message message) async {
@@ -413,15 +595,6 @@ class _ChatScreenState extends State<ChatScreen> {
       await OpenFilex.open(localPath);
     }
   }
-
-  // void _handlePreviewDataFetched(
-  //     types.TextMessage message,
-  //     types.PreviewData previewData,
-  //     ) {
-  //   final updatedMessage = message.copyWith(previewData: previewData);
-  //
-  //   FirebaseChatCore.instance.updateMessage(updatedMessage, widget.room.id);
-  // }
 
   Future<void> _handleSendPressed(types.PartialText message) async {
     String msgid = DateTime.now().millisecondsSinceEpoch.toString();
@@ -460,6 +633,19 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Widget _buildVoiceMessage(types.AudioMessage msg, {required int messageWidth}) {
+    bool isMine = (msg.author.id == widget.user.uid);
+
+    return Container(
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      decoration: BoxDecoration(
+        color: isMine ? Color.from(alpha: 0, red: 111, green: 96, blue: 232): Colors.green.shade50,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: AudioPlayerWidget(uri: msg.uri)
+    );
+  }
+
   Widget _buildPromptAnswer(Map meta, int width) {
     final answer = meta['answer'] ?? '';
     final answeredBy = meta['answeredBy'];
@@ -496,7 +682,7 @@ class _ChatScreenState extends State<ChatScreen> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text('Date Idea: ${idea?['activity']}'),
           if (idea?['location'] != null) Text('Location: ${idea?['location']}'),
@@ -575,7 +761,7 @@ class _ChatScreenState extends State<ChatScreen> {
               author: types.User(id: e['author']),
               createdAt: e['createdAt'],
               id: e['id'],
-              duration: e['duration'],
+              duration: Duration(milliseconds: int.parse(e['duration'])),
               name: e['name'],
               size: e['size'],
               uri: e['uri']

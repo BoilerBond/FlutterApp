@@ -188,7 +188,7 @@ class AppUser {
         ratedUsers: List<String>.from(data['ratedUsers'] ?? []),
         lastDailyPromptTime:
             int.tryParse(data['lastDailyPromptTime'].toString()) ?? 0,
-        roomID: data['room'] ?? '',
+        roomID: data['roomID'] ?? '',
         currentMoodId: data['currentMoodId'] ?? '',
         showMoodToMatches: data['showMoodToMatches'] ?? true,
         moodTimestamp: data['moodTimestamp'] as Timestamp?);

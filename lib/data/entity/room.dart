@@ -47,7 +47,6 @@ class Room {
   }
 
   void sendMessage(types.Message msg) async {
-    print(messages);
     Map<String, dynamic> newmsg = {};
     switch (msg.type) {
       case types.MessageType.audio:
@@ -57,7 +56,7 @@ class Room {
         'author': msg.author.id,
         'createdAt': msg.createdAt,
         'id': msg.id,
-        'duration': vmsg.duration,
+        'duration': vmsg.duration.inMilliseconds.toString(),
         'name': vmsg.name,
         'size': vmsg.size,
         'uri': vmsg.uri

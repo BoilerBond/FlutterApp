@@ -1647,7 +1647,7 @@ class _BondScreenState extends State<BondScreen> {
                                               .collection("users")
                                               .doc(curUser!.uid)
                                               .update({"roomID": rid});
-                                          // await FirebaseFirestore.instance.collection("users").doc(match!.uid).update({"roomID": rid});
+                                          await FirebaseFirestore.instance.collection("users").doc(match!.uid).update({"roomID": rid});
 
                                           setState(() {
                                             curUser!.roomID = rid;
