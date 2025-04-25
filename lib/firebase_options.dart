@@ -67,7 +67,7 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://purduedatingapp-default-rtdb.firebaseio.com',
     storageBucket: 'purduedatingapp.firebasestorage.app',
     iosClientId: '434594544336-fj4ejrdcass7aipb66h2v3tndsg8h5ku.apps.googleusercontent.com',
-    iosBundleId: 'com.example.datingapp',
+    iosBundleId: 'com.calebbuening.boilerbond',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -78,7 +78,7 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://purduedatingapp-default-rtdb.firebaseio.com',
     storageBucket: 'purduedatingapp.firebasestorage.app',
     iosClientId: '434594544336-fj4ejrdcass7aipb66h2v3tndsg8h5ku.apps.googleusercontent.com',
-    iosBundleId: 'com.example.datingapp',
+    iosBundleId: 'com.calebbuening.boilerbond',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

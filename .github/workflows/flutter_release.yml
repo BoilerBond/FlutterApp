@@ -1,0 +1,63 @@
+# File: .github/workflows/flutter_release.yml
+name: Build & Release Flutter App
+
+on:
+  push:
+    branches: [main]      # fires when main is updated (incl. PR merges)
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Get the sources
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # 2. Toolchains ---------------------------------------------------------
+      - name: Set up Java 17 (Android tool-chain needs it)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.29.0"      # pin to a version if you prefer
+          cache: true
+
+      # 3. Dependencies & build ----------------------------------------------
+      - name: Get pub packages
+        run: flutter pub get
+
+      - name: Build Android APK (release)
+        run: flutter build apk --release
+
+      # 4. Tagging -----------------------------------------------------------
+      - name: Generate unique tag
+        id: tagger
+        run: |
+          DATE=$(date +'%Y.%m.%d')
+          TAG="v${DATE}-${GITHUB_RUN_NUMBER}"
+          echo "TAG=$TAG" | tee -a $GITHUB_ENV   # expose as env var
+          echo "tag=$TAG" >> $GITHUB_OUTPUT     # expose as step output
+
+      - name: Create & push git tag
+        env:
+          TAG: ${{ steps.tagger.outputs.tag }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      # 5. GitHub Release -----------------------------------------------------
+      - name: Create GitHub release and attach APK
+        uses: ncipollo/release-action@v1
+        with:
+          tag:   ${{ steps.tagger.outputs.tag }}
+          name:  Release ${{ steps.tagger.outputs.tag }}
+          artifacts: build/app/outputs/flutter-apk/app-release.apk
+          draft: false
+          prerelease: false
