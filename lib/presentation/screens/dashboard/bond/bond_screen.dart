@@ -693,6 +693,59 @@ class _BondScreenState extends State<BondScreen> {
     );
   }
 
+  Widget _buildDateTimeIndicator() {
+    if (_upcomingDates.isEmpty) return const SizedBox.shrink();
+    
+    final upcomingDate = _upcomingDates.first;
+    final DateTime dateTime = upcomingDate['dateTime'];
+    final Duration timeUntil = dateTime.difference(DateTime.now());
+    
+    // Skip if the date is in the past
+    if (timeUntil.isNegative) return const SizedBox.shrink();
+    
+    // Format time remaining
+    String timeRemainingText;
+    if (timeUntil.inDays > 0) {
+      timeRemainingText = '${timeUntil.inDays} day${timeUntil.inDays != 1 ? 's' : ''}, ${timeUntil.inHours % 24} hour${(timeUntil.inHours % 24) != 1 ? 's' : ''}';
+    } else if (timeUntil.inHours > 0) {
+      timeRemainingText = '${timeUntil.inHours} hour${timeUntil.inHours != 1 ? 's' : ''}, ${timeUntil.inMinutes % 60} minute${(timeUntil.inMinutes % 60) != 1 ? 's' : ''}';
+    } else {
+      timeRemainingText = '${timeUntil.inMinutes} minute${timeUntil.inMinutes != 1 ? 's' : ''}';
+    }
+    
+    return GestureDetector(
+      onTap: () => _showDateDetails(context),
+      child: Container(
+        margin: const EdgeInsets.only(top: 16),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEEF2FA),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF5E77DF), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.calendar_today,
+              size: 16,
+              color: Color(0xFF5E77DF),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              "Date in $timeRemainingText",
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5E77DF),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   IconData _getMoodIcon(String moodId) {
     switch (moodId.toLowerCase()) {
       case 'happy':
@@ -1434,6 +1487,10 @@ class _BondScreenState extends State<BondScreen> {
                                               fontSize: 16,
                                               fontStyle: FontStyle.italic,
                                               color: Color(0xFF5E77DF))),
+                                    
+                                      if (!_loadingDates && _upcomingDates.isNotEmpty)
+                                        _buildDateTimeIndicator(),
+                                    
                                       const SizedBox(height: 16),
                                       IntrinsicHeight(
                                         child: Row(
@@ -1493,7 +1550,9 @@ class _BondScreenState extends State<BondScreen> {
                                                 .toList(),
                                         ],
                                       ),
-                                      // const SizedBox(height: 12),
+
+                                      // Rest of your code...
+                                      const SizedBox(height: 12),
                                       // StreakIndicator(
                                       //   currentStreak: _currentStreak,
                                       //   lastInteractionDate: _lastInteractionDate,
