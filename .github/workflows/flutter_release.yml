@@ -24,7 +24,7 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "stable"      # pin to a version if you prefer
+          flutter-version: "3.29.0"      # pin to a version if you prefer
           cache: true
 
       # 3. Dependencies & build ----------------------------------------------
