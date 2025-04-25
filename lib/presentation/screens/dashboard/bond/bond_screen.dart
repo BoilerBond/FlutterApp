@@ -511,6 +511,188 @@ class _BondScreenState extends State<BondScreen> {
     }
   }
 
+  void _showDateDetails(BuildContext context) {
+    if (_upcomingDates.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No upcoming dates scheduled')),
+      );
+      return;
+    }
+
+    final upcomingDate = _upcomingDates.first;
+    final DateTime dateTime = upcomingDate['dateTime'];
+    final Duration timeUntil = dateTime.difference(DateTime.now());
+
+    // Skip if the date is in the past
+    if (timeUntil.isNegative) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No upcoming dates scheduled')),
+      );
+      return;
+    }
+
+    // Format time remaining
+    String timeRemainingText;
+    if (timeUntil.inDays > 0) {
+      timeRemainingText = '${timeUntil.inDays} days, ${timeUntil.inHours % 24} hours';
+    } else if (timeUntil.inHours > 0) {
+      timeRemainingText = '${timeUntil.inHours} hours, ${timeUntil.inMinutes % 60} minutes';
+    } else {
+      timeRemainingText = '${timeUntil.inMinutes} minutes';
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, color: Color(0xFF5E77DF), size: 24),
+                const SizedBox(width: 10),
+                const Text(
+                  'Upcoming Date',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF2FA),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF5E77DF), width: 1),
+                  ),
+                  child: Text(
+                    'In $timeRemainingText',
+                    style: const TextStyle(
+                      color: Color(0xFF5E77DF),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                const Icon(Icons.event, size: 20, color: Color(0xFF5E77DF)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    upcomingDate['activity'],
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.location_on, size: 20, color: Color(0xFF5E77DF)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    upcomingDate['location'],
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(Icons.access_time, size: 20, color: Color(0xFF5E77DF)),
+                const SizedBox(width: 8),
+                Text(
+                  DateFormat('EEEE, MMM d • h:mm a').format(dateTime),
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ],
+            ),
+            if (upcomingDate['notes'] != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.chat_bubble_outline, size: 18, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        upcomingDate['notes'],
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showCancelDateDialog(upcomingDate['id']);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text('Cancel Date'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showPostponeDateDialog(upcomingDate['id']);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF5E77DF),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text('Postpone'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   IconData _getMoodIcon(String moodId) {
     switch (moodId.toLowerCase()) {
       case 'happy':
@@ -1100,6 +1282,28 @@ class _BondScreenState extends State<BondScreen> {
           ),
         ),
         automaticallyImplyLeading: false,
+        leading: Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.calendar_month, color: Color(0xFF5E77DF)),
+              onPressed: () => _showDateDetails(context),
+            ),
+            if (_upcomingDates.isNotEmpty)
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.more_horiz, color: Colors.black54),
@@ -1357,7 +1561,7 @@ class _BondScreenState extends State<BondScreen> {
                                               .collection("rooms")
                                               .doc(rid);
 
-                                          // Only write an empty room if it doesn’t exist
+                                          // Only write an empty room if it doesn't exist
                                           final snap = await roomRef.get();
                                           if (!snap.exists) {
                                             await roomRef.set({
@@ -1417,9 +1621,6 @@ class _BondScreenState extends State<BondScreen> {
                                           ),
                                         );
                                       }),
-                                      const SizedBox(height: 15),
-                                      _buildUpcomingDateSection(),
-
                                       const SizedBox(height: 15),
                                       const Divider(),
                                       const SizedBox(height: 5),
