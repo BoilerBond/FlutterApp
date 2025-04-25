@@ -46,21 +46,21 @@ class Room {
     };
   }
 
-  void sendMessage(types.Message msg) async {
+  Map<String, dynamic> convertToMap(types.Message msg) {
     Map<String, dynamic> newmsg = {};
     switch (msg.type) {
       case types.MessageType.audio:
         types.AudioMessage vmsg = types.AudioMessage.fromJson(msg.toJson());
         newmsg = {
-        'type': "audio",
-        'author': msg.author.id,
-        'createdAt': msg.createdAt,
-        'id': msg.id,
-        'duration': vmsg.duration.inMilliseconds.toString(),
-        'name': vmsg.name,
-        'size': vmsg.size,
-        'uri': vmsg.uri
-      };
+          'type': "audio",
+          'author': msg.author.id,
+          'createdAt': msg.createdAt,
+          'id': msg.id,
+          'duration': vmsg.duration.inMilliseconds.toString(),
+          'name': vmsg.name,
+          'size': vmsg.size,
+          'uri': vmsg.uri
+        };
         break;
       case types.MessageType.image:
         types.ImageMessage imsg = types.ImageMessage.fromJson(msg.toJson());
@@ -111,9 +111,17 @@ class Room {
         };
         break;
     }
-    messages.insert(0, newmsg);
-    print(messages);
+    return newmsg;
+  }
+
+  void sendMessage(types.Message msg) async {
+    messages.insert(0, convertToMap(msg));
     // save to firebase
+    await FirebaseFirestore.instance.collection("rooms").doc(roomID).update({"messages": messages});
+  }
+
+  void deleteMessage(types.Message msg) async {
+    messages.removeWhere((e) => e['id'] == msg.id);
     await FirebaseFirestore.instance.collection("rooms").doc(roomID).update({"messages": messages});
   }
 

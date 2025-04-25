@@ -106,6 +106,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           messages: messages,
                           onAttachmentPressed: _handleAttachmentPressed,
                           onMessageTap: _handleMessageTap,
+                          onMessageLongPress: _showDeletePrompt,
                           //onPreviewDataFetched: _handlePreviewDataFetched,
                           onSendPressed: _handleSendPressed,
                           customMessageBuilder: _customMessageBuilder,
@@ -403,6 +404,36 @@ class _ChatScreenState extends State<ChatScreen> {
         _setAttachmentUploading(false);
       }
     }
+  }
+
+  void _showDeletePrompt(BuildContext context, types.Message msg) {
+    if (msg.author.id == widget.user.uid) {
+      showDialog<String>(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            title: const Text('Delete message?'),
+            content: const Text('This action is irreversible'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'Cancel'),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async => {
+                  _deleteMessage(msg),
+                  Navigator.pop(context, 'OK'),
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          )
+      );
+    }
+  }
+
+  void _deleteMessage(types.Message msg) async {
+    Room room = await Room.getById(widget.roomID);
+    room.deleteMessage(msg);
   }
 
   void _handleImageSelection() async {
