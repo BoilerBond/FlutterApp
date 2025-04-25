@@ -60,6 +60,9 @@ class AppUser {
   final String? currentEventAnswer;
   final String? currentEventGuess;
   final String? currentEventPhase;
+  bool eventReset;
+  Map<String, Map<String, dynamic>> matchScores;
+
 
   AppUser({
     required this.uid,
@@ -118,6 +121,9 @@ class AppUser {
     this.currentEventAnswer,
     this.currentEventGuess,
     this.currentEventPhase,
+    this.eventReset = false,
+    this.matchScores = const {},
+
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -182,6 +188,11 @@ class AppUser {
       currentEventAnswer: data['currentEventAnswer'],
       currentEventGuess: data['currentEventGuess'],
       currentEventPhase: data['currentEventPhase'],
+      eventReset: data['eventReset'] ?? false,
+      matchScores: (data['matchScores'] as Map<String, dynamic>? ?? {}).map((key, value) => MapEntry(key,
+      Map<String, dynamic>.from(value),
+)),
+
     );
   }
 
@@ -268,6 +279,8 @@ class AppUser {
       'currentEventAnswer': currentEventAnswer,
       'currentEventGuess': currentEventGuess,
       'currentEventPhase': currentEventPhase,
+      'eventReset': eventReset,
+      'matchScores': matchScores,
     };
   }
 
