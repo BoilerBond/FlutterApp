@@ -403,7 +403,9 @@ class _EventRoomScreenState extends State<EventRoomScreen> {
             Text("They answered: ${matchUser?.currentEventAnswer ?? ''}"),
             Text("You guessed: ${curUser!.currentEventGuess ?? ''}"),
             SizedBox(height: 12),
-            Text("Your Avg Match Score: ${updatedScoreInfo['averageScore']}%"),
+            updatedScoreInfo != null
+            ? Text("Your Avg Match Score: ${updatedScoreInfo['averageScore']}%")
+            : const Text("Match score not available yet."),
             SizedBox(height: 16),
             ElevatedButton(
               onPressed: () async {
