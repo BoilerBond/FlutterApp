@@ -45,7 +45,7 @@ class _BondScreenState extends State<BondScreen> {
     final currentUser = FirebaseAuth.instance.currentUser;
     final db = FirebaseFirestore.instance;
     final curUserSnapshot =
-        await db.collection("users").doc(currentUser?.uid).get();
+    await db.collection("users").doc(currentUser?.uid).get();
     AppUser user = AppUser.fromSnapshot(curUserSnapshot);
     //final matchSnapshot = await db.collection("users").doc(user.match).get();
     if (user.match.isNotEmpty) {
@@ -113,17 +113,17 @@ class _BondScreenState extends State<BondScreen> {
 
   Future<void> _loadDateInvitations() async {
     if (curUser == null || match == null) return;
-  
+
     setState(() {
       _loadingInvitations = true;
     });
-  
+
     try {
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(curUser!.uid)
           .get();
-      
+
       if (!userDoc.exists) {
         setState(() {
           _pendingInvitations = [];
@@ -131,13 +131,13 @@ class _BondScreenState extends State<BondScreen> {
         });
         return;
       }
-      
+
       final userData = userDoc.data();
       final datesData = userData?['dates'] as Map<String, dynamic>? ?? {};
       final matchDates = datesData[match!.uid] as Map<String, dynamic>? ?? {};
-      
+
       final List<Map<String, dynamic>> invitations = [];
-      
+
       // Process all dates with this match
       matchDates.forEach((dateId, dateData) {
         final data = dateData as Map<String, dynamic>;
@@ -155,13 +155,13 @@ class _BondScreenState extends State<BondScreen> {
           });
         }
       });
-      
+
       setState(() {
         _pendingInvitations = invitations;
         _pendingInvitations.sort((a, b) => (a['dateTime'] as DateTime).compareTo(b['dateTime'] as DateTime));
         _loadingInvitations = false;
       });
-      
+
       print("Loaded ${_pendingInvitations.length} pending date invitations");
     } catch (e) {
       print('Error loading date invitations: $e');
@@ -170,23 +170,23 @@ class _BondScreenState extends State<BondScreen> {
       });
     }
   }
-  
+
   Future<void> _proposeDateInvitation(
       String activity, String location, DateTime dateTime, String notes) async {
     if (curUser == null || match == null) return;
-  
+
     try {
       // Your existing date creation code...
-      
+
       // Make sure this line executes - add debug print to verify
       print('About to update streak from: $_currentStreak');
       await _updateStreak();
       print('Streak should now be: ${_currentStreak}');
-  
+
       // Reload pending invitations
       _loadDateInvitations();
       _loadUpcomingDates();
-  
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Date invitation sent!')),
       );
@@ -197,7 +197,7 @@ class _BondScreenState extends State<BondScreen> {
       );
     }
   }
-  
+
   void _showCancelDateDialog(String dateId) {
     showDialog(
       context: context,
@@ -229,19 +229,19 @@ class _BondScreenState extends State<BondScreen> {
     setState(() {
       _upcomingDates.removeWhere((date) => date['id'] == dateId);
     });
-  
+
     // Don't reset the streak when canceling a date
     // The streak should remain intact
     print('Date canceled. Current streak remains at: $_currentStreak');
-  
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Date canceled successfully')),
     );
-  
+
     // Note: we're intentionally not calling _loadStreakData() here
     // as that would reset the streak
   }
-  
+
   void _handleCalendarTap() {
     if (_upcomingDates.isEmpty) {
       _showCreateDateDialog();
@@ -679,14 +679,14 @@ class _BondScreenState extends State<BondScreen> {
 
   Widget _buildDateTimeIndicator() {
     if (_upcomingDates.isEmpty) return const SizedBox.shrink();
-    
+
     final upcomingDate = _upcomingDates.first;
     final DateTime dateTime = upcomingDate['dateTime'];
     final Duration timeUntil = dateTime.difference(DateTime.now());
-    
+
     // Skip if the date is in the past
     if (timeUntil.isNegative) return const SizedBox.shrink();
-    
+
     // Format time remaining
     String timeRemainingText;
     if (timeUntil.inDays > 0) {
@@ -696,7 +696,7 @@ class _BondScreenState extends State<BondScreen> {
     } else {
       timeRemainingText = '${timeUntil.inMinutes} minute${timeUntil.inMinutes != 1 ? 's' : ''}';
     }
-    
+
     return GestureDetector(
       onTap: () => _showDateDetails(context),
       child: Container(
@@ -780,7 +780,7 @@ class _BondScreenState extends State<BondScreen> {
 
   Future<void> getUserMood() async {
     if (curUser == null || match == null) return;
-  
+
     try {
       final moodSnapshot = await FirebaseFirestore.instance
           .collection('users')
@@ -789,7 +789,7 @@ class _BondScreenState extends State<BondScreen> {
           .orderBy('timestamp', descending: true)
           .limit(1)
           .get();
-  
+
       if (moodSnapshot.docs.isNotEmpty) {
         final moodData = moodSnapshot.docs.first.data();
         setState(() {
@@ -806,7 +806,7 @@ class _BondScreenState extends State<BondScreen> {
     final now = DateTime.now();
     final moodTime = timestamp.toDate();
     final difference = now.difference(moodTime);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays} days ago';
     } else if (difference.inHours > 0) {
@@ -815,7 +815,7 @@ class _BondScreenState extends State<BondScreen> {
       return '${difference.inMinutes} minutes ago';
     }
   }
-  
+
   @override
   void initState() {
     super.initState();
@@ -897,7 +897,7 @@ class _BondScreenState extends State<BondScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              
+
               // Suggestions container
               Container(
                 padding: const EdgeInsets.all(16),
@@ -924,14 +924,14 @@ class _BondScreenState extends State<BondScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                                      _buildSuggestionItem(
-                    Icons.edit,
-                    "Update your profile",
-                    "Add more photos or update your bio",
-                  ),
+                    _buildSuggestionItem(
+                      Icons.edit,
+                      "Update your profile",
+                      "Add more photos or update your bio",
+                    ),
                     _buildSuggestionItem(
                       Icons.question_answer,
-                      "Complete personality questions", 
+                      "Complete personality questions",
                       "Help us match you more accurately",
                     ),
                     _buildSuggestionItem(
@@ -968,7 +968,7 @@ class _BondScreenState extends State<BondScreen> {
       ),
     );
   }
-  
+
   Widget _buildSuggestionItem(IconData icon, String title, String subtitle) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -1024,22 +1024,22 @@ class _BondScreenState extends State<BondScreen> {
       context,
       MaterialPageRoute(
           builder: (context) => MoreProfileScreen(
-                uid: match!.uid,
-                name: match!.firstName,
-                age: match!.age.toString(),
-                major: match!.major,
-                bio: match!.bio,
-                displayedInterests: match!.displayedInterests,
-                showHeight: match!.showHeight,
-                heightUnit: match!.heightUnit,
-                viewerHeightUnit: curUser!.heightUnit,
-                heightValue: match!.heightValue,
-                photosURL: match!.photosURL,
-                pfpLink: match!.profilePictureURL,
-                spotifyUsername: match!.spotifyUsername,
-                viewerUid: curUser!.uid,
-                isMatchViewer: true,
-              )),
+            uid: match!.uid,
+            name: match!.firstName,
+            age: match!.age.toString(),
+            major: match!.major,
+            bio: match!.bio,
+            displayedInterests: match!.displayedInterests,
+            showHeight: match!.showHeight,
+            heightUnit: match!.heightUnit,
+            viewerHeightUnit: curUser!.heightUnit,
+            heightValue: match!.heightValue,
+            photosURL: match!.photosURL,
+            pfpLink: match!.profilePictureURL,
+            spotifyUsername: match!.spotifyUsername,
+            viewerUid: curUser!.uid,
+            isMatchViewer: true,
+          )),
     );
   }
 
@@ -1055,45 +1055,45 @@ class _BondScreenState extends State<BondScreen> {
       print('Keeping existing streak value: $_currentStreak');
       return;
     }
-    
+
     // Only set to 0 if we don't have a streak yet (first load)
     setState(() {
       _currentStreak = 0;
       _lastInteractionDate = null;
       _isStreakAboutToExpire = false;
     });
-    
+
     print('Initialized new streak: $_currentStreak');
   }
-  
+
   // Helper method to ensure streak is initialized
   Future<void> _initializeStreakIfNeeded(Map<String, dynamic> userData) async {
-    if (!userData.containsKey('streaks') || 
+    if (!userData.containsKey('streaks') ||
         !(userData['streaks'] as Map<String, dynamic>?)?[match!.uid] is Map) {
-      
+
       // Initialize streak data for both users
       await FirebaseFirestore.instance
-        .collection('users')
-        .doc(curUser!.uid)
-        .update({
-          'streaks.${match!.uid}': {
-            'currentStreak': 0,
-            'streakBroken': false,
-            'updatedAt': FieldValue.serverTimestamp(),
-          }
-        });
+          .collection('users')
+          .doc(curUser!.uid)
+          .update({
+        'streaks.${match!.uid}': {
+          'currentStreak': 0,
+          'streakBroken': false,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }
+      });
 
       await FirebaseFirestore.instance
-        .collection('users')
-        .doc(match!.uid)
-        .update({
-          'streaks.${curUser!.uid}': {
-            'currentStreak': 0,
-            'streakBroken': false,
-            'updatedAt': FieldValue.serverTimestamp(),
-          }
-        });
-        
+          .collection('users')
+          .doc(match!.uid)
+          .update({
+        'streaks.${curUser!.uid}': {
+          'currentStreak': 0,
+          'streakBroken': false,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }
+      });
+
       setState(() {
         _currentStreak = 0;
       });
@@ -1144,23 +1144,23 @@ class _BondScreenState extends State<BondScreen> {
       // Reset streak
       try {
         await FirebaseFirestore.instance
-          .collection('users')
-          .doc(curUser!.uid)
-          .update({
-            'streaks.${match!.uid}.currentStreak': 0,
-            'streaks.${match!.uid}.streakBroken': true,
-            'streaks.${match!.uid}.updatedAt': FieldValue.serverTimestamp(),
-          });
+            .collection('users')
+            .doc(curUser!.uid)
+            .update({
+          'streaks.${match!.uid}.currentStreak': 0,
+          'streaks.${match!.uid}.streakBroken': true,
+          'streaks.${match!.uid}.updatedAt': FieldValue.serverTimestamp(),
+        });
 
         // Also update match's streak data
         await FirebaseFirestore.instance
-          .collection('users')
-          .doc(match!.uid)
-          .update({
-            'streaks.${curUser!.uid}.currentStreak': 0,
-            'streaks.${curUser!.uid}.streakBroken': true,
-            'streaks.${curUser!.uid}.updatedAt': FieldValue.serverTimestamp(),
-          });
+            .collection('users')
+            .doc(match!.uid)
+            .update({
+          'streaks.${curUser!.uid}.currentStreak': 0,
+          'streaks.${curUser!.uid}.streakBroken': true,
+          'streaks.${curUser!.uid}.updatedAt': FieldValue.serverTimestamp(),
+        });
 
         setState(() {
           _currentStreak = 0;
@@ -1180,27 +1180,27 @@ class _BondScreenState extends State<BondScreen> {
 
   void _showStreakExpirationWarning() {
     if (!mounted) return;
-  
+
     _showPushNotification(
       'Streak About to Expire!',
       'Your streak with ${match!.firstName} will expire in 1 hour! Interact with your match to keep it going.',
       isWarning: true,
     );
   }
-  
+
   Future<void> _updateStreak() async {
     // Simple hardcoded solution - increment streak whenever called
     final newStreak = _currentStreak + 1;
-    
+
     print('Incrementing streak from $_currentStreak to $newStreak');
-    
+
     // Update UI immediately without Firebase
     setState(() {
       _currentStreak = newStreak;
       _lastInteractionDate = DateTime.now();
       _isStreakAboutToExpire = false;
     });
-  
+
     // Show feedback to user with the new push notification style
     if (mounted) {
       _showPushNotification(
@@ -1232,467 +1232,463 @@ class _BondScreenState extends State<BondScreen> {
     }
     return SafeArea(
         child: Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "My Bond",
-          style: TextStyle(
-            fontStyle: FontStyle.italic,
-            fontWeight: FontWeight.w100,
-            fontSize: 22,
-            color: Color(0xFF454746),
-          ),
-        ),
-        automaticallyImplyLeading: false,
-        leading: Stack(
-          alignment: Alignment.center,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.calendar_month, color: Color(0xFF5E77DF)),
-              onPressed: _handleCalendarTap,
-            ),
-            if (_upcomingDates.isNotEmpty)
-              const Positioned(
-                top: 10,
-                right: 10,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                  child: SizedBox(width: 10, height: 10),
-                ),
+          appBar: AppBar(
+            title: const Text(
+              "My Bond",
+              style: TextStyle(
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w100,
+                fontSize: 22,
+                color: Color(0xFF454746),
               ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_horiz, color: Colors.black54),
-            onPressed: () {
-              _reportProfile(context, match!.firstName);
-            },
+            ),
+            automaticallyImplyLeading: false,
+            leading: Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.calendar_month, color: Color(0xFF5E77DF)),
+                  onPressed: _handleCalendarTap,
+                ),
+                if (_upcomingDates.isNotEmpty)
+                  const Positioned(
+                    top: 10,
+                    right: 10,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: SizedBox(width: 10, height: 10),
+                    ),
+                  ),
+              ],
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.more_horiz, color: Colors.black54),
+                onPressed: () {
+                  _reportProfile(context, match!.firstName);
+                },
+              ),
+            ],
+            toolbarHeight: 40,
           ),
-        ],
-        toolbarHeight: 40,
-      ),
-      body: isMatchBlocked
-          ? _buildBlockedView()
-          : isAwaitingMatch
+          body: isMatchBlocked
+              ? _buildBlockedView()
+              : isAwaitingMatch
               ? _buildAwaitingMatchView()
               : isMatchUnbonded
-                  ? _buildUnbondedView()
-                  : SingleChildScrollView(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16).copyWith(top: 0),
-                        child: Column(
+              ? _buildUnbondedView()
+              : SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16).copyWith(top: 0),
+              child: Column(
+                children: [
+                  const Divider(
+                      height: 20,
+                      thickness: 1,
+                      color: Color(0xFFE7EFEE)),
+                  match == null
+                      ? Text(
+                    "No bond available. Please participate in matching to obtain a bond.",
+                    style:
+                    TextStyle(fontStyle: FontStyle.italic),
+                  )
+                      : (Column(
+                    children: [
+                      Row(
+                          mainAxisAlignment:
+                          MainAxisAlignment.end,
                           children: [
-                            const Divider(
-                                height: 20,
-                                thickness: 1,
-                                color: Color(0xFFE7EFEE)),
-                            match == null
-                                ? Text(
-                                    "No bond available. Please participate in matching to obtain a bond.",
-                                    style:
-                                        TextStyle(fontStyle: FontStyle.italic),
-                                  )
-                                : (Column(
-                                    children: [
-                                      Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            IconButton(
-                                              onPressed: () =>
-                                                  showDialog<String>(
-                                                context: context,
-                                                builder: (BuildContext
-                                                        context) =>
-                                                    AlertDialog(
-                                                        title: const Text(
-                                                            "Why was I matched with this profile?"),
-                                                        content: Text(curUser!
-                                                            .getMatchReason(
-                                                                match!))),
-                                              ),
-                                              icon: Icon(Icons.info_outline),
-                                            )
-                                          ]),
-                                          Stack(
-                                            alignment: Alignment.center,
-                                            children: [
-                                              CircleAvatar(
-                                                radius: MediaQuery.of(context).size.width * 0.2,
-                                                backgroundImage: match!.profilePictureURL.isEmpty
-                                                    ? NetworkImage(
-                                                        "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png")
-                                                    : NetworkImage(match!.profilePictureURL),
-                                                backgroundColor: const Color(0xFFCDFCFF),
-                                              ),
-                                                                                            if (match!.currentMoodId.isNotEmpty && (match!.showMoodToMatches ?? true))
-                                                Positioned(
-                                                  bottom: 0,
-                                                  right: 0,
-                                                  child: Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.white,
-                                                      borderRadius: BorderRadius.circular(20),
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: Colors.black.withOpacity(0.1),
-                                                          blurRadius: 4,
-                                                          offset: const Offset(0, 2),
-                                                        ),
-                                                      ],
-                                                      border: Border.all(
-                                                        color: const Color(0xFF5E77DF),
-                                                        width: 1.5,
-                                                      ),
-                                                    ),
-                                                    child: Row(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        Icon(
-                                                          _getMoodIcon(match!.currentMoodId),
-                                                          size: 18,
-                                                          color: _getMoodColor(match!.currentMoodId),
-                                                        ),
-                                                        const SizedBox(width: 4),
-                                                        Text(
-                                                          _formatMood(match!.currentMoodId),
-                                                          style: const TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight: FontWeight.bold,
-                                                          ),
-                                                        ),
-                                                        if (match!.moodTimestamp != null && 
-                                                            DateTime.now().difference(match!.moodTimestamp!.toDate()).inHours > 48)
-                                                          const SizedBox(width: 4),
-                                                          if (match!.moodTimestamp != null && 
-                                                              DateTime.now().difference(match!.moodTimestamp!.toDate()).inHours > 48)
-                                                            Tooltip(
-                                                              message: 'Mood updated ${_formatMoodAge(match!.moodTimestamp!)}',
-                                                              child: Icon(
-                                                                Icons.update,
-                                                                size: 14,
-                                                                color: Colors.grey,
-                                                              ),
-                                                            ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                      Text(match!.firstName,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headlineMedium),
-                                      const SizedBox(height: 8),
-                                      Text("${match!.age} | ${match!.major}",
-                                          style: const TextStyle(
-                                              fontSize: 16,
-                                              fontStyle: FontStyle.italic,
-                                              color: Color(0xFF5E77DF))),
-                                    
-                                      if (!_loadingDates && _upcomingDates.isNotEmpty)
-                                        _buildDateTimeIndicator(),
-                                    
-                                      const SizedBox(height: 16),
-                                      IntrinsicHeight(
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            SizedBox(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width /
-                                                  3,
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(16),
-                                                child: TextButton(
-                                                  onPressed:
-                                                      _navigateToMoreProfile,
-                                                  child:
-                                                      const Text("View More"),
-                                                ),
-                                              ),
-                                            ),
-                                            const VerticalDivider(
-                                                indent: 16, endIndent: 16),
-                                            SizedBox(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width /
-                                                  3,
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(16),
-                                                child: TextButton(
-                                                  onPressed: () =>
-                                                      _confirmUnbondDialog(
-                                                          context),
-                                                  child: const Text("Unbond"),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
+                            IconButton(
+                              onPressed: () =>
+                                  showDialog<String>(
+                                    context: context,
+                                    builder: (BuildContext
+                                    context) =>
+                                        AlertDialog(
+                                            title: const Text(
+                                                "Why was I matched with this profile?"),
+                                            content: Text(curUser!
+                                                .getMatchReason(
+                                                match!))),
+                                  ),
+                              icon: Icon(Icons.info_outline),
+                            )
+                          ]),
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: MediaQuery.of(context).size.width * 0.2,
+                            backgroundImage: match!.profilePictureURL.isEmpty
+                                ? NetworkImage(
+                                "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png")
+                                : NetworkImage(match!.profilePictureURL),
+                            backgroundColor: const Color(0xFFCDFCFF),
+                          ),
+                          if (match!.currentMoodId.isNotEmpty && (match!.showMoodToMatches ?? true))
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                  border: Border.all(
+                                    color: const Color(0xFF5E77DF),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _getMoodIcon(match!.currentMoodId),
+                                      size: 18,
+                                      color: _getMoodColor(match!.currentMoodId),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _formatMood(match!.currentMoodId),
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    if (match!.moodTimestamp != null &&
+                                        DateTime.now().difference(match!.moodTimestamp!.toDate()).inHours > 48)
+                                      const SizedBox(width: 4),
+                                    if (match!.moodTimestamp != null &&
+                                        DateTime.now().difference(match!.moodTimestamp!.toDate()).inHours > 48)
+                                      Tooltip(
+                                        message: 'Mood updated ${_formatMoodAge(match!.moodTimestamp!)}',
+                                        child: Icon(
+                                          Icons.update,
+                                          size: 14,
+                                          color: Colors.grey,
                                         ),
                                       ),
-                                      const Divider(),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text("What you have in common:",
-                                              style: TextStyle(fontSize: 16)),
-                                          if (sharedTraits.isEmpty)
-                                            const Text(
-                                                "No traits in common yet.")
-                                          else
-                                            ...sharedTraits
-                                                .map(
-                                                    (trait) => Text("• $trait"))
-                                                .toList(),
-                                        ],
-                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      Text(match!.firstName,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium),
+                      const SizedBox(height: 8),
+                      Text("${match!.age} | ${match!.major}",
+                          style: const TextStyle(
+                              fontSize: 16,
+                              fontStyle: FontStyle.italic,
+                              color: Color(0xFF5E77DF))),
 
-                                      const SizedBox(height: 12),
-                                      StreakIndicator(
-                                        currentStreak: _currentStreak,
-                                        lastInteractionDate: _lastInteractionDate,
-                                        isStreakAboutToExpire: _isStreakAboutToExpire,
-                                      ),
-                                      const SizedBox(height: 12),
+                      if (!_loadingDates && _upcomingDates.isNotEmpty)
+                        _buildDateTimeIndicator(),
 
-                                      // Add streak testing buttons
-                                      // Replace the existing buttons with these:
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Expanded(
-                                            child: ElevatedButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  _isStreakAboutToExpire = true;
-                                                  _lastInteractionDate = DateTime.now().subtract(const Duration(hours: 23));
-                                                });
-                                                _showPushNotification(
-                                                  'Streak About to Expire!',
-                                                  'Your streak with ${match!.firstName} will expire in 1 hour! Send a message or plan a date to keep it going.',
-                                                  isWarning: true,
-                                                );
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.orange,
-                                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                              ),
-                                              child: const Text('Simulate Expiring Streak', style: TextStyle(fontSize: 12)),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: ElevatedButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  _currentStreak = 0;
-                                                  _lastInteractionDate = DateTime.now().subtract(const Duration(hours: 25));
-                                                });
-                                                _showPushNotification(
-                                                  'Streak Ended',
-                                                  'Your streak with ${match!.firstName} has ended! Start a new interaction to rebuild your streak.',
-                                                  isWarning: true,
-                                                );
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.red,
-                                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                              ),
-                                              child: const Text('Simulate Missed Day', style: TextStyle(fontSize: 12)),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      // Spotify Button
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 16),
-                                        child: OutlinedButton.icon(
-                                          onPressed: () {
-                                            final spotifyUsername =
-                                                match?.spotifyUsername;
-                                            final String url = spotifyUsername !=
-                                                        null &&
-                                                    spotifyUsername.isNotEmpty
-                                                ? "https://open.spotify.com/user/" +
-                                                    spotifyUsername
-                                                : "";
-                                            _launchURL(url);
-                                          },
-                                          icon: Icon(Icons.music_note,
-                                              color: match?.spotifyUsername !=
-                                                          null &&
-                                                      match!.spotifyUsername
-                                                          .isNotEmpty
-                                                  ? Colors.blueAccent
-                                                  : Colors.grey),
-                                          label: Text("Spotify",
-                                              style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: match?.spotifyUsername !=
-                                                              null &&
-                                                          match!.spotifyUsername
-                                                              .isNotEmpty
-                                                      ? Colors.blueAccent
-                                                      : Colors.grey)),
-                                          style: OutlinedButton.styleFrom(
-                                            side: BorderSide(
-                                              width: 1,
-                                              color: match?.spotifyUsername !=
-                                                          null &&
-                                                      match!.spotifyUsername
-                                                          .isNotEmpty
-                                                  ? Colors.blueAccent
-                                                  : Colors.grey,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-
-                                      _buildActionButton(Icons.chat_bubble,
-                                          "Go to our messages", () async {
-                                        String rid = curUser!.roomID;
-
-                                        if (rid.isEmpty) {
-                                          rid = curUser!.uid + match!.uid;
-                                          final roomRef = FirebaseFirestore
-                                              .instance
-                                              .collection("rooms")
-                                              .doc(rid);
-
-                                          // Only write an empty room if it doesn't exist
-                                          final snap = await roomRef.get();
-                                          if (!snap.exists) {
-                                            await roomRef.set({
-                                              "messages": [],
-                                              "roomID": rid,
-                                              "users": [
-                                                curUser!.uid,
-                                                match!.uid
-                                              ],
-                                            });
-                                          }
-
-                                          // Persist room ID to user document
-                                          await FirebaseFirestore.instance
-                                              .collection("users")
-                                              .doc(curUser!.uid)
-                                              .update({"roomID": rid});
-                                          // await FirebaseFirestore.instance.collection("users").doc(match!.uid).update({"roomID": rid});
-
-                                          setState(() {
-                                            curUser!.roomID = rid;
-                                          });
-                                        }
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => ChatScreen(
-                                                user: curUser!,
-                                                match: match!,
-                                                roomID: rid),
-                                          ),
-                                        );
-                                      }),
-                                      _buildActionButton(Icons.favorite,
-                                          "Relationship suggestions", () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                RelationshipAdviceScreen(
-                                                    user: curUser!,
-                                                    match: match!),
-                                          ),
-                                        );
-                                      }),
-                                      _buildActionButton(
-                                          Icons.info, "View Match Introduction",
-                                          () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                MatchIntroScreen(
-                                              curUser: curUser!,
-                                              match: match!,
-                                            ),
-                                          ),
-                                        );
-                                      }),
-                                      const SizedBox(height: 15),
-                                      const Divider(),
-                                      const SizedBox(height: 5),
-
-                                      // Keep Match Toggle
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 8.0),
-                                        child: SwitchListTile(
-                                          title: const Text(
-                                              "Keep this match for next week",
-                                              style: TextStyle(fontSize: 16)),
-                                          subtitle: Text(
-                                              keepMatchToggle
-                                                  ? "You'll keep this match"
-                                                  : "You'll get a new match next week",
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey)),
-                                          value: keepMatchToggle,
-                                          activeColor: const Color(0xFF5E77DF),
-                                          onChanged: (bool value) {
-                                            _updateKeepMatch(value);
-                                          },
-                                        ),
-                                      ),
-
-                                      const SizedBox(height: 16),
-                                      const Divider(),
-                                      const SizedBox(height: 16),
-
-                                      // Block User Button
-                                      ElevatedButton.icon(
-                                        onPressed: _confirmBlockUser,
-                                        icon: const Icon(Icons.block,
-                                            color: Colors.white),
-                                        label: const Text("Block User",
-                                            style:
-                                                TextStyle(color: Colors.white)),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.redAccent,
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                          ),
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 12, horizontal: 16),
-                                        ),
-                                      ),
-                                    ],
-                                  )),
+                      const SizedBox(height: 16),
+                      IntrinsicHeight(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: MediaQuery.of(context)
+                                  .size
+                                  .width /
+                                  3,
+                              child: Padding(
+                                padding:
+                                const EdgeInsets.all(16),
+                                child: TextButton(
+                                  onPressed:
+                                  _navigateToMoreProfile,
+                                  child:
+                                  const Text("View More"),
+                                ),
+                              ),
+                            ),
+                            const VerticalDivider(
+                                indent: 16, endIndent: 16),
+                            SizedBox(
+                              width: MediaQuery.of(context)
+                                  .size
+                                  .width /
+                                  3,
+                              child: Padding(
+                                padding:
+                                const EdgeInsets.all(16),
+                                child: TextButton(
+                                  onPressed: () =>
+                                      _confirmUnbondDialog(
+                                          context),
+                                  child: const Text("Unbond"),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                    ),
-    ));
+                      const Divider(),
+                      Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                        children: [
+                          const Text("What you have in common:",
+                              style: TextStyle(fontSize: 16)),
+                          if (sharedTraits.isEmpty)
+                            const Text(
+                                "No traits in common yet.")
+                          else
+                            ...sharedTraits
+                                .map(
+                                    (trait) => Text("• $trait"))
+                                .toList(),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+                      StreakIndicator(
+                        currentStreak: _currentStreak,
+                        lastInteractionDate: _lastInteractionDate,
+                        isStreakAboutToExpire: _isStreakAboutToExpire,
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Add streak testing buttons
+                      // Replace the existing buttons with these:
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  _isStreakAboutToExpire = true;
+                                  _lastInteractionDate = DateTime.now().subtract(const Duration(hours: 23));
+                                });
+                                _showPushNotification(
+                                  'Streak About to Expire!',
+                                  'Your streak with ${match!.firstName} will expire in 1 hour! Send a message or plan a date to keep it going.',
+                                  isWarning: true,
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                              ),
+                              child: const Text('Simulate Expiring Streak', style: TextStyle(fontSize: 12)),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  _currentStreak = 0;
+                                  _lastInteractionDate = DateTime.now().subtract(const Duration(hours: 25));
+                                });
+                                _showPushNotification(
+                                  'Streak Ended',
+                                  'Your streak with ${match!.firstName} has ended! Start a new interaction to rebuild your streak.',
+                                  isWarning: true,
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                              ),
+                              child: const Text('Simulate Missed Day', style: TextStyle(fontSize: 12)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Spotify Button
+                      Padding(
+                        padding:
+                        const EdgeInsets.only(bottom: 16),
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            final spotifyUsername =
+                                match?.spotifyUsername;
+                            final String url = spotifyUsername !=
+                                null &&
+                                spotifyUsername.isNotEmpty
+                                ? "https://open.spotify.com/user/" +
+                                spotifyUsername
+                                : "";
+                            _launchURL(url);
+                          },
+                          icon: Icon(Icons.music_note,
+                              color: match?.spotifyUsername !=
+                                  null &&
+                                  match!.spotifyUsername
+                                      .isNotEmpty
+                                  ? Colors.blueAccent
+                                  : Colors.grey),
+                          label: Text("Spotify",
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  color: match?.spotifyUsername !=
+                                      null &&
+                                      match!.spotifyUsername
+                                          .isNotEmpty
+                                      ? Colors.blueAccent
+                                      : Colors.grey)),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(
+                              width: 1,
+                              color: match?.spotifyUsername !=
+                                  null &&
+                                  match!.spotifyUsername
+                                      .isNotEmpty
+                                  ? Colors.blueAccent
+                                  : Colors.grey,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                              BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      _buildActionButton(Icons.chat_bubble,
+                          "Go to our messages", () async {
+                            String rid = curUser!.roomID;
+
+                            if (rid.isEmpty) {
+                              if (curUser!.uid.compareTo(match!.uid) < 0) {
+                                rid = curUser!.uid + match!.uid;
+                              }
+                              else rid = match!.uid + curUser!.uid;
+
+                              final roomRef = FirebaseFirestore
+                                  .instance
+                                  .collection("rooms")
+                                  .doc(rid);
+
+                              // Only write an empty room if it doesn't exist
+                              final snap = await roomRef.get();
+                              if (!snap.exists) {
+                                await roomRef.set({
+                                  "messages": [],
+                                  "roomID": rid,
+                                  "users": [
+                                    curUser!.uid,
+                                    match!.uid
+                                  ],
+                                });
+                              }
+                              setState(() {
+                                curUser!.roomID = rid;
+                              });
+                            }
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ChatScreen(
+                                    user: curUser!,
+                                    match: match!,
+                                    roomID: rid),
+                              ),
+                            );
+                          }),
+                      _buildActionButton(Icons.favorite,
+                          "Relationship suggestions", () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    RelationshipAdviceScreen(
+                                        user: curUser!,
+                                        match: match!),
+                              ),
+                            );
+                          }),
+                      _buildActionButton(
+                          Icons.info, "View Match Introduction",
+                              () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    MatchIntroScreen(
+                                      curUser: curUser!,
+                                      match: match!,
+                                    ),
+                              ),
+                            );
+                          }),
+                      const SizedBox(height: 15),
+                      const Divider(),
+                      const SizedBox(height: 5),
+
+                      // Keep Match Toggle
+                      Padding(
+                        padding:
+                        const EdgeInsets.only(bottom: 8.0),
+                        child: SwitchListTile(
+                          title: const Text(
+                              "Keep this match for next week",
+                              style: TextStyle(fontSize: 16)),
+                          subtitle: Text(
+                              keepMatchToggle
+                                  ? "You'll keep this match"
+                                  : "You'll get a new match next week",
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey)),
+                          value: keepMatchToggle,
+                          activeColor: const Color(0xFF5E77DF),
+                          onChanged: (bool value) {
+                            _updateKeepMatch(value);
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 16),
+
+                      // Block User Button
+                      ElevatedButton.icon(
+                        onPressed: _confirmBlockUser,
+                        icon: const Icon(Icons.block,
+                            color: Colors.white),
+                        label: const Text("Block User",
+                            style:
+                            TextStyle(color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                            BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 16),
+                        ),
+                      ),
+                    ],
+                  )),
+                ],
+              ),
+            ),
+          ),
+        ));
   }
 
   Widget _buildActionButton(IconData icon, String label, VoidCallback onPressed) {
@@ -1967,7 +1963,7 @@ class _BondScreenState extends State<BondScreen> {
               label: const Text("Explore Profiles"),
               style: OutlinedButton.styleFrom(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],
@@ -2001,7 +1997,7 @@ class _BondScreenState extends State<BondScreen> {
             const SizedBox(height: 16),
             const Text(
               "This user will no longer appear in your matches. "
-              "You can unblock users from your settings.",
+                  "You can unblock users from your settings.",
               style: TextStyle(
                 fontSize: 16,
                 fontStyle: FontStyle.italic,
@@ -2023,7 +2019,7 @@ class _BondScreenState extends State<BondScreen> {
               label: const Text("Manage Blocked Users"),
               style: OutlinedButton.styleFrom(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),
           ],
@@ -2179,7 +2175,7 @@ class _BondScreenState extends State<BondScreen> {
                       DropdownMenuItem(
                         value: 2,
                         child:
-                            Text("Profile appears to be fake or catfishing."),
+                        Text("Profile appears to be fake or catfishing."),
                       ),
                       DropdownMenuItem(
                         value: 3,
@@ -2219,102 +2215,102 @@ class _BondScreenState extends State<BondScreen> {
       ),
     );
   }
-void _showPushNotification(String title, String message, {bool isWarning = false}) {
-  // Cancel any existing overlay
-  _removeNotificationOverlay();
-  
-  // Create an overlay entry
-  final overlay = Overlay.of(context);
-  _notificationOverlay = OverlayEntry(
-    builder: (context) => Positioned(
-      top: MediaQuery.of(context).padding.top + 20,
-      left: 20,
-      right: 20,
-      child: Material(
-        elevation: 10,
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.transparent,
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF5E77DF), // Always use blue color
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
+  void _showPushNotification(String title, String message, {bool isWarning = false}) {
+    // Cancel any existing overlay
+    _removeNotificationOverlay();
+
+    // Create an overlay entry
+    final overlay = Overlay.of(context);
+    _notificationOverlay = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 20,
+        left: 20,
+        right: 20,
+        child: Material(
+          elevation: 10,
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.transparent,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF5E77DF), // Always use blue color
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
                 ),
-                child: Icon(
-                  isWarning ? Icons.warning_rounded : Icons.local_fire_department,
-                  color: Colors.white,
-                  size: 18,
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    isWarning ? Icons.warning_rounded : Icons.local_fire_department,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      message,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
+                      const SizedBox(height: 2),
+                      Text(
+                        message,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: _removeNotificationOverlay,
-                child: const Icon(
-                  Icons.close,
-                  color: Colors.white70,
-                  size: 18,
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _removeNotificationOverlay,
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white70,
+                    size: 18,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-  
-  // Add the overlay to the screen
-  overlay?.insert(_notificationOverlay!);
-  
-  // Auto-dismiss after 4 seconds
-  Future.delayed(const Duration(seconds: 4), _removeNotificationOverlay);
-}
-OverlayEntry? _notificationOverlay;
+    );
 
-void _removeNotificationOverlay() {
-  _notificationOverlay?.remove();
-  _notificationOverlay = null;
-}
+    // Add the overlay to the screen
+    overlay?.insert(_notificationOverlay!);
+
+    // Auto-dismiss after 4 seconds
+    Future.delayed(const Duration(seconds: 4), _removeNotificationOverlay);
+  }
+  OverlayEntry? _notificationOverlay;
+
+  void _removeNotificationOverlay() {
+    _notificationOverlay?.remove();
+    _notificationOverlay = null;
+  }
 }
