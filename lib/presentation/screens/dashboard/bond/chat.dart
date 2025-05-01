@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:audio_duration/audio_duration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:datingapp/data/constants/icebreakers.dart';
 import 'package:datingapp/presentation/screens/dashboard/bond/audioPlayer.dart';
@@ -32,9 +31,9 @@ class ChatScreen extends StatefulWidget {
   final String roomID;
   ChatScreen(
       {super.key,
-      required this.user,
-      required this.match,
-      required this.roomID});
+        required this.user,
+        required this.match,
+        required this.roomID});
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
@@ -45,9 +44,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _userAnswer;
   bool _hasAnswered = false;
   bool _isAttachmentUploading = false;
-  bool _isRecording = false;
   late final AudioRecorder _audioRecorder;
-  String? _audioPath;
 
   @override
   void initState() {
@@ -56,69 +53,63 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   @override
-  void dispose() {
-    _audioRecorder.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          title: Text(widget.match.firstName),
-        ),
-        body:
-            Column(
-            children: [
-              if (_currentPrompt != null)
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Prompt: $_currentPrompt"),
-                      if (!_hasAnswered)
-                        TextField(onChanged: (val) => _userAnswer = val),
-                      if (!_hasAnswered)
-                        ElevatedButton(
-                          onPressed: () => _submitDailyPromptAnswer(
-                              _userAnswer ?? '',
-                              "${widget.user.uid}_${widget.match.uid}_${DateTime.now().millisecondsSinceEpoch}"),
-                          child: Text("Submit Answer"),
-                        ),
-                      if (_hasAnswered && _matchAnswer != null)
-                        Text("Match's Answer: $_matchAnswer"),
-                    ],
-                  ),
-                ),
-              Expanded(
-                  child: StreamBuilder<DocumentSnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection("rooms")
-                          .doc(widget.roomID)
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        List<Map<String, dynamic>> msgsMap =
-                            List<Map<String, dynamic>>.from(
-                                snapshot.data?['messages'] ?? []);
-                        List<types.Message> messages = parseMsgs(msgsMap);
-                        return Chat(
-                          isAttachmentUploading: _isAttachmentUploading,
-                          messages: messages,
-                          onAttachmentPressed: _handleAttachmentPressed,
-                          onMessageTap: _handleMessageTap,
-                          onMessageLongPress: _showDeletePrompt,
-                          //onPreviewDataFetched: _handlePreviewDataFetched,
-                          onSendPressed: _handleSendPressed,
-                          customMessageBuilder: _customMessageBuilder,
-                          audioMessageBuilder: _buildVoiceMessage,
-                          showUserAvatars: true,
-                          user: types.User(
-                            id: widget.user.uid,
-                          ),
-                        );
-                      })),
-              ],)
-      );
+      appBar: AppBar(
+        title: Text(widget.match.firstName),
+      ),
+      body:
+      Column(
+        children: [
+          if (_currentPrompt != null)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Prompt: $_currentPrompt"),
+                  if (!_hasAnswered)
+                    TextField(onChanged: (val) => _userAnswer = val),
+                  if (!_hasAnswered)
+                    ElevatedButton(
+                      onPressed: () => _submitDailyPromptAnswer(
+                          _userAnswer ?? '',
+                          "${widget.user.uid}_${widget.match.uid}_${DateTime.now().millisecondsSinceEpoch}"),
+                      child: Text("Submit Answer"),
+                    ),
+                  if (_hasAnswered && _matchAnswer != null)
+                    Text("Match's Answer: $_matchAnswer"),
+                ],
+              ),
+            ),
+          Expanded(
+              child: StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection("rooms")
+                      .doc(widget.roomID)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    List<Map<String, dynamic>> msgsMap =
+                    List<Map<String, dynamic>>.from(
+                        snapshot.data?['messages'] ?? []);
+                    List<types.Message> messages = parseMsgs(msgsMap);
+                    return Chat(
+                      isAttachmentUploading: _isAttachmentUploading,
+                      messages: messages,
+                      onAttachmentPressed: _handleAttachmentPressed,
+                      onMessageTap: _handleMessageTap,
+                      onMessageLongPress: _showDeletePrompt,
+                      //onPreviewDataFetched: _handlePreviewDataFetched,
+                      onSendPressed: _handleSendPressed,
+                      customMessageBuilder: _customMessageBuilder,
+                      audioMessageBuilder: _buildVoiceMessage,
+                      showUserAvatars: true,
+                      user: types.User(
+                        id: widget.user.uid,
+                      ),
+                    );
+                  })),
+        ],)
+  );
 
   void _handleAttachmentPressed() {
     showModalBottomSheet<void>(
@@ -126,10 +117,10 @@ class _ChatScreenState extends State<ChatScreen> {
       isScrollControlled: false,
       builder: (BuildContext context) => Container(
         height: MediaQuery.of(context).size.height / 4,
-          child: GridView.count(
-              crossAxisCount: 3,
-              children: [
-                Column(
+        child: GridView.count(
+            crossAxisCount: 3,
+            children: [
+              Column(
                   children: [
                     IconButton(
                       onPressed: () {
@@ -140,8 +131,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     Text("Photo")
                   ]
-                ),
-                Column(
+              ),
+              Column(
                   children: [
                     IconButton(
                         onPressed: () {
@@ -152,20 +143,20 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     Text("File")
                   ]
-                ),
-                Column(
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _handleVoiceRecording();
-                        },
-                        icon: Icon(Icons.mic),
-                      ),
-                      Text("Voice Message")
-                    ]
-                ),
-                Column(
+              ),
+              Column(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _handleVoiceRecording();
+                      },
+                      icon: Icon(Icons.mic),
+                    ),
+                    Text("Voice Message")
+                  ]
+              ),
+              Column(
                   children: [
                     IconButton(
                         onPressed: () {
@@ -176,32 +167,32 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     Text("Daily Prompt"),
                   ]
-                ),
-                Column(
-                    children: [
-                      IconButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _iceBreaker();
-                          },
-                          icon: Icon(Icons.chat_bubble_outline)
-                      ),
-                      Text("Icebreaker"),
-                    ]
-                ),
-                Column(
+              ),
+              Column(
                   children: [
-                  IconButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _openDateFilterDialog();
-                    },
-                    icon: Icon(Icons.lightbulb)
-                  ),
-                  Text("Date Idea")
+                    IconButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _iceBreaker();
+                        },
+                        icon: Icon(Icons.chat_bubble_outline)
+                    ),
+                    Text("Icebreaker"),
                   ]
-                )
-              ]
+              ),
+              Column(
+                  children: [
+                    IconButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _openDateFilterDialog();
+                        },
+                        icon: Icon(Icons.lightbulb)
+                    ),
+                    Text("Date Idea")
+                  ]
+              )
+            ]
         ),
       ),
     );
@@ -323,7 +314,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     // update user's Firestore record
     final userRef =
-        FirebaseFirestore.instance.collection('users').doc(widget.user.uid);
+    FirebaseFirestore.instance.collection('users').doc(widget.user.uid);
     await userRef.update({'lastDailyPromptTime': now});
 
     setState(() {
@@ -334,7 +325,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _submitDailyPromptAnswer(String answer, String promptId) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     final promptRef =
-        FirebaseFirestore.instance.collection('daily_prompts').doc(promptId);
+    FirebaseFirestore.instance.collection('daily_prompts').doc(promptId);
     await promptRef.set({
       'promptId': promptId,
       'timestamp': now,
@@ -452,7 +443,8 @@ class _ChatScreenState extends State<ChatScreen> {
       final name = result.name;
 
       try {
-        final reference = FirebaseStorage.instance.ref("images/"+name);
+        final id = const Uuid().v4();
+        final reference = FirebaseStorage.instance.ref("images/"+ name + id);
         await reference.putFile(file);
         final uri = await reference.getDownloadURL();
 
@@ -460,97 +452,11 @@ class _ChatScreenState extends State<ChatScreen> {
           author: types.User(id: widget.user.uid),
           createdAt: DateTime.now().millisecondsSinceEpoch,
           height: image.height.toDouble(),
-          id: const Uuid().v4(),
+          id: id,
           name: name,
           size: size,
           uri: uri,
           width: image.width.toDouble(),
-        );
-        Room room = await Room.getById(widget.roomID);
-        room.sendMessage(message);
-        _setAttachmentUploading(false);
-      } finally {
-        _setAttachmentUploading(false);
-      }
-    }
-  }
-
-  Future<void> _startRecording() async {
-    try {
-      debugPrint(
-          '=========>>>>>>>>>>> RECORDING!!!!!!!!!!!!!!! <<<<<<===========');
-
-      String filePath = await getApplicationDocumentsDirectory()
-          .then((value) => '${value.path}/${const Uuid().v1()}.wav');
-
-      await _audioRecorder.start(
-        const RecordConfig(
-          // specify the codec to be `.wav`
-          encoder: AudioEncoder.wav,
-        ),
-        path: filePath,
-      );
-    } catch (e) {
-      debugPrint('ERROR WHILE RECORDING: $e');
-    }
-  }
-
-  Future<void> _stopRecording() async {
-    try {
-      String? path = await _audioRecorder.stop();
-
-      setState(() {
-        _audioPath = path!;
-      });
-      debugPrint('=========>>>>>> PATH: $_audioPath <<<<<<===========');
-    } catch (e) {
-      debugPrint('ERROR WHILE STOP RECORDING: $e');
-    }
-  }
-
-  void _record() async {
-    if (_isRecording == false) {
-      final status = await Permission.microphone.request();
-
-      if (status == PermissionStatus.granted) {
-        setState(() {
-          _isRecording = true;
-        });
-        await _startRecording();
-      } else if (status == PermissionStatus.permanentlyDenied) {
-        debugPrint('Permission permanently denied');
-      }
-    } else {
-      await _stopRecording();
-
-      setState(() {
-        _isRecording = false;
-      });
-    }
-  }
-
-  void _sendAudio() async {
-    if (_audioPath != null) {
-      _setAttachmentUploading(true);
-      final name = widget.user.uid + const Uuid().v4();
-      final file = File(_audioPath!);
-      int? durationInMilliSeconds = await AudioDuration.getAudioDuration(_audioPath!);
-
-      try {
-        final reference = FirebaseStorage.instance.ref("voice_messages/" + name);
-        await reference.putFile(file);
-        final uri = await reference.getDownloadURL();
-
-        final message = types.AudioMessage(
-          author: types.User(id: widget.user.uid),
-          id: const Uuid().v4(),
-          mimeType: lookupMimeType(_audioPath!),
-          name: name,
-          size: file.readAsBytesSync().lengthInBytes,
-          duration: Duration(
-              milliseconds: durationInMilliSeconds ?? 0
-          ),
-          uri: uri,
         );
         Room room = await Room.getById(widget.roomID);
         room.sendMessage(message);
@@ -569,32 +475,9 @@ class _ChatScreenState extends State<ChatScreen> {
         context: context,
         isScrollControlled: false,
         builder: (BuildContext context) => Container(
-          height: MediaQuery.of(context).size.height / 4,
-          width: double.infinity,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-            IconButton(
-              onPressed: () async => await _audioRecorder.dispose(),
-              icon: Icon(Icons.cancel),
-              iconSize: 30,
-            ),
-            Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  if (_isRecording) const CustomRecordingWaveWidget(),
-                  const SizedBox(height: 16),
-                  CustomRecordingButton(
-                    isRecording: _isRecording,
-                    onPressed: () => _record(),
-                  ),
-            ]),
-            IconButton(
-              onPressed: _sendAudio,
-              icon: Icon(Icons.send),
-              iconSize: 30,
-            ),
-          ])
+            height: MediaQuery.of(context).size.height / 4,
+            width: double.infinity,
+            child: CustomRecordingButton(audioRecorder: _audioRecorder, uid: widget.user.uid, roomID: widget.roomID)
         )
     );
   }
@@ -668,12 +551,12 @@ class _ChatScreenState extends State<ChatScreen> {
     bool isMine = (msg.author.id == widget.user.uid);
 
     return Container(
-      padding: const EdgeInsets.only(top: 8, bottom: 8),
-      decoration: BoxDecoration(
-        color: isMine ? Color.from(alpha: 0, red: 111, green: 96, blue: 232): Colors.green.shade50,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: AudioPlayerWidget(uri: msg.uri)
+        padding: const EdgeInsets.only(top: 8, bottom: 8),
+        decoration: BoxDecoration(
+          color: isMine ? Color.from(alpha: 0, red: 111, green: 96, blue: 232): Colors.green.shade50,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: AudioPlayerWidget(uri: msg.uri)
     );
   }
 
@@ -801,12 +684,12 @@ class _ChatScreenState extends State<ChatScreen> {
           break;
         case 'image':
           types.ImageMessage imsg = types.ImageMessage(
-            author: types.User(id: e['author']),
-            createdAt: e['createdAt'],
-            id: e['id'],
-            name: e['name'],
-            size: e['size'],
-            uri: e['uri']
+              author: types.User(id: e['author']),
+              createdAt: e['createdAt'],
+              id: e['id'],
+              name: e['name'],
+              size: e['size'],
+              uri: e['uri']
           );
           result.add(imsg);
           break;
