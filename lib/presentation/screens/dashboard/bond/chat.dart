@@ -592,29 +592,47 @@ class _ChatScreenState extends State<ChatScreen> {
       width: width.toDouble(),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.pink.shade50,
+        color: Color.fromARGB(0, 111, 96, 232),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text('Date Idea: ${idea?['activity']}'),
-          if (idea?['location'] != null) Text('Location: ${idea?['location']}'),
-          if (idea?['description'] != null) Text(idea?['description']),
+          Text('Date Idea: ${idea?['activity']}',
+            style: DefaultChatTheme().sentMessageBodyTextStyle),
+          if (idea?['location'] != null) Text('Location: ${idea?['location']}',
+            style: TextStyle(
+                color: Colors.white,
+                fontFamily: DefaultChatTheme().sentMessageBodyTextStyle.fontFamily,
+                fontWeight: FontWeight.w100)),
+          if (idea?['description'] != null) Text(idea?['description'],
+            style: TextStyle(
+                color: Colors.white,
+                fontFamily: DefaultChatTheme().sentMessageBodyTextStyle.fontFamily,
+                fontWeight: FontWeight.w100)),
           if (idea?['dateTime'] != null)
             Text(DateFormat('EEE, MMM d • h:mm a')
-                .format(DateTime.parse(idea!['dateTime']))),
+                .format(DateTime.parse(idea!['dateTime'])),
+                style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: DefaultChatTheme().sentMessageBodyTextStyle.fontFamily,
+                    fontWeight: FontWeight.w100)),
           const SizedBox(height: 6),
           if (!hasVoted)
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 TextButton(
                   onPressed: () => _respondToDateIdea(msg, true),
-                  child: const Text('Accept'),
+                  style: TextButton.styleFrom(backgroundColor: Colors.green.shade400),
+                  child: Text('Accept',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: DefaultChatTheme().sentMessageBodyTextStyle.fontFamily))
                 ),
                 TextButton(
                   onPressed: () => _respondToDateIdea(msg, false),
-                  child: const Text('Deny'),
+                  style: TextButton.styleFrom(backgroundColor: Colors.red.shade400),
+                  child: Text('Deny',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white, fontFamily: DefaultChatTheme().sentMessageBodyTextStyle.fontFamily))
                 ),
               ],
             )
@@ -623,7 +641,7 @@ class _ChatScreenState extends State<ChatScreen> {
               accepted.contains(widget.user.uid)
                   ? 'You accepted'
                   : 'You denied',
-              style: const TextStyle(fontStyle: FontStyle.italic),
+              style: DefaultChatTheme().sentMessageBodyTextStyle,
             ),
         ],
       ),
