@@ -186,7 +186,7 @@ class AppUser {
       showSocialMediaToMatch: data['showSocialMediaToMatch'] ?? true,
       showSocialMediaToOthers: data['showSocialMediaToOthers'] ?? true,
       match: data['match'] ?? '',
-      nonNegotiables: data['nonNegotiables'] ?? {},
+      nonNegotiables: Map<String, dynamic>.from(data['nonNegotiables'] ?? {}),
       longFormQuestion: data['longFormQuestion'] ?? 0,
       longFormAnswer: data['longFormAnswer'] ?? '',
       personalTraits: Map<String, int>.from(data['personalTraits'] ?? {}),

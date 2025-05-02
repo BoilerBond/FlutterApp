@@ -120,6 +120,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           }
         }
       }
+      else listFiltered = visibleUsers;
       setState(() {
         recommendedUsers = listFiltered;
         isLoading = false;
