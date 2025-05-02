@@ -300,7 +300,7 @@ class _NonNegotiablesFormScreenState extends State<NonNegotiablesFormScreen> {
                     }
                   });
                 },
-                selectedColor: Theme.of(context).colorScheme.tertiary,
+                selectedColor: Theme.of(context).colorScheme.inversePrimary,
                 backgroundColor: Color(0xFFE7EFEE),
                 padding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
