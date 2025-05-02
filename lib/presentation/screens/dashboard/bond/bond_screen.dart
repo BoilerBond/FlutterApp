@@ -209,6 +209,9 @@ class _BondScreenState extends State<BondScreen> {
         'createdAt': Timestamp.fromDate(DateTime.now()),
       };
   
+      // Get current timestamp for interaction
+      final currentTimestamp = FieldValue.serverTimestamp();
+  
       // Update current user's document
       final currentUserDoc = await FirebaseFirestore.instance
           .collection('users')
@@ -227,6 +230,7 @@ class _BondScreenState extends State<BondScreen> {
           .doc(curUser!.uid)
           .update({
         'dates': currentUserDates,
+        'lastInteractionTimestamp': currentTimestamp, // Add timestamp field
       });
   
       // Try to update match's document with similar structure
@@ -243,12 +247,13 @@ class _BondScreenState extends State<BondScreen> {
         // Store directly under current user's ID (no dateId)
         matchUserDates[curUser!.uid] = dateData;
         
-        // Update only the dates field
+        // Update both dates field and lastInteractionTimestamp
         await FirebaseFirestore.instance
             .collection('users')
             .doc(match!.uid)
             .update({
           'dates': matchUserDates,
+          'lastInteractionTimestamp': currentTimestamp, // Add timestamp field
         });
       } catch (e) {
         print('Warning: Could not update match document: $e');
@@ -260,6 +265,9 @@ class _BondScreenState extends State<BondScreen> {
         );
       }
   
+      // Update local streak data since this is an interaction
+      _updateStreak();
+      
       // Reload upcoming dates
       _loadUpcomingDates();
   
@@ -1265,52 +1273,40 @@ class _BondScreenState extends State<BondScreen> {
   Timer? _streakExpirationTimer;
 
   void _loadStreakData() async {
-    // Don't reset streak if we already have a value (solves the cancellation issue)
-    if (_currentStreak > 0) {
-      // We already have a streak, don't reset it
-      print('Keeping existing streak value: $_currentStreak');
-      return;
-    }
-
-    // Only set to 0 if we don't have a streak yet (first load)
-    setState(() {
-      _currentStreak = 0;
-      _lastInteractionDate = null;
-      _isStreakAboutToExpire = false;
-    });
-
-    print('Initialized new streak: $_currentStreak');
-  }
-
-  // Helper method to ensure streak is initialized
-  Future<void> _initializeStreakIfNeeded(Map<String, dynamic> userData) async {
-    if (!userData.containsKey('streaks') ||
-        !(userData['streaks'] as Map<String, dynamic>?)?[match!.uid] is Map) {
-      // Initialize streak data for both users
-      await FirebaseFirestore.instance
+    if (curUser == null || match == null) return;
+  
+    try {
+      // Get current user doc to read streak data
+      final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(curUser!.uid)
-          .update({
-        'streaks.${match!.uid}': {
-          'currentStreak': 0,
-          'streakBroken': false,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }
+          .get();
+      
+      if (!userDoc.exists) return;
+      
+      // Get streak directly as an integer
+      final int streakCount = userDoc.data()?['streak'] ?? 0;
+      final Timestamp? lastUpdated = userDoc.data()?['lastStreakUpdate'] as Timestamp?;
+      
+      setState(() {
+        _currentStreak = streakCount;
+        _lastInteractionDate = lastUpdated?.toDate();
+        _isStreakAboutToExpire = false;
       });
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(match!.uid)
-          .update({
-        'streaks.${curUser!.uid}': {
-          'currentStreak': 0,
-          'streakBroken': false,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }
-      });
-
+      
+      print('Loaded streak from Firestore: $_currentStreak');
+      
+      // Setup timer to check for streak expiration
+      if (_lastInteractionDate != null) {
+        _startStreakExpirationTimer();
+      }
+      
+    } catch (e) {
+      print('Error loading streak data: $e');
+      // Set to 0 as fallback
       setState(() {
         _currentStreak = 0;
+        _lastInteractionDate = null;
       });
     }
   }
@@ -1358,25 +1354,24 @@ class _BondScreenState extends State<BondScreen> {
     final expiryTime = _lastInteractionDate!.add(const Duration(hours: 24));
 
     if (now.isAfter(expiryTime)) {
-      // Reset streak
+      // Reset streak to 0
       try {
+        // Reset current user's streak
         await FirebaseFirestore.instance
             .collection('users')
             .doc(curUser!.uid)
             .update({
-          'streaks.${match!.uid}.currentStreak': 0,
-          'streaks.${match!.uid}.streakBroken': true,
-          'streaks.${match!.uid}.updatedAt': FieldValue.serverTimestamp(),
+          'streak': 0,
+          'lastStreakUpdate': FieldValue.serverTimestamp(),
         });
 
-        // Also update match's streak data
+        // Also reset match's streak
         await FirebaseFirestore.instance
             .collection('users')
             .doc(match!.uid)
             .update({
-          'streaks.${curUser!.uid}.currentStreak': 0,
-          'streaks.${curUser!.uid}.streakBroken': true,
-          'streaks.${curUser!.uid}.updatedAt': FieldValue.serverTimestamp(),
+          'streak': 0,
+          'lastStreakUpdate': FieldValue.serverTimestamp(),
         });
 
         setState(() {
@@ -1407,25 +1402,49 @@ class _BondScreenState extends State<BondScreen> {
   }
 
   Future<void> _updateStreak() async {
-    // Simple hardcoded solution - increment streak whenever called
+    // Increment streak value
     final newStreak = _currentStreak + 1;
-
     print('Incrementing streak from $_currentStreak to $newStreak');
 
-    // Update UI immediately without Firebase
-    setState(() {
-      _currentStreak = newStreak;
-      _lastInteractionDate = DateTime.now();
-      _isStreakAboutToExpire = false;
-    });
+    try {
+      // Update streak in Firestore as a simple integer
+      if (curUser != null && match != null) {
+        // Update current user's streak
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(curUser!.uid)
+            .update({
+          'streak': newStreak,
+          'lastStreakUpdate': FieldValue.serverTimestamp(),
+        });
+        
+        // Also update match's streak to keep them in sync
+        // await FirebaseFirestore.instance
+        //     .collection('users')
+        //     .doc(match!.uid)
+        //     .update({
+        //   'streak': newStreak,
+        //   'lastStreakUpdate': FieldValue.serverTimestamp(),
+        // });
+      }
+      
+      // Update UI immediately
+      setState(() {
+        _currentStreak = newStreak;
+        _lastInteractionDate = DateTime.now();
+        _isStreakAboutToExpire = false;
+      });
 
-    // Show feedback to user with the new push notification style
-    if (mounted) {
-      _showPushNotification(
-        'Streak Updated! 🔥',
-        'Your streak with ${match?.firstName ?? 'your match'} is now $_currentStreak days!',
-        isWarning: false,
-      );
+      // Show feedback to user
+      if (mounted) {
+        _showPushNotification(
+          'Streak Updated! 🔥',
+          'Your streak with ${match?.firstName ?? 'your match'} is now $_currentStreak days!',
+          isWarning: false,
+        );
+      }
+    } catch (e) {
+      print('Error updating streak in Firestore: $e');
     }
   }
 

@@ -67,7 +67,9 @@ class AppUser {
   final String? currentEventPhase;
   bool eventReset;
   Map<String, Map<String, dynamic>> matchScores;
-
+  Timestamp? lastInteractionTimestamp;
+  Map<String, dynamic> dates;
+  int streak;
 
   AppUser({
     required this.uid,
@@ -97,8 +99,7 @@ class AppUser {
     this.spotifyUsername = '',
     this.showHeight = false,
     this.heightUnit = '',
-    this.heightValue =
-    0.0, // height is stored in cm and displayed according to user preference
+    this.heightValue = 0.0,
     this.showMajorToMatch = true,
     this.showMajorToOthers = true,
     this.showBioToMatch = true,
@@ -139,6 +140,9 @@ class AppUser {
     this.currentEventPhase,
     this.eventReset = false,
     this.matchScores = const {},
+    this.lastInteractionTimestamp,
+    this.dates = const {},
+    this.streak = 0,
   });
 
   factory AppUser.fromSnapshot(DocumentSnapshot snapshot) {
@@ -158,15 +162,14 @@ class AppUser {
       profilePictureURL: data['profilePictureURL'] ?? '',
       photosURL: List<String>.from(data['photosURL'] ?? []),
       blockedUserUIDs: List<String>.from(data['blockedUserUIDs'] ?? []),
-      displayedInterests: List<String>.from(
-          data['displayedInterests'] ?? []), // Fetch from Firestore
+      displayedInterests: List<String>.from(data['displayedInterests'] ?? []),
       profileVisible: data['profileVisible'] ?? true,
       photoVisible: data['photoVisible'] ?? true,
       interestsVisible: data['interestsVisible'] ?? true,
       matchResultNotificationEnabled:
-      data['matchResultNotificationEnabled'] ?? true,
+          data['matchResultNotificationEnabled'] ?? true,
       messagingNotificationEnabled:
-      data['messagingNotificationEnabled'] ?? true,
+          data['messagingNotificationEnabled'] ?? true,
       eventNotificationEnabled: data['eventNotificationEnabled'] ?? true,
       keepMatch: data['keepMatch'] ?? true,
       instagramLink: data['instagramLink'] ?? '',
@@ -191,7 +194,7 @@ class AppUser {
       longFormAnswer: data['longFormAnswer'] ?? '',
       personalTraits: Map<String, int>.from(data['personalTraits'] ?? {}),
       partnerPreferences:
-      Map<String, int>.from(data['partnerPreferences'] ?? {}),
+          Map<String, int>.from(data['partnerPreferences'] ?? {}),
       weeksWithoutMatch: data['weeksWithoutMatch'] ?? 0,
       hasSeenMatchIntro: data['hasSeenMatchIntro'] ?? false,
       showSpotifyToMatch: data['showSpotifyToMatch'] ?? true,
@@ -200,7 +203,7 @@ class AppUser {
       showPhotosToOthers: data['showPhotosToOthers'] ?? true,
       ratedUsers: List<String>.from(data['ratedUsers'] ?? []),
       lastDailyPromptTime:
-      int.tryParse(data['lastDailyPromptTime'].toString()) ?? 0,
+          int.tryParse(data['lastDailyPromptTime'].toString()) ?? 0,
       roomID: data['roomID'] ?? '',
       currentMoodId: data['currentMoodId'] ?? '',
       showMoodToMatches: data['showMoodToMatches'] ?? true,
@@ -210,16 +213,20 @@ class AppUser {
       currentEventGuess: data['currentEventGuess'],
       currentEventPhase: data['currentEventPhase'],
       eventReset: data['eventReset'] ?? false,
-      matchScores: (data['matchScores'] as Map<String, dynamic>? ?? {}).map((key, value) => MapEntry(key,
-        Map<String, dynamic>.from(value),
-      )),
-
+      matchScores: (data['matchScores'] as Map<String, dynamic>? ?? {})
+          .map((key, value) => MapEntry(
+                key,
+                Map<String, dynamic>.from(value),
+              )),
+      lastInteractionTimestamp: data['lastInteractionTimestamp'] as Timestamp?,
+      dates: Map<String, dynamic>.from(data['dates'] ?? {}),
+      streak: data['streak'] ?? 0,
     );
   }
 
   static Future<AppUser> getById(String id) async {
     final snapshot =
-    await FirebaseFirestore.instance.collection("users").doc(id).get();
+        await FirebaseFirestore.instance.collection("users").doc(id).get();
     return AppUser.fromSnapshot(snapshot);
   }
 
@@ -307,6 +314,9 @@ class AppUser {
       'currentEventPhase': currentEventPhase,
       'eventReset': eventReset,
       'matchScores': matchScores,
+      'lastInteractionTimestamp': lastInteractionTimestamp,
+      'dates': dates,
+      'streak': streak,
     };
   }
 
@@ -415,22 +425,22 @@ class AppUser {
     switch (minIndex) {
       case 1:
         message +=
-        "'s level of extroversion matches your partner preference.\n";
+            "'s level of extroversion matches your partner preference.\n";
         break;
       case 0:
         message +=
-        "'s views on the importance of family matches your partner preference\n.";
+            "'s views on the importance of family matches your partner preference\n.";
         break;
       case 2:
         message += "'s lifestyle matches your partner preference\n.";
         break;
       case 4:
         message +=
-        "'s emotional expressiveness matches your partner preference\n.";
+            "'s emotional expressiveness matches your partner preference\n.";
         break;
       case 3:
         message +=
-        "'s willingness to try new things and take risks matches your partner preference\n.";
+            "'s willingness to try new things and take risks matches your partner preference\n.";
         break;
     }
     return message;
