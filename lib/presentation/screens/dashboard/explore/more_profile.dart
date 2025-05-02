@@ -361,10 +361,7 @@ class _MoreProfileScreenState extends State<MoreProfileScreen> {
             : SizedBox(
                 width: double.infinity,
                 height: MediaQuery.of(context).size.height * 0.5,
-                child: GridView.count(
-                  crossAxisCount: (photosURL.length < 3) ? 1 : 3,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
+                child: ListView(
                   children: photosURL.map((photoURL) {
                     return _buildPhotoItem(context, photoURL);
                   }).toList(),

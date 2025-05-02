@@ -13,6 +13,7 @@ import 'chat.dart';
 import 'match_intro_screen.dart';
 import 'relationship_advice_screen.dart';
 import '../../../widgets/streak_indicator.dart';
+import 'date_ideas/generate_date_ideas.dart';
 
 class BondScreen extends StatefulWidget {
   const BondScreen({super.key});
@@ -1619,6 +1620,13 @@ class _BondScreenState extends State<BondScreen> {
                             );
                           }),
                       _buildActionButton(
+                        Icons.local_activity,
+                        "Generate Date Idea",
+                            () =>
+                            _showDatePreferencesDialog(context),
+                      ),
+
+                      _buildActionButton(
                           Icons.info, "View Match Introduction",
                               () {
                             Navigator.push(
@@ -2215,6 +2223,140 @@ class _BondScreenState extends State<BondScreen> {
       ),
     );
   }
+
+  _showDatePreferencesDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String selectedTime = "Evening";
+        String selectedLocation = "Outdoor";
+        String selectedType = "Food";
+
+        return AlertDialog(
+          title: const Text("Customize Your Date"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: "Time of Day"),
+                value: selectedTime,
+                items: ["Morning", "Afternoon", "Evening", "Night"]
+                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                    .toList(),
+                onChanged: (value) => selectedTime = value!,
+              ),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: "Location Type"),
+                value: selectedLocation,
+                items: ["Outdoor", "Indoor"]
+                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                    .toList(),
+                onChanged: (value) => selectedLocation = value!,
+              ),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: "Activity Type"),
+                value: selectedType,
+                items: [
+                  "Food",
+                  "Creative",
+                  "Chill",
+                  "Active",
+                  "Playful",
+                  "Romantic",
+                  "Explore"
+                ]
+                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                    .toList(),
+                onChanged: (value) => selectedType = value!,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text("Cancel"),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            ElevatedButton(
+              child: const Text("Generate"),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                final idea = await generateFlexibleDateIdea(
+                  time: selectedTime,
+                  locationType: selectedLocation,
+                  activityType: selectedType,
+                );
+
+                if (context.mounted) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text("Your Date Idea"),
+                      content: idea == null
+                          ? const Text("No matching idea found.")
+                          : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on,
+                                  color: Colors.blueAccent),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  idea['location'] ?? '',
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              const Icon(Icons.calendar_today,
+                                  color: Colors.green),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  idea['activity'] ?? '',
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              const Icon(Icons.access_time,
+                                  color: Colors.deepPurple),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  idea['time'] ?? '',
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text("Close"),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showPushNotification(String title, String message, {bool isWarning = false}) {
     // Cancel any existing overlay
     _removeNotificationOverlay();
