@@ -39,9 +39,6 @@ class _BondScreenState extends State<BondScreen> {
   List<Map<String, dynamic>> _upcomingDates = [];
   bool _loadingDates = true;
 
-  Map<String, dynamic>? _pendingInvitation;
-  bool _loadingInvitations = true;
-
   Future<void> getUserProfiles() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     final db = FirebaseFirestore.instance;
@@ -146,9 +143,6 @@ class _BondScreenState extends State<BondScreen> {
   Future<void> _loadDateInvitations() async {
     if (curUser == null || match == null) return;
 
-    setState(() {
-      _loadingInvitations = true;
-    });
 
     try {
       final userDoc = await FirebaseFirestore.instance
@@ -157,10 +151,6 @@ class _BondScreenState extends State<BondScreen> {
           .get();
 
       if (!userDoc.exists) {
-        setState(() {
-          _pendingInvitation = null;
-          _loadingInvitations = false;
-        });
         return;
       }
 
@@ -187,25 +177,17 @@ class _BondScreenState extends State<BondScreen> {
         }
       });
 
-      setState(() {
-        _pendingInvitation = invitation;
-        _loadingInvitations = false;
-      });
-
       print(
           "Loaded pending date invitation: ${invitation != null ? 'Yes' : 'None'}");
     } catch (e) {
       print('Error loading date invitation: $e');
-      setState(() {
-        _loadingInvitations = false;
-      });
     }
   }
 
   Future<void> _proposeDateInvitation(
       String activity, String location, DateTime dateTime, String notes) async {
     if (curUser == null || match == null) return;
-
+  
     try {
       // Check if user already has an upcoming date
       if (_upcomingDates.isNotEmpty) {
@@ -218,23 +200,11 @@ class _BondScreenState extends State<BondScreen> {
         );
         return;
       }
-
-      // Check for pending invitations as well
-      if (_pendingInvitation != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'You already have a pending date invitation. Please cancel it before creating a new one.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
+  
       // Generate a unique date ID
       final dateId = FirebaseFirestore.instance.collection('users').doc().id;
-
-      // Create date data structure
+  
+      // Create date data structure - status is now "confirmed" by default
       final dateData = {
         'id': dateId,
         'activity': activity,
@@ -243,10 +213,10 @@ class _BondScreenState extends State<BondScreen> {
         'notes': notes,
         'senderId': curUser!.uid,
         'receiverId': match!.uid,
-        'status': 'pending',
+        'status': 'confirmed', // Direct confirmation, no pending state
         'createdAt': FieldValue.serverTimestamp(),
       };
-
+  
       // Store in current user's document
       await FirebaseFirestore.instance
           .collection('users')
@@ -254,35 +224,29 @@ class _BondScreenState extends State<BondScreen> {
           .update({
         'dates.${match!.uid}.$dateId': dateData,
       });
-
-      // Also store in match's document so they can see the invitation
+  
+      // Also store in match's document so they see it immediately
       await FirebaseFirestore.instance
           .collection('users')
           .doc(match!.uid)
           .update({
         'dates.${curUser!.uid}.$dateId': dateData,
       });
-
-      // Update streak
-      // print('About to update streak from: $_currentStreak');
-      // await _updateStreak();
-      // print('Streak should now be: ${_currentStreak}');
-
-      // Reload pending invitations
-      _loadDateInvitations();
+  
+      // Reload upcoming dates (no longer need invitations)
       _loadUpcomingDates();
-
+  
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Date invitation sent!')),
+        const SnackBar(content: Text('Date created successfully!')),
       );
     } catch (e) {
-      print('Error creating date invitation: $e');
+      print('Error creating date: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to send date invitation')),
+        const SnackBar(content: Text('Failed to create date')),
       );
     }
   }
-
+  
   void _showCancelDateDialog(String dateId) {
     showDialog(
       context: context,
@@ -310,21 +274,51 @@ class _BondScreenState extends State<BondScreen> {
   }
 
   Future<void> _cancelDate(String dateId) async {
-    // Immediately update UI by removing the canceled date
-    setState(() {
-      _upcomingDates.removeWhere((date) => date['id'] == dateId);
-    });
-
-    // Don't reset the streak when canceling a date
-    // The streak should remain intact
-    print('Date canceled. Current streak remains at: $_currentStreak');
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Date canceled successfully')),
-    );
-
-    // Note: we're intentionally not calling _loadStreakData() here
-    // as that would reset the streak
+    if (curUser == null || match == null) return;
+  
+    try {
+      // Update Firestore for both users
+      // Update in current user's document
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(curUser!.uid)
+          .update({
+        'dates.${match!.uid}.$dateId.status': 'canceled',
+        'dates.${match!.uid}.$dateId.canceledAt': FieldValue.serverTimestamp(),
+        'dates.${match!.uid}.$dateId.canceledBy': curUser!.uid,
+      });
+  
+      // Update in match's document
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(match!.uid)
+          .update({
+        'dates.${curUser!.uid}.$dateId.status': 'canceled',
+        'dates.${curUser!.uid}.$dateId.canceledAt': FieldValue.serverTimestamp(),
+        'dates.${curUser!.uid}.$dateId.canceledBy': curUser!.uid,
+      });
+  
+      // Update UI
+      setState(() {
+        _upcomingDates.removeWhere((date) => date['id'] == dateId);
+      });
+  
+      // Don't reset the streak when canceling a date
+      // The streak should remain intact
+      print('Date canceled. Current streak remains at: $_currentStreak');
+  
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Date canceled successfully')),
+      );
+    } catch (e) {
+      print('Error canceling date: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to cancel date'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _handleCalendarTap() {
@@ -548,18 +542,33 @@ class _BondScreenState extends State<BondScreen> {
   }
 
   Future<void> _postponeDate(String dateId, DateTime newDateTime) async {
+    if (curUser == null || match == null) return;
+  
     try {
-      // TODO: fix for Firestore
-      // await FirebaseFirestore.instance
-      //     .collection('dateInvitations')
-      //     .doc(dateId)
-      //     .update({
-      //   'status': 'postponed',
-      //   'dateTime': Timestamp.fromDate(newDateTime),
-      //   'postponedTo': Timestamp.fromDate(newDateTime),
-      //   'updatedAt': FieldValue.serverTimestamp(),
-      // });
-
+      // First update Firestore for both users
+      // Update in current user's document
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(curUser!.uid)
+          .update({
+        'dates.${match!.uid}.$dateId.status': 'postponed',
+        'dates.${match!.uid}.$dateId.dateTime': Timestamp.fromDate(newDateTime),
+        'dates.${match!.uid}.$dateId.postponedTo': Timestamp.fromDate(newDateTime),
+        'dates.${match!.uid}.$dateId.updatedAt': FieldValue.serverTimestamp(),
+      });
+  
+      // Also update in match's document so they see the postponement
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(match!.uid)
+          .update({
+        'dates.${curUser!.uid}.$dateId.status': 'postponed',
+        'dates.${curUser!.uid}.$dateId.dateTime': Timestamp.fromDate(newDateTime),
+        'dates.${curUser!.uid}.$dateId.postponedTo': Timestamp.fromDate(newDateTime),
+        'dates.${curUser!.uid}.$dateId.updatedAt': FieldValue.serverTimestamp(),
+      });
+  
+      // Then update local state
       setState(() {
         final index = _upcomingDates.indexWhere((date) => date['id'] == dateId);
         if (index != -1) {
@@ -568,18 +577,24 @@ class _BondScreenState extends State<BondScreen> {
           _upcomingDates[index]['status'] = 'postponed';
         }
       });
-
+  
+      // Refresh data from server to ensure we have the latest
+      _loadUpcomingDates();
+  
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Date postponed successfully')),
       );
     } catch (e) {
       print('Error postponing date: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to postpone date')),
+        const SnackBar(
+          content: Text('Failed to postpone date'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
-
+  
   void _showDateDetails(BuildContext context) {
     if (_upcomingDates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -587,11 +602,13 @@ class _BondScreenState extends State<BondScreen> {
       );
       return;
     }
-
+  
     final upcomingDate = _upcomingDates.first;
     final DateTime dateTime = upcomingDate['dateTime'];
     final Duration timeUntil = dateTime.difference(DateTime.now());
-
+    final String createdBy = upcomingDate['senderId'] == curUser!.uid ? 
+        'Created by you' : 'Created by ${match!.firstName}';
+  
     // Skip if the date is in the past
     if (timeUntil.isNegative) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -599,7 +616,7 @@ class _BondScreenState extends State<BondScreen> {
       );
       return;
     }
-
+  
     // Format time remaining
     String timeRemainingText;
     if (timeUntil.inDays > 0) {
@@ -611,7 +628,7 @@ class _BondScreenState extends State<BondScreen> {
     } else {
       timeRemainingText = '${timeUntil.inMinutes} minutes';
     }
-
+  
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -640,7 +657,7 @@ class _BondScreenState extends State<BondScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.35, // Limit width to 35% of screen
+                    maxWidth: MediaQuery.of(context).size.width * 0.35,
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEEF2FA),
@@ -663,6 +680,20 @@ class _BondScreenState extends State<BondScreen> {
                 ),
               ],
             ),
+            
+            // Show who created the date
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                createdBy,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+            
             const SizedBox(height: 20),
             Row(
               children: [
@@ -706,7 +737,7 @@ class _BondScreenState extends State<BondScreen> {
                 ),
               ],
             ),
-            if (upcomingDate['notes'] != null) ...[
+            if (upcomingDate['notes'] != null && upcomingDate['notes'].isNotEmpty) ...[
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -765,7 +796,7 @@ class _BondScreenState extends State<BondScreen> {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    child: const Text('Postpone'),
+                    child: const Text('Reschedule'),
                   ),
                 ),
               ],
@@ -775,7 +806,7 @@ class _BondScreenState extends State<BondScreen> {
       ),
     );
   }
-
+  
   Widget _buildDateTimeIndicator() {
     if (_upcomingDates.isEmpty) return const SizedBox.shrink();
 
