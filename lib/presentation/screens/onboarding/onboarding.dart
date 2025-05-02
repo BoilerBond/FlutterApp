@@ -430,23 +430,23 @@ class _Step2State extends State<Step2> {
                 width: MediaQuery.of(context).size.width * 0.3,
                 height: MediaQuery.of(context).size.width * 0.1,
                 child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Color(0xffCDFCFF),
-                      side: BorderSide(
-                        width: 1,
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white, // Purple color
+                    alignment: Alignment.center, // Explicit center alignment
+                    side: BorderSide(
+                      width: 1,
+                      color: Theme.of(context).colorScheme.outlineVariant,
                     ),
-                    onPressed: _saving
-                        ? null
-                        : _saveBioAndContinue, // Disable button while saving
-                    child: _saving
-                        ? CircularProgressIndicator()
-                        : Icon(Icons.arrow_forward)),
+                    padding: EdgeInsets.zero, // Remove padding that could affect centering
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: _saving ? null : _saveBioAndContinue,
+                  child: _saving
+                      ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                      : const Center(child: Icon(Icons.arrow_forward)), // Wrap in Center
+                ),
               ),
             ),
           ),
@@ -657,20 +657,21 @@ class _Step3State extends State<Step3> {
                   height: MediaQuery.of(context).size.width * 0.1,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      backgroundColor: Color(0xffCDFCFF),
+                      backgroundColor: Colors.white, // Purple color
+                      alignment: Alignment.center, // Explicit center alignment
                       side: BorderSide(
                         width: 1,
                         color: Theme.of(context).colorScheme.outlineVariant,
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.zero, // Remove padding that could affect centering
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                     onPressed: _saving ? null : _saveHeightAndContinue,
                     child: _saving
-                        ? CircularProgressIndicator()
-                        : Icon(Icons.arrow_forward),
+                        ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                        : const Center(child: Icon(Icons.arrow_forward)), // Wrap in Center
                   ),
                 ),
               ),
@@ -719,9 +720,7 @@ class _Step4State extends State<Step4> {
     'Architecture',
     'Business'
   ];
-
   final Set<String> _selectedInterests = {};
-
   void _onInterestSelected(bool selected, String interest) {
     setState(() {
       if (selected) {
@@ -738,7 +737,6 @@ class _Step4State extends State<Step4> {
       print("User is not logged in");
       return;
     }
-
     try {
       await FirebaseFirestore.instance
           .collection("users")
@@ -775,7 +773,6 @@ class _Step4State extends State<Step4> {
             indent: width * 0.04,
             endIndent: width * 0.04,
           ),
-
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: width * 0.07),
@@ -828,28 +825,30 @@ class _Step4State extends State<Step4> {
               ),
             ),
           ),
-
           // Next Button
           Center(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: SizedBox(
-                width: width * 0.3,
-                height: width * 0.1,
+                width: MediaQuery.of(context).size.width * 0.3,
+                height: MediaQuery.of(context).size.width * 0.1,
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: const Color(0xffCDFCFF),
+                    backgroundColor: Colors.white, // Purple color
+                    alignment: Alignment.center, // Explicit center alignment
                     side: BorderSide(
                       width: 1,
                       color: Theme.of(context).colorScheme.outlineVariant,
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: EdgeInsets.zero, // Remove padding that could affect centering
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   onPressed: saveInterests,
-                  child: const Icon(Icons.arrow_forward),
+                  child: const Center(
+                    child: Icon(Icons.arrow_forward), // Ensure the arrow is centered
+                  ),
                 ),
               ),
             ),
@@ -872,7 +871,6 @@ class _Step5State extends State<Step5> {
   String? _selectedDiningCourt;
   final TextEditingController petPeeveController = TextEditingController();
   final TextEditingController bestMemoryController = TextEditingController();
-
   Map<String, String> _errors = {};
   bool _formSubmitted = false;
   bool _isSaving = false;
@@ -917,7 +915,6 @@ class _Step5State extends State<Step5> {
         'purduePetPeeve': petPeeveController.text.trim(),
         'bestPurdueMemory': bestMemoryController.text.trim(),
       });
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Purdue information saved successfully")),
       );
@@ -947,11 +944,9 @@ class _Step5State extends State<Step5> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text("4. Purdue-Specific Questions",
-                      style:
-                          TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                      style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                   const Divider(),
                   const SizedBox(height: 20),
-
                   // Favorite Study Spot
                   Row(
                     children: [
@@ -973,7 +968,6 @@ class _Step5State extends State<Step5> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
                   // Favorite Dining Court
                   Row(
                     children: [
@@ -1013,7 +1007,6 @@ class _Step5State extends State<Step5> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
                   // Biggest Purdue Pet Peeve
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1030,7 +1023,6 @@ class _Step5State extends State<Step5> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
                   // Best Purdue Memory
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1153,24 +1145,30 @@ class _Step6State extends State<Step6> {
                 width: MediaQuery.of(context).size.width * 0.3,
                 height: MediaQuery.of(context).size.width * 0.1,
                 child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Color(0xffCDFCFF),
-                      side: BorderSide(
-                        width: 1,
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white, // Purple color
+                    alignment: Alignment.center, // Explicit center alignment
+                    side: BorderSide(
+                      width: 1,
+                      color: Theme.of(context).colorScheme.outlineVariant,
                     ),
-                    onPressed: () async {
-                      if (_image != null) {
-                        await _uploadImage(_image!);
-                      }
-                      Navigator.of(context).push(_createRoute(Step7()));
-                    },
-                    child: Text("Next")),
+                    padding: EdgeInsets.zero, // Remove padding that could affect centering
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () async {
+                    if (_image != null) {
+                      await _uploadImage(_image!);
+                    }
+                    Navigator.of(context).push(_createRoute(Step7()));
+                  },
+                  child: _image == null
+                      ? const Icon(Icons.arrow_forward, size: 24) // Ensure consistent size
+                      : const Center(
+                          child: Icon(Icons.arrow_forward, size: 24), // Wrap in Center
+                        ),
+                ),
               ),
             ),
           ),
@@ -1288,7 +1286,6 @@ class _Step7State extends State<Step7> {
             indent: width * 0.04,
             endIndent: width * 0.04,
           ),
-
           // Main content
           Expanded(
             child: SingleChildScrollView(
@@ -1301,25 +1298,20 @@ class _Step7State extends State<Step7> {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 24),
-
                   const Text(
                     "About You",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 16),
-
                   // Personal traits sliders
                   ..._personalTraits.keys.map(
                       (question) => _buildSlider(question, _personalTraits)),
-
                   SizedBox(height: 24),
-
                   const Text(
                     "What You're Looking For",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 16),
-
                   // Partner preference sliders
                   ..._partnerPreferences.keys.map((question) =>
                       _buildSlider(question, _partnerPreferences)),
@@ -1327,28 +1319,29 @@ class _Step7State extends State<Step7> {
               ),
             ),
           ),
-
-          // Finish Button
           Center(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: SizedBox(
-                width: width * 0.3,
-                height: width * 0.1,
+                width: MediaQuery.of(context).size.width * 0.3,
+                height: MediaQuery.of(context).size.width * 0.1,
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: const Color(0xffCDFCFF),
+                    backgroundColor: Colors.white, // Purple color
+                    alignment: Alignment.center, // Explicit center alignment
                     side: BorderSide(
                       width: 1,
                       color: Theme.of(context).colorScheme.outlineVariant,
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: EdgeInsets.zero, // Remove padding that could affect centering
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  onPressed: _savePreferencesAndFinish,
-                  child: const Text("Finish"),
+                  onPressed: _savePreferencesAndFinish, // Keep the backend functionality
+                  child: const Center(
+                    child: Icon(Icons.arrow_forward, size: 24), // Ensure consistent size
+                  ),
                 ),
               ),
             ),
