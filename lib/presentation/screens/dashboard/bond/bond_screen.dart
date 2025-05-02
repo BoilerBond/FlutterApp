@@ -102,32 +102,28 @@ class _BondScreenState extends State<BondScreen> {
   
       final userData = userDoc.data();
       final datesData = userData?['dates'] as Map<String, dynamic>? ?? {};
-      final matchDates = datesData[match!.uid] as Map<String, dynamic>? ?? {};
-  
+      
+      // New data structure: dates.[matchId] is the direct date object
+      final dateData = datesData[match!.uid] as Map<String, dynamic>?;
+      
       final List<Map<String, dynamic>> upcomingDates = [];
   
-      // Process all dates with this match - include all dates regardless of status
-      matchDates.forEach((dateId, dateData) {
-        final data = dateData as Map<String, dynamic>;
-        // Include all dates except explicitly canceled ones
-        if (data['status'] != 'canceled') {
-          upcomingDates.add({
-            'id': dateId,
-            'activity': data['activity'] ?? '',
-            'location': data['location'] ?? '',
-            'dateTime': (data['dateTime'] as Timestamp).toDate(),
-            'notes': data['notes'] ?? '',
-            'senderId': data['senderId'] ?? '',
-            'receiverId': data['receiverId'] ?? '',
-            'status': data['status'] ?? '',
-          });
-        }
-      });
+      // Only add the date if it exists and isn't canceled
+      if (dateData != null && dateData['status'] != 'canceled') {
+        upcomingDates.add({
+          'id': 'current', // Use a fixed ID since there's only one date
+          'activity': dateData['activity'] ?? '',
+          'location': dateData['location'] ?? '',
+          'dateTime': (dateData['dateTime'] as Timestamp).toDate(),
+          'notes': dateData['notes'] ?? '',
+          'senderId': dateData['senderId'] ?? '',
+          'receiverId': dateData['receiverId'] ?? '',
+          'status': dateData['status'] ?? '',
+        });
+      }
   
       setState(() {
         _upcomingDates = upcomingDates;
-        // Sort by date, with earliest dates first
-        _upcomingDates.sort((a, b) => (a['dateTime'] as DateTime).compareTo(b['dateTime'] as DateTime));
         _loadingDates = false;
       });
   
@@ -201,39 +197,70 @@ class _BondScreenState extends State<BondScreen> {
         return;
       }
   
-      // Generate a unique date ID
-      final dateId = FirebaseFirestore.instance.collection('users').doc().id;
-  
-      // Create date data structure - status is now "confirmed" by default
+      // Create date data structure - NO IDs or server timestamp
       final dateData = {
-        'id': dateId,
         'activity': activity,
         'location': location,
         'dateTime': Timestamp.fromDate(dateTime),
         'notes': notes,
         'senderId': curUser!.uid,
         'receiverId': match!.uid,
-        'status': 'confirmed', // Direct confirmation, no pending state
-        'createdAt': FieldValue.serverTimestamp(),
+        'status': 'confirmed',
+        'createdAt': Timestamp.fromDate(DateTime.now()),
       };
   
-      // Store in current user's document
+      // Update current user's document
+      final currentUserDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(curUser!.uid)
+          .get();
+      
+      // Fix 1: Use Map.from() instead of direct casting
+      Map<String, dynamic> currentUserDates = 
+          Map<String, dynamic>.from(currentUserDoc.data()?['dates'] ?? {});
+      
+      // Store directly under match ID (no dateId)
+      currentUserDates[match!.uid] = dateData;
+      
       await FirebaseFirestore.instance
           .collection('users')
           .doc(curUser!.uid)
           .update({
-        'dates.${match!.uid}.$dateId': dateData,
+        'dates': currentUserDates,
       });
   
-      // Also store in match's document so they see it immediately
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(match!.uid)
-          .update({
-        'dates.${curUser!.uid}.$dateId': dateData,
-      });
+      // Try to update match's document with similar structure
+      try {
+        final matchUserDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(match!.uid)
+            .get();
+        
+        // Fix 2: Use Map.from() here too
+        Map<String, dynamic> matchUserDates = 
+            Map<String, dynamic>.from(matchUserDoc.data()?['dates'] ?? {});
+        
+        // Store directly under current user's ID (no dateId)
+        matchUserDates[curUser!.uid] = dateData;
+        
+        // Update only the dates field
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(match!.uid)
+            .update({
+          'dates': matchUserDates,
+        });
+      } catch (e) {
+        print('Warning: Could not update match document: $e');
+        // Don't fail the entire operation
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Date created, but your match may not see it immediately'),
+          ),
+        );
+      }
   
-      // Reload upcoming dates (no longer need invitations)
+      // Reload upcoming dates
       _loadUpcomingDates();
   
       ScaffoldMessenger.of(context).showSnackBar(
@@ -277,35 +304,56 @@ class _BondScreenState extends State<BondScreen> {
     if (curUser == null || match == null) return;
   
     try {
-      // Update Firestore for both users
-      // Update in current user's document
-      await FirebaseFirestore.instance
+      // Get the current dates data for current user
+      final currentUserDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(curUser!.uid)
-          .update({
-        'dates.${match!.uid}.$dateId.status': 'canceled',
-        'dates.${match!.uid}.$dateId.canceledAt': FieldValue.serverTimestamp(),
-        'dates.${match!.uid}.$dateId.canceledBy': curUser!.uid,
-      });
-  
-      // Update in match's document
-      await FirebaseFirestore.instance
+          .get();
+      
+      // Get the dates map
+      Map<String, dynamic> currentUserDates = 
+          Map<String, dynamic>.from(currentUserDoc.data()?['dates'] ?? {});
+      
+      // COMPLETELY REMOVE the date entry under match ID directly
+      if (currentUserDates.containsKey(match!.uid)) {
+        // Remove the entire date entry
+        currentUserDates.remove(match!.uid);
+        
+        // Write back the entire dates object
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(curUser!.uid)
+            .update({
+          'dates': currentUserDates,
+        });
+      }
+      
+      // Do the same for match's document
+      final matchUserDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(match!.uid)
-          .update({
-        'dates.${curUser!.uid}.$dateId.status': 'canceled',
-        'dates.${curUser!.uid}.$dateId.canceledAt': FieldValue.serverTimestamp(),
-        'dates.${curUser!.uid}.$dateId.canceledBy': curUser!.uid,
-      });
+          .get();
+      
+      Map<String, dynamic> matchUserDates = 
+          Map<String, dynamic>.from(matchUserDoc.data()?['dates'] ?? {});
+      
+      if (matchUserDates.containsKey(curUser!.uid)) {
+        // Remove the entire date entry
+        matchUserDates.remove(curUser!.uid);
+        
+        // Write back the entire dates object
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(match!.uid)
+            .update({
+          'dates': matchUserDates,
+        });
+      }
   
       // Update UI
       setState(() {
-        _upcomingDates.removeWhere((date) => date['id'] == dateId);
+        _upcomingDates = [];
       });
-  
-      // Don't reset the streak when canceling a date
-      // The streak should remain intact
-      print('Date canceled. Current streak remains at: $_currentStreak');
   
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Date canceled successfully')),
@@ -320,7 +368,7 @@ class _BondScreenState extends State<BondScreen> {
       );
     }
   }
-
+  
   void _handleCalendarTap() {
     if (_upcomingDates.isEmpty) {
       _showCreateDateDialog();
@@ -545,40 +593,75 @@ class _BondScreenState extends State<BondScreen> {
     if (curUser == null || match == null) return;
   
     try {
-      // First update Firestore for both users
-      // Update in current user's document
-      await FirebaseFirestore.instance
+      // Get current user's dates data
+      final currentUserDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(curUser!.uid)
-          .update({
-        'dates.${match!.uid}.$dateId.status': 'postponed',
-        'dates.${match!.uid}.$dateId.dateTime': Timestamp.fromDate(newDateTime),
-        'dates.${match!.uid}.$dateId.postponedTo': Timestamp.fromDate(newDateTime),
-        'dates.${match!.uid}.$dateId.updatedAt': FieldValue.serverTimestamp(),
-      });
-  
-      // Also update in match's document so they see the postponement
-      await FirebaseFirestore.instance
+          .get();
+      
+      Map<String, dynamic> currentUserDates = 
+          (currentUserDoc.data()?['dates'] ?? {}) as Map<String, dynamic>;
+      
+      // Update directly under match ID
+      if (currentUserDates.containsKey(match!.uid)) {
+        Map<String, dynamic> dateData = Map<String, dynamic>.from(
+            currentUserDates[match!.uid] as Map<String, dynamic>);
+        
+        dateData['status'] = 'postponed';
+        dateData['dateTime'] = Timestamp.fromDate(newDateTime);
+        dateData['postponedTo'] = Timestamp.fromDate(newDateTime);
+        dateData['updatedAt'] = FieldValue.serverTimestamp();
+        
+        currentUserDates[match!.uid] = dateData;
+        
+        // Update the entire dates object
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(curUser!.uid)
+            .update({
+          'dates': currentUserDates,
+        });
+      }
+      
+      // Do the same for match's document
+      final matchUserDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(match!.uid)
-          .update({
-        'dates.${curUser!.uid}.$dateId.status': 'postponed',
-        'dates.${curUser!.uid}.$dateId.dateTime': Timestamp.fromDate(newDateTime),
-        'dates.${curUser!.uid}.$dateId.postponedTo': Timestamp.fromDate(newDateTime),
-        'dates.${curUser!.uid}.$dateId.updatedAt': FieldValue.serverTimestamp(),
-      });
+          .get();
+      
+      Map<String, dynamic> matchUserDates = 
+          (matchUserDoc.data()?['dates'] ?? {}) as Map<String, dynamic>;
+      
+      if (matchUserDates.containsKey(curUser!.uid)) {
+        Map<String, dynamic> dateData = Map<String, dynamic>.from(
+            matchUserDates[curUser!.uid] as Map<String, dynamic>);
+        
+        dateData['status'] = 'postponed';
+        dateData['dateTime'] = Timestamp.fromDate(newDateTime);
+        dateData['postponedTo'] = Timestamp.fromDate(newDateTime);
+        dateData['updatedAt'] = FieldValue.serverTimestamp();
+        
+        matchUserDates[curUser!.uid] = dateData;
+        
+        // Update the entire dates object
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(match!.uid)
+            .update({
+          'dates': matchUserDates,
+        });
+      }
   
-      // Then update local state
-      setState(() {
-        final index = _upcomingDates.indexWhere((date) => date['id'] == dateId);
-        if (index != -1) {
-          _upcomingDates[index]['dateTime'] = newDateTime;
-          _upcomingDates[index]['postponedTo'] = newDateTime;
-          _upcomingDates[index]['status'] = 'postponed';
-        }
-      });
+      // Update local state if there's a date
+      if (_upcomingDates.isNotEmpty) {
+        setState(() {
+          _upcomingDates[0]['dateTime'] = newDateTime;
+          _upcomingDates[0]['postponedTo'] = newDateTime;
+          _upcomingDates[0]['status'] = 'postponed';
+        });
+      }
   
-      // Refresh data from server to ensure we have the latest
+      // Refresh data from server
       _loadUpcomingDates();
   
       ScaffoldMessenger.of(context).showSnackBar(
