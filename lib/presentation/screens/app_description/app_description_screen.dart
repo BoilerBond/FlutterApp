@@ -1,3 +1,5 @@
+import 'package:datingapp/theme/theme.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 // ignore: must_be_immutable
@@ -109,24 +111,46 @@ class _AppDescriptionScreenState extends State<AppDescriptionScreen> {
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                label: const Text('Next'),
-                style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                onPressed: () {
-                  if (widget.arguments["navigateToTos"]) {
-                    Navigator.pushNamed(context, "/terms_of_service", arguments: {"navigatePath" : widget.arguments["navigatePath"], "navigateToTos": false});
-                  } else {
-                    if (widget.arguments["navigatePath"].isNotEmpty) {
-                      Navigator.pushReplacementNamed(context, widget.arguments["navigatePath"]);
-                    } else {
-                      Navigator.pop(context);
-                    }
-                  }
-                },
-              ),
-            ),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    label: const Text('Back'),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(width: 1.0, color: Theme.of(context).colorScheme.outlineVariant),
+                      foregroundColor: MaterialTheme.warning,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                      ),
+                    onPressed: () {
+                      User? currentUser = FirebaseAuth.instance.currentUser;
+                      if (currentUser != null) {
+                        FirebaseAuth.instance.signOut();
+                      } else {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    label: const Text('Next'),
+                    style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                    onPressed: () {
+                      if (widget.arguments["navigateToTos"]) {
+                        Navigator.pushNamed(context, "/terms_of_service", arguments: {"navigatePath": widget.arguments["navigatePath"], "navigateToTos": false});
+                      } else {
+                        if (widget.arguments["navigatePath"].isNotEmpty) {
+                          Navigator.pushReplacementNamed(context, widget.arguments["navigatePath"]);
+                        } else {
+                          Navigator.pop(context);
+                        }
+                      }
+                    },
+                  ),
+                ),
+              ],
+            )
           ],
         ),
       ),
